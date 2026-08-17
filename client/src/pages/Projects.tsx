@@ -100,7 +100,7 @@ export default function Projects() {
           <section key={field.code} className="space-y-2">
             <div className="flex items-center gap-2">
               <h2 className="text-sm font-semibold">{field.name}</h2>
-              <span className="font-mono text-[11px] text-muted-foreground">{field.code}</span>
+              <span className="font-mono text-xs text-muted-foreground">{field.code}</span>
               <span className="text-xs text-muted-foreground">· {list.length} dự án</span>
               <div className="ml-auto flex gap-0.5">
                 <button
@@ -236,10 +236,10 @@ function ProjectItem({
           muted && "opacity-60"
         )}
       >
-        <span className="font-mono text-[11px] text-muted-foreground">{project.code}</span>
+        <span className="font-mono text-xs text-muted-foreground">{project.code}</span>
         <span className="min-w-0 flex-1 truncate">{project.name}</span>
         {count > 0 && (
-          <span className="rounded-full bg-muted px-1.5 text-[11px] tabular-nums text-muted-foreground">
+          <span className="rounded-full bg-muted px-1.5 text-xs tabular-nums text-muted-foreground">
             {count}
           </span>
         )}

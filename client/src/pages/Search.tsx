@@ -97,10 +97,10 @@ export default function SearchPage() {
                     href={`/du-an/${hit.task.project}`}
                     className="block rounded-xl border border-border bg-card px-3 py-2.5 transition-colors hover:border-foreground/20"
                   >
-                    <div className={cn("text-[15px]", hit.task.done && "text-muted-foreground line-through")}>
+                    <div className={cn("text-base", hit.task.done && "text-muted-foreground line-through")}>
                       <Highlight text={hit.task.title} query={debounced} />
                     </div>
-                    <div className="mt-1 flex flex-wrap gap-x-2 text-[11px] text-muted-foreground">
+                    <div className="mt-1 flex flex-wrap gap-x-2 text-xs text-muted-foreground">
                       <span className="font-mono">{hit.task.id}</span>
                       <span>{projectName.get(hit.task.project) ?? hit.task.project}</span>
                       <span className="tabular-nums">{hit.task.created}</span>
@@ -121,7 +121,7 @@ export default function SearchPage() {
                     href={`/lich-su/${hit.note.date}`}
                     className="block rounded-xl border border-border bg-card px-3 py-2.5 transition-colors hover:border-foreground/20"
                   >
-                    <div className="text-[11px] font-medium tabular-nums text-muted-foreground">
+                    <div className="text-xs font-medium tabular-nums text-muted-foreground">
                       {hit.note.date}
                     </div>
                     <p className="mt-0.5 whitespace-pre-wrap text-sm leading-snug">
@@ -144,10 +144,10 @@ export default function SearchPage() {
                   >
                     <Phone className="size-4 shrink-0 text-muted-foreground" />
                     <div className="min-w-0 flex-1">
-                      <div className="text-[15px]">
+                      <div className="text-base">
                         <Highlight text={hit.contact.label} query={debounced} />
                       </div>
-                      <div className="text-[11px] text-muted-foreground">{hit.contact.group}</div>
+                      <div className="text-xs text-muted-foreground">{hit.contact.group}</div>
                     </div>
                     <span className="font-mono text-sm tabular-nums text-primary">
                       {hit.contact.phone}

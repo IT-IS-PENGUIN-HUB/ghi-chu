@@ -51,7 +51,7 @@ export function RecurringRules() {
             >
               <div className="min-w-0 flex-1">
                 <div className="truncate text-sm">{rule.title}</div>
-                <div className="text-[11px] text-muted-foreground">
+                <div className="text-xs text-muted-foreground">
                   {describeRule(rule)} · {projectName.get(rule.project) ?? rule.project}
                   {rule.lastRun && ` · lần cuối ${rule.lastRun}`}
                 </div>

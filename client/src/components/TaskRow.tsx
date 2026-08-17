@@ -120,7 +120,7 @@ function TaskRowInner({
             <div className="flex flex-wrap items-baseline gap-x-2 gap-y-0.5">
               <span
                 className={cn(
-                  "shrink-0 rounded px-1.5 py-0.5 font-mono text-[11px] font-semibold tabular-nums",
+                  "shrink-0 rounded px-1.5 py-0.5 font-mono text-xs font-semibold tabular-nums",
                   task.done
                     ? "bg-muted text-muted-foreground"
                     : task.category === "WRK"
@@ -135,7 +135,7 @@ function TaskRowInner({
               )}
               <span
                 className={cn(
-                  "min-w-0 break-words text-[15px] leading-snug",
+                  "min-w-0 break-words text-base leading-snug",
                   task.done && "text-muted-foreground line-through"
                 )}
               >
@@ -143,7 +143,7 @@ function TaskRowInner({
               </span>
             </div>
 
-            <div className="mt-1 flex flex-wrap items-center gap-x-2 gap-y-1 text-[11px] text-muted-foreground">
+            <div className="mt-1 flex flex-wrap items-center gap-x-2 gap-y-1 text-xs text-muted-foreground">
               {project && (
                 <span className="rounded bg-muted px-1.5 py-0.5 font-medium">
                   {project.name}
@@ -212,7 +212,7 @@ function TaskRowInner({
                       .filter((p) => !p.archived && p.code !== task.project)
                       .map((p) => (
                         <DropdownMenuItem key={p.code} onClick={() => onMove(task.id, p.code)}>
-                          <span className="mr-2 font-mono text-[11px] text-muted-foreground">
+                          <span className="mr-2 font-mono text-xs text-muted-foreground">
                             {p.code}
                           </span>
                           {p.name}

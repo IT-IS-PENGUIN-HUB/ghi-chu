@@ -13,7 +13,7 @@ export function ThemeToggle() {
       title={label}
       className="tap flex items-center justify-center rounded-lg text-muted-foreground transition-colors hover:bg-accent hover:text-foreground"
     >
-      {theme === "dark" ? <Sun className="size-[18px]" /> : <Moon className="size-[18px]" />}
+      {theme === "dark" ? <Sun className="size-[1.125rem]" /> : <Moon className="size-[1.125rem]" />}
     </button>
   );
 }

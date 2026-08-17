@@ -41,7 +41,7 @@ export function AppShell({ children }: { children: ReactNode }) {
             <span className="flex size-8 items-center justify-center rounded-lg bg-primary text-primary-foreground">
               <CheckSquare className="size-4 stroke-[2.5]" />
             </span>
-            <span className="text-[15px] font-bold tracking-tight">Ghi chú</span>
+            <span className="text-base font-bold tracking-tight">Ghi chú</span>
           </Link>
 
           {NAV.map(({ path, label, icon: Icon }) => (
@@ -102,7 +102,7 @@ export function AppShell({ children }: { children: ReactNode }) {
               href={path}
               aria-current={isActive(path) ? "page" : undefined}
               className={cn(
-                "no-tap-highlight flex flex-1 flex-col items-center gap-0.5 py-2 text-[11px] transition-colors",
+                "no-tap-highlight flex flex-1 flex-col items-center gap-0.5 py-2 text-xs transition-colors",
                 isActive(path) ? "font-semibold text-primary" : "text-muted-foreground"
               )}
             >
@@ -139,7 +139,7 @@ function IconLink({
           : "text-muted-foreground hover:bg-accent hover:text-foreground"
       )}
     >
-      <Icon className="size-[18px]" />
+      <Icon className="size-[1.125rem]" />
     </Link>
   );
 }

@@ -302,7 +302,7 @@ function Section({
 function Step({ n, children }: { n: number; children: ReactNode }) {
   return (
     <li className="flex items-start gap-2.5">
-      <span className="mt-px flex size-5 shrink-0 items-center justify-center rounded-full bg-primary text-[11px] font-bold text-primary-foreground">
+      <span className="mt-px flex size-5 shrink-0 items-center justify-center rounded-full bg-primary text-xs font-bold text-primary-foreground">
         {n}
       </span>
       <span>{children}</span>
@@ -323,7 +323,7 @@ function Tip({ children, variant = "info" }: { children: ReactNode; variant?: "i
   return (
     <p
       className={cn(
-        "mt-3 rounded-lg border-l-4 px-3 py-2 text-[13px]",
+        "mt-3 rounded-lg border-l-4 px-3 py-2 text-sm",
         variant === "warn"
           ? "border-l-destructive bg-destructive/5"
           : "border-l-primary bg-primary/5"
@@ -336,7 +336,7 @@ function Tip({ children, variant = "info" }: { children: ReactNode; variant?: "i
 
 function Kbd({ children }: { children: ReactNode }) {
   return (
-    <kbd className="rounded border border-border bg-muted px-1.5 py-0.5 font-mono text-[11px] font-medium">
+    <kbd className="rounded border border-border bg-muted px-1.5 py-0.5 font-mono text-xs font-medium">
       {children}
     </kbd>
   );
@@ -346,7 +346,7 @@ function Chip({ children, color }: { children: ReactNode; color: "wrk" | "per" }
   return (
     <span
       className={cn(
-        "rounded px-1.5 py-0.5 text-[13px] font-medium",
+        "rounded px-1.5 py-0.5 text-sm font-medium",
         color === "wrk" ? "bg-wrk-soft text-wrk" : "bg-per-soft text-per"
       )}
     >

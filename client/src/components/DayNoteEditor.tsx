@@ -91,7 +91,7 @@ export function DayNoteEditor({ date, value, onChange }: DayNoteEditorProps) {
         />
       )}
 
-      <p className="text-[11px] text-muted-foreground">
+      <p className="text-xs text-muted-foreground">
         {empty
           ? "Ngày không có ghi chú sẽ không tạo file nào trên GitHub."
           : `Lưu vào data/days/${date.slice(0, 4)}/${date}.md`}

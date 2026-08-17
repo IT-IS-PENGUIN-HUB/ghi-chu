@@ -93,7 +93,7 @@ export default function Today() {
           <div className="flex items-center gap-3">
             <div className="text-right">
               <div className="text-2xl font-bold tabular-nums text-done">{percent}%</div>
-              <div className="text-[11px] text-muted-foreground">
+              <div className="text-xs text-muted-foreground">
                 {doneToday.length}/{progress} xong hôm nay
               </div>
             </div>
@@ -121,7 +121,7 @@ export default function Today() {
               onClick={() => setCategory(c)}
               aria-pressed={active}
               className={cn(
-                "flex items-center justify-center gap-2 rounded-xl border-2 px-3 py-2.5 text-[15px] font-medium transition-all",
+                "flex items-center justify-center gap-2 rounded-xl border-2 px-3 py-2.5 text-base font-medium transition-all",
                 active
                   ? c === "WRK"
                     ? "border-wrk bg-wrk text-white shadow-sm"

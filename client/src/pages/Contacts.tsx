@@ -102,9 +102,9 @@ export default function Contacts() {
                   >
                     <Phone className="size-4 shrink-0 text-muted-foreground" />
                     <div className="min-w-0 flex-1">
-                      <div className="truncate text-[15px]">{c.label}</div>
+                      <div className="truncate text-base">{c.label}</div>
                       {c.note && (
-                        <div className="truncate text-[11px] text-muted-foreground">{c.note}</div>
+                        <div className="truncate text-xs text-muted-foreground">{c.note}</div>
                       )}
                     </div>
                     <span className="shrink-0 font-mono text-sm tabular-nums text-primary">

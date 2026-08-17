@@ -103,7 +103,7 @@ export function QuickAdd({ projects, fields, category, onAdd }: QuickAddProps) {
         >
           <Plus className="size-4 stroke-[3]" />
         </span>
-        <h2 className="text-[15px] font-semibold">Thêm việc mới</h2>
+        <h2 className="text-base font-semibold">Thêm việc mới</h2>
         <span
           className={cn(
             "rounded-full px-2 py-0.5 text-xs font-medium",
@@ -153,7 +153,7 @@ export function QuickAdd({ projects, fields, category, onAdd }: QuickAddProps) {
           <SelectContent className="max-h-72">
             {grouped.map(([fieldCode, list]) => (
               <SelectGroup key={fieldCode || "none"}>
-                <SelectLabel className="text-[11px] uppercase tracking-wide text-muted-foreground">
+                <SelectLabel className="text-xs uppercase tracking-wide text-muted-foreground">
                   {fields.find((f) => f.code === fieldCode)?.name ?? "Chưa gán lĩnh vực"}
                 </SelectLabel>
                 {list.map((p) => (

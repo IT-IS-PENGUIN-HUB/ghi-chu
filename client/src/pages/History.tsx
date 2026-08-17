@@ -85,7 +85,7 @@ export default function History() {
 
         <div className="grid grid-cols-7 gap-1 text-center">
           {WEEKDAY_HEADS.map((d) => (
-            <div key={d} className="pb-1 text-[10px] font-medium text-muted-foreground">
+            <div key={d} className="pb-1 text-[0.625rem] font-medium text-muted-foreground">
               {d}
             </div>
           ))}
@@ -222,9 +222,9 @@ function DayList({
             key={`${t.id}-${title}`}
             className="flex items-baseline gap-2 rounded-lg border border-border bg-card px-3 py-2 text-sm"
           >
-            <span className="shrink-0 font-mono text-[11px] text-muted-foreground">{t.id}</span>
+            <span className="shrink-0 font-mono text-xs text-muted-foreground">{t.id}</span>
             <span className={cn("min-w-0 flex-1", done && "text-muted-foreground")}>{t.title}</span>
-            <span className="shrink-0 text-[11px] text-muted-foreground">
+            <span className="shrink-0 text-xs text-muted-foreground">
               {projectName.get(t.project) ?? t.project}
             </span>
           </li>

@@ -19,7 +19,7 @@ export function SyncBadge() {
         title="Chưa kết nối GitHub — dữ liệu chỉ nằm trên máy này"
         className="tap flex items-center justify-center rounded-lg text-muted-foreground hover:text-foreground"
       >
-        <CloudOff className="size-[18px]" />
+        <CloudOff className="size-[1.125rem]" />
       </Link>
     );
   }
@@ -31,7 +31,7 @@ export function SyncBadge() {
         title="Đang đồng bộ"
         className="tap flex items-center justify-center text-muted-foreground"
       >
-        <RefreshCw className="size-[18px] animate-spin" />
+        <RefreshCw className="size-[1.125rem] animate-spin" />
       </span>
     );
   }
@@ -44,7 +44,7 @@ export function SyncBadge() {
         title={`Lỗi đồng bộ: ${syncState.message}`}
         className="tap flex items-center justify-center rounded-lg text-destructive"
       >
-        <TriangleAlert className="size-[18px]" />
+        <TriangleAlert className="size-[1.125rem]" />
       </Link>
     );
   }
@@ -59,12 +59,12 @@ export function SyncBadge() {
       )}
     >
       {pending > 0 ? (
-        <span className="relative flex size-[18px] items-center justify-center">
-          <RefreshCw className="size-[18px]" />
+        <span className="relative flex size-[1.125rem] items-center justify-center">
+          <RefreshCw className="size-[1.125rem]" />
           <span className="absolute -right-1 -top-1 size-2 rounded-full bg-amber-500" />
         </span>
       ) : (
-        <Check className="size-[18px]" />
+        <Check className="size-[1.125rem]" />
       )}
     </span>
   );

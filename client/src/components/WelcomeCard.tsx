@@ -45,7 +45,7 @@ export function WelcomeCard() {
             <span
               className={cn(
                 "mt-px flex size-5 shrink-0 items-center justify-center rounded-full",
-                "bg-primary text-[11px] font-bold text-primary-foreground"
+                "bg-primary text-xs font-bold text-primary-foreground"
               )}
             >
               {i + 1}
