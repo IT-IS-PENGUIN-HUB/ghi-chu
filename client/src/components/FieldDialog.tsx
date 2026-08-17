@@ -13,7 +13,15 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
 import { suggestProjectCode } from "@/core/codes";
-import { CATEGORIES, CATEGORY_LABEL, type Category, type Field } from "@/core/model";
+import {
+  CATEGORIES,
+  CATEGORY_LABEL,
+  CODE_RE,
+  CODE_RULE_TEXT,
+  normaliseCode,
+  type Category,
+  type Field,
+} from "@/core/model";
 import { store } from "@/core/store";
 
 export interface FieldDialogProps {
@@ -32,10 +40,11 @@ export function FieldDialog({ field, defaultCategory, existing, onClose }: Field
   const [codeTouched, setCodeTouched] = useState(editing);
 
   const taken = existing.filter((f) => f.code !== field?.code).map((f) => f.code);
-  const effectiveCode = (codeTouched ? code : suggestProjectCode(name, taken)).toUpperCase();
+  const effectiveCode = codeTouched ? normaliseCode(code) : suggestProjectCode(name, taken);
+  const codeChanged = editing && effectiveCode !== field.code;
   const codeError =
-    effectiveCode && !/^[A-Z][A-Z0-9]{1,5}$/.test(effectiveCode)
-      ? "Mã phải là 2–6 ký tự chữ in hoa hoặc số, bắt đầu bằng chữ."
+    effectiveCode && !CODE_RE.test(effectiveCode)
+      ? CODE_RULE_TEXT
       : taken.includes(effectiveCode)
         ? "Mã này đã được dùng."
         : "";
@@ -43,8 +52,22 @@ export function FieldDialog({ field, defaultCategory, existing, onClose }: Field
   const submit = () => {
     if (!name.trim() || codeError || !effectiveCode) return;
     if (editing) {
-      store.updateField(field.code, { name: name.trim(), category });
-      toast.success(`Đã cập nhật lĩnh vực ${name.trim()}`);
+      if (codeChanged) {
+        const result = store.renameFieldCode(field.code, effectiveCode);
+        if (!result.ok) {
+          toast.error(result.reason ?? "Không đổi được mã");
+          return;
+        }
+      }
+      store.updateField(codeChanged ? effectiveCode : field.code, {
+        name: name.trim(),
+        category,
+      });
+      toast.success(
+        codeChanged
+          ? `Đã đổi mã ${field.code} → ${effectiveCode}`
+          : `Đã cập nhật lĩnh vực ${name.trim()}`
+      );
     } else {
       store.createField(name.trim(), effectiveCode, category);
       toast.success(`Đã tạo lĩnh vực ${name.trim()}`);
@@ -82,18 +105,18 @@ export function FieldDialog({ field, defaultCategory, existing, onClose }: Field
               value={effectiveCode}
               onChange={(e) => {
                 setCodeTouched(true);
-                setCode(e.target.value.toUpperCase());
+                setCode(e.target.value);
               }}
-              disabled={editing}
-              maxLength={6}
+              maxLength={8}
               className="font-mono"
             />
-            <p className="text-xs text-muted-foreground">
-              {editing
-                ? "Mã không đổi được — dự án đang tham chiếu tới nó."
-                : codeError || "Tự gợi ý từ tên, sửa được."}
-            </p>
-            {codeError && !editing && <p className="text-xs text-destructive">{codeError}</p>}
+            <p className="text-xs text-muted-foreground">{CODE_RULE_TEXT}</p>
+            {codeError && <p className="text-xs text-destructive">{codeError}</p>}
+            {codeChanged && !codeError && (
+              <p className="text-xs text-muted-foreground">
+                Các dự án thuộc lĩnh vực này sẽ tự trỏ sang mã mới.
+              </p>
+            )}
           </div>
 
           <div className="space-y-2">

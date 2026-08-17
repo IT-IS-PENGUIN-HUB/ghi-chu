@@ -381,6 +381,96 @@ export class Store {
     this.write([{ path: paths.fields, content: serializeFieldsFile(fields) }]);
   }
 
+  /**
+   * Changes a project's code, rewriting every task id under it.
+   *
+   * The code is the prefix of every id in the project and the name of its
+   * file, so this touches four things at once: the registry row, the file
+   * path, each task id, and any recurring rule pointing at the old code.
+   *
+   * Ids are rewritten rather than left alone — `data/tasks/BETA.md` full of
+   * `BET-0042` would be its own kind of confusing — which does mean a code you
+   * quoted somewhere else changes. That is the trade for being able to fix a
+   * typo, and the dialog says so before you confirm.
+   */
+  renameProjectCode(oldCode: string, newCode: string): { ok: boolean; reason?: string } {
+    const from = oldCode.toUpperCase();
+    const to = newCode.toUpperCase();
+    if (from === to) return { ok: true };
+
+    const project = this.projectOf(from);
+    if (!project) return { ok: false, reason: "Không tìm thấy dự án." };
+    if (this.projectOf(to)) return { ok: false, reason: `Mã ${to} đã được dùng.` };
+
+    const renamed: Project = { ...project, code: to };
+    const tasks = this.tasksOf(from).map((t) => ({
+      ...t,
+      id: `${to}-${t.id.split("-")[1] ?? "0001"}`,
+      project: to,
+    }));
+
+    const registry = this.snapshot.projects
+      .filter((p) => p.code !== from)
+      .concat(renamed);
+
+    const writes = [
+      { path: paths.projects, content: serializeProjectsFile(registry) },
+      {
+        path: paths.project(to),
+        content: serializeProjectFile({
+          project: renamed,
+          tasks,
+          extra: this.projectFiles.get(from)?.extra ?? [],
+        }),
+      },
+    ];
+
+    const rules = this.snapshot.recurring;
+    if (rules.some((r) => r.project === from)) {
+      writes.push({
+        path: paths.recurring,
+        content: serializeRecurringFile(
+          rules.map((r) => (r.project === from ? { ...r, project: to } : r))
+        ),
+      });
+    }
+
+    // Drop the old file first: otherwise the rebuild in between would see both
+    // files and resurrect the old project into the registry.
+    this.remove(paths.project(from));
+    this.write(writes);
+    return { ok: true };
+  }
+
+  /** Changes a field's code, repointing every project that referenced it. */
+  renameFieldCode(oldCode: string, newCode: string): { ok: boolean; reason?: string } {
+    const from = oldCode.toUpperCase();
+    const to = newCode.toUpperCase();
+    if (from === to) return { ok: true };
+
+    const field = this.snapshot.fields.find((f) => f.code === from);
+    if (!field) return { ok: false, reason: "Không tìm thấy lĩnh vực." };
+    if (this.snapshot.fields.some((f) => f.code === to)) {
+      return { ok: false, reason: `Mã ${to} đã được dùng.` };
+    }
+
+    const fields = this.snapshot.fields.map((f) =>
+      f.code === from ? { ...f, code: to } : f
+    );
+    const moved = this.snapshot.projects
+      .filter((p) => p.field === from)
+      .map((p) => ({ ...p, field: to }));
+
+    this.write([{ path: paths.fields, content: serializeFieldsFile(fields) }]);
+    if (moved.length) {
+      this.writeProjects(
+        moved,
+        moved.map((project) => ({ project, tasks: this.tasksOf(project.code) }))
+      );
+    }
+    return { ok: true };
+  }
+
   createProject(
     name: string,
     code: string,

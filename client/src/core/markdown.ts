@@ -22,6 +22,8 @@ import {
   type RecurringRule,
   type Task,
   CATEGORIES,
+  CODE_PATTERN,
+  CODE_RE,
   DEFAULT_PROJECT,
 } from "./model";
 
@@ -38,7 +40,7 @@ const EMPTY_DONE = "_Chưa có việc nào._";
 const PLACEHOLDERS = new Set([EMPTY_OPEN, EMPTY_DONE]);
 
 /** Task ids look like `ALP-0042`: project prefix, hyphen, four digits. */
-export const TASK_ID_RE = /^[A-Z][A-Z0-9]{1,4}-\d{4}$/;
+export const TASK_ID_RE = new RegExp(`^${CODE_PATTERN}-\\d{4}$`);
 
 /** Stamps look like `2026.08.10_09.12`. */
 const STAMP = "\\d{4}\\.\\d{2}\\.\\d{2}_\\d{2}\\.\\d{2}";
@@ -50,7 +52,7 @@ const STAMP = "\\d{4}\\.\\d{2}\\.\\d{2}_\\d{2}\\.\\d{2}";
  */
 const TASK_LINE_RE = new RegExp(
   "^- \\[([ xX])\\] " + // checkbox
-    "`([A-Z][A-Z0-9]{1,4}-\\d{4})` " + // permanent id
+    "`(" + CODE_PATTERN + "-\\d{4})` " + // permanent id
     "(★ )?" + // optional star
     "(.*?)" + // title (lazy, so the stamps below win)
     " `(" +
@@ -257,7 +259,7 @@ export function parseProjectsFile(text: string): Project[] {
 
     const code = cells[0].replace(/`/g, "").toUpperCase();
     // Skip the header row and the |---|---| separator.
-    if (!/^[A-Z][A-Z0-9]{1,4}$/.test(code)) continue;
+    if (!CODE_RE.test(code)) continue;
 
     const field = cells[3].replace(/`/g, "").toUpperCase();
     projects.push({
@@ -308,7 +310,7 @@ export function parseFieldsFile(text: string): Field[] {
     if (cells.length < 3) continue;
 
     const code = cells[0].replace(/`/g, "").toUpperCase();
-    if (!/^[A-Z][A-Z0-9]{1,5}$/.test(code)) continue;
+    if (!CODE_RE.test(code)) continue;
 
     fields.push({
       code,
@@ -498,6 +500,6 @@ export function dateFromDayPath(path: string): string | null {
 
 /** "data/tasks/ALP.md" -> "ALP" */
 export function codeFromProjectPath(path: string): string | null {
-  const m = /\/([A-Z][A-Z0-9]{1,4})\.md$/.exec(path);
+  const m = new RegExp(`/(${CODE_PATTERN})\\.md$`).exec(path);
   return m ? m[1] : null;
 }

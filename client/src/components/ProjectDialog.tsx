@@ -20,8 +20,17 @@ import {
 } from "@/components/ui/select";
 import { Switch } from "@/components/ui/switch";
 import { suggestProjectCode } from "@/core/codes";
-import { CATEGORY_LABEL, type Category, type Field, type Project } from "@/core/model";
+import {
+  CATEGORY_LABEL,
+  CODE_RE,
+  CODE_RULE_TEXT,
+  normaliseCode,
+  type Category,
+  type Field,
+  type Project,
+} from "@/core/model";
 import { store } from "@/core/store";
+import { useStore } from "@/hooks/useStore";
 
 const NO_FIELD = "__none__";
 
@@ -45,7 +54,9 @@ export function ProjectDialog({
   existing,
   onClose,
 }: ProjectDialogProps) {
+  const { tasks } = useStore();
   const editing = project !== null;
+  const existingTaskCount = tasks.filter((t) => t.project === project?.code).length;
   const [name, setName] = useState(project?.name ?? "");
   const [code, setCode] = useState(project?.code ?? "");
   const [field, setField] = useState(project?.field ?? NO_FIELD);
@@ -53,7 +64,10 @@ export function ProjectDialog({
   const [codeTouched, setCodeTouched] = useState(editing);
 
   const taken = existing.filter((p) => p.code !== project?.code).map((p) => p.code);
-  const effectiveCode = (codeTouched ? code : suggestProjectCode(name, taken)).toUpperCase();
+  const effectiveCode = codeTouched
+    ? normaliseCode(code)
+    : suggestProjectCode(name, taken);
+  const codeChanged = editing && effectiveCode !== project.code;
 
   // A field owns the group, so the group is shown as a consequence of the
   // field rather than as a separate question the user could contradict.
@@ -61,8 +75,8 @@ export function ProjectDialog({
   const category: Category = owner?.category ?? project?.category ?? defaultCategory;
 
   const codeError =
-    effectiveCode && !/^[A-Z][A-Z0-9]{1,4}$/.test(effectiveCode)
-      ? "Mã phải là 2–5 ký tự chữ in hoa hoặc số, bắt đầu bằng chữ."
+    effectiveCode && !CODE_RE.test(effectiveCode)
+      ? CODE_RULE_TEXT
       : taken.includes(effectiveCode)
         ? "Mã này đã được dùng."
         : "";
@@ -72,13 +86,24 @@ export function ProjectDialog({
     const fieldCode = field === NO_FIELD ? undefined : field;
 
     if (editing) {
-      store.updateProject(project.code, {
+      if (codeChanged) {
+        const result = store.renameProjectCode(project.code, effectiveCode);
+        if (!result.ok) {
+          toast.error(result.reason ?? "Không đổi được mã");
+          return;
+        }
+      }
+      store.updateProject(codeChanged ? effectiveCode : project.code, {
         name: name.trim(),
         category,
         field: fieldCode,
         archived,
       });
-      toast.success(`Đã cập nhật ${name.trim()}`);
+      toast.success(
+        codeChanged
+          ? `Đã đổi mã ${project.code} → ${effectiveCode}`
+          : `Đã cập nhật ${name.trim()}`
+      );
     } else {
       store.createProject(name.trim(), effectiveCode, category, fieldCode);
       toast.success(`Đã tạo dự án ${name.trim()} · mã việc ${effectiveCode}-0001`);
@@ -140,18 +165,22 @@ export function ProjectDialog({
               value={effectiveCode}
               onChange={(e) => {
                 setCodeTouched(true);
-                setCode(e.target.value.toUpperCase());
+                setCode(e.target.value);
               }}
-              disabled={editing}
-              maxLength={5}
+              maxLength={8}
               className="font-mono"
             />
-            <p className="text-xs text-muted-foreground">
-              {editing
-                ? "Mã không đổi được — các việc đã cấp mã theo nó."
-                : "Tự gợi ý từ tên, sửa được."}
-            </p>
-            {codeError && !editing && <p className="text-xs text-destructive">{codeError}</p>}
+            <p className="text-xs text-muted-foreground">{CODE_RULE_TEXT}</p>
+            {codeError && <p className="text-xs text-destructive">{codeError}</p>}
+            {codeChanged && !codeError && (
+              <p className="rounded-lg border-l-4 border-l-amber-500 bg-amber-500/10 px-2.5 py-2 text-xs">
+                Đổi mã sẽ đánh lại mã của{" "}
+                <b>{existingTaskCount} việc</b> trong dự án này:{" "}
+                <code className="font-mono">{project.code}-0001</code> →{" "}
+                <code className="font-mono">{effectiveCode}-0001</code>. File trên GitHub
+                cũng đổi tên theo.
+              </p>
+            )}
           </div>
 
           {editing && (

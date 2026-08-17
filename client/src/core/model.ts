@@ -18,6 +18,39 @@
  *               drift out of sync with the file.
  */
 
+/**
+ * Character set for project and field codes.
+ *
+ * A code becomes three things at once: a folder-like filename
+ * (`data/tasks/SNK.md`), a URL segment (`/du-an/SNK`), and the prefix of every
+ * task id under it (`SNK-0042`). That rules out a few characters:
+ *
+ * - `-` would make `SNK-0042` ambiguous — is the project `SNK` or `SNK-0042`?
+ * - `.` collides with the `.md` extension when reading a code back out of a
+ *   path, and a leading dot makes a hidden file. `..` is worse still.
+ * - `/` `\` `:` `*` `?` `"` `<` `>` `|` are illegal in Windows filenames.
+ *
+ * Underscores are safe everywhere, so they are allowed. Codes are upper-cased
+ * because Windows filesystems are case-insensitive: `snk.md` and `SNK.md`
+ * would be the same file but two different projects.
+ */
+export const CODE_PATTERN = "[A-Z][A-Z0-9_]{1,7}";
+export const CODE_RE = new RegExp(`^${CODE_PATTERN}$`);
+
+export const CODE_RULE_TEXT =
+  "2–8 ký tự: chữ in hoa, số và dấu _ , bắt đầu bằng chữ.";
+
+/** Normalises free typing into a candidate code (does not guarantee validity). */
+export function normaliseCode(raw: string): string {
+  return raw
+    .normalize("NFD")
+    .replace(/[̀-ͯ]/g, "")
+    .replace(/đ/gi, "d")
+    .toUpperCase()
+    .replace(/[^A-Z0-9_]/g, "")
+    .slice(0, 8);
+}
+
 /** Top-level bucket. Independent of the project — it is its own column. */
 export type Category = "WRK" | "PER";
 

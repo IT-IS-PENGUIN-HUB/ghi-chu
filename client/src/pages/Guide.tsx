@@ -138,7 +138,26 @@ Cá nhân (PER)
           </Bullet>
           <Bullet>
             Mã dự án (ví dụ <code className="rounded bg-muted px-1 font-mono">ALP</code>) là
-            tiền tố của mọi mã việc bên trong, nên đặt xong thì không đổi được.
+            tiền tố của mọi mã việc bên trong. <b>Đổi được bất cứ lúc nào</b> — app sẽ
+            đánh lại mã cho toàn bộ việc trong dự án và đổi tên file trên GitHub.
+          </Bullet>
+        </ul>
+
+        <h3 className="mb-2 mt-4 font-semibold">Đặt mã như thế nào</h3>
+        <ul className="space-y-2">
+          <Bullet>
+            Được dùng: <b>chữ in hoa</b>, <b>số</b> và dấu <b>gạch dưới</b> —{" "}
+            <code className="rounded bg-muted px-1 font-mono">SNK</code>,{" "}
+            <code className="rounded bg-muted px-1 font-mono">DU_AN01</code>. Dài 2–8 ký tự,
+            bắt đầu bằng chữ. Gõ tiếng Việt có dấu cũng được, app tự bỏ dấu.
+          </Bullet>
+          <Bullet>
+            Không dùng được dấu <b>chấm</b> và dấu <b>gạch ngang</b>, vì mã vừa là tên file
+            (<code className="rounded bg-muted px-1 font-mono">data/tasks/SNK.md</code>) vừa
+            là phần đầu của mã việc (
+            <code className="rounded bg-muted px-1 font-mono">SNK-0042</code>) — dấu chấm sẽ
+            lẫn với đuôi <code className="rounded bg-muted px-1 font-mono">.md</code>, còn
+            gạch ngang sẽ lẫn với dấu ngăn trước dãy số.
           </Bullet>
         </ul>
       </Section>
