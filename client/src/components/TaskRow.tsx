@@ -75,16 +75,25 @@ function TaskRowInner({
   void _isComposing;
 
   const age = ageInDays(task.created);
-  const stale = !task.done && age >= 7;
+
+  // The left edge colour is set inline rather than with a `border-l-<colour>`
+  // class: tailwind-merge does not know `wrk`/`per`/`done` are colours, so it
+  // treats that class as conflicting with `border-l-4` and silently drops it.
+  const edge = task.done ? "var(--done)" : task.category === "WRK" ? "var(--wrk)" : "var(--per)";
 
   return (
     <div
       data-task-id={task.id}
+      style={{ borderLeftColor: edge }}
       className={cn(
-        "group flex items-start gap-3 rounded-xl border px-3 py-2.5 transition-colors no-tap-highlight",
+        // A coloured left edge tells you the group at a glance without reading
+        // anything, which is what makes a long mixed list scannable.
+        "group flex items-start gap-3 rounded-xl border border-l-4 px-3 py-2.5 shadow-sm transition-colors no-tap-highlight",
         task.done
-          ? "border-transparent bg-done-soft/60"
-          : "border-border bg-card hover:border-foreground/20",
+          ? "border-border/60 bg-done-soft/50"
+          : task.category === "WRK"
+            ? "border-border bg-card hover:border-wrk/50"
+            : "border-border bg-card hover:border-per/50",
         selected && "ring-2 ring-ring ring-offset-1 ring-offset-background"
       )}
       onClick={() => onFocus?.(task.id)}
@@ -111,8 +120,12 @@ function TaskRowInner({
             <div className="flex flex-wrap items-baseline gap-x-2 gap-y-0.5">
               <span
                 className={cn(
-                  "shrink-0 font-mono text-[11px] tabular-nums",
-                  task.category === "WRK" ? "text-wrk" : "text-per"
+                  "shrink-0 rounded px-1.5 py-0.5 font-mono text-[11px] font-semibold tabular-nums",
+                  task.done
+                    ? "bg-muted text-muted-foreground"
+                    : task.category === "WRK"
+                      ? "bg-wrk-soft text-wrk"
+                      : "bg-per-soft text-per"
                 )}
               >
                 {label}
@@ -137,16 +150,27 @@ function TaskRowInner({
                 </span>
               )}
               <span className="font-mono tabular-nums">{task.id}</span>
-              <span
-                className={cn("tabular-nums", stale && "font-medium text-destructive")}
-                title={`Thêm lúc ${task.created}`}
-              >
-                {task.done
-                  ? `xong ${task.completed?.slice(0, 10) ?? ""}`
-                  : age === 0
-                    ? "hôm nay"
-                    : `+${age} ngày`}
-              </span>
+              {task.done ? (
+                <span className="tabular-nums text-done">
+                  ✓ xong {task.completed?.slice(0, 10) ?? ""}
+                </span>
+              ) : (
+                <span
+                  className={cn(
+                    "rounded px-1.5 py-0.5 font-medium tabular-nums",
+                    // Three steps, because "how long has this been sitting
+                    // there" is the question the timestamp exists to answer.
+                    age === 0
+                      ? "bg-done-soft text-done"
+                      : age < 7
+                        ? "bg-muted text-muted-foreground"
+                        : "bg-destructive/10 text-destructive"
+                  )}
+                  title={`Thêm lúc ${task.created}`}
+                >
+                  {age === 0 ? "hôm nay" : `+${age} ngày`}
+                </span>
+              )}
               {task.tags?.map((tag) => (
                 <span key={tag} className="text-muted-foreground/80">
                   #{tag}

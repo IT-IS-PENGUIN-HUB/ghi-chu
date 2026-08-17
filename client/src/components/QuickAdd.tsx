@@ -1,5 +1,5 @@
 import { useMemo, useRef, useState } from "react";
-import { Plus, Star } from "lucide-react";
+import { CornerDownLeft, Plus, Star } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import {
@@ -26,9 +26,13 @@ export interface QuickAddProps {
 }
 
 /**
- * The single most-used control, so it is tuned for one-handed phone use:
- * remembers the last project, accepts `#tag` inline, and never blocks on
- * anything. Enter adds and keeps focus so several tasks can go in a row.
+ * The primary action of the whole app, so it is styled as one: a titled panel
+ * with a filled button that says "Thêm", not a bare input with a plus icon.
+ *
+ * The earlier version sat unlabelled between two cards and people could not
+ * tell it was where you type. Everything else here — remembering the last
+ * project, accepting #tags inline, keeping focus after submit — exists to make
+ * entering several tasks in a row cost nothing.
  */
 export function QuickAdd({ projects, fields, category, onAdd }: QuickAddProps) {
   const inputRef = useRef<HTMLInputElement>(null);
@@ -40,12 +44,9 @@ export function QuickAdd({ projects, fields, category, onAdd }: QuickAddProps) {
     [projects, category]
   );
 
-  // Remembering the last project makes the common case — several tasks for the
-  // job you are already looking at — zero extra taps.
-  const [project, setProject] = useState(() => {
-    const remembered = localStorage.getItem(`${LAST_PROJECT_KEY}-${category}`);
-    return remembered ?? "";
-  });
+  const [project, setProject] = useState(
+    () => localStorage.getItem(`${LAST_PROJECT_KEY}-${category}`) ?? ""
+  );
 
   const effective =
     available.find((p) => p.code === project)?.code ??
@@ -60,7 +61,7 @@ export function QuickAdd({ projects, fields, category, onAdd }: QuickAddProps) {
     setTitle("");
     setStarred(false);
     localStorage.setItem(`${LAST_PROJECT_KEY}-${category}`, effective);
-    // Keep the keyboard up so the next task can be typed straight away.
+    // Keep the keyboard up so the next task can go straight in.
     inputRef.current?.focus();
   };
 
@@ -77,23 +78,51 @@ export function QuickAdd({ projects, fields, category, onAdd }: QuickAddProps) {
   const grouped = useMemo(() => {
     const byField = new Map<string, Project[]>();
     for (const p of available) {
-      const key = p.field ?? "";
-      byField.set(key, [...(byField.get(key) ?? []), p]);
+      byField.set(p.field ?? "", [...(byField.get(p.field ?? "") ?? []), p]);
     }
-    return [...byField.entries()].sort(([a], [b]) => (a === "" ? 1 : b === "" ? -1 : a.localeCompare(b)));
+    return [...byField.entries()].sort(([a], [b]) =>
+      a === "" ? 1 : b === "" ? -1 : a.localeCompare(b)
+    );
   }, [available]);
 
   return (
-    <div className="space-y-2">
-      <div className="flex gap-2">
+    <section
+      className={cn(
+        "rounded-2xl border-2 p-4 shadow-sm transition-colors",
+        category === "WRK"
+          ? "border-wrk/35 bg-wrk-soft/40"
+          : "border-per/35 bg-per-soft/40"
+      )}
+    >
+      <div className="mb-2.5 flex items-center gap-2">
+        <span
+          className={cn(
+            "flex size-7 items-center justify-center rounded-lg text-white",
+            category === "WRK" ? "bg-wrk" : "bg-per"
+          )}
+        >
+          <Plus className="size-4 stroke-[3]" />
+        </span>
+        <h2 className="text-[15px] font-semibold">Thêm việc mới</h2>
+        <span
+          className={cn(
+            "rounded-full px-2 py-0.5 text-xs font-medium",
+            category === "WRK" ? "bg-wrk/15 text-wrk" : "bg-per/15 text-per"
+          )}
+        >
+          {CATEGORY_LABEL[category]}
+        </span>
+      </div>
+
+      <div className="flex flex-col gap-2 sm:flex-row">
         <Input
           ref={inputRef}
           value={title}
           onChange={(e) => setTitle(e.target.value)}
           {...compositionHandlers}
-          placeholder={`Thêm việc ${CATEGORY_LABEL[category].toLowerCase()}… (gõ #nhãn nếu cần)`}
+          placeholder="Gõ việc cần làm rồi bấm Enter…"
           aria-label="Nội dung công việc mới"
-          className="h-11 flex-1"
+          className="h-12 flex-1 border-2 bg-background text-base shadow-none focus-visible:ring-2"
           enterKeyHint="done"
           autoComplete="off"
           autoCorrect="off"
@@ -101,16 +130,24 @@ export function QuickAdd({ projects, fields, category, onAdd }: QuickAddProps) {
         <Button
           onClick={submit}
           disabled={!title.trim() || !effective}
-          className="tap h-11 px-4"
-          aria-label="Thêm công việc"
+          size="lg"
+          className={cn(
+            "h-12 gap-2 px-6 text-base font-semibold text-white shadow-sm",
+            category === "WRK" ? "bg-wrk hover:bg-wrk/90" : "bg-per hover:bg-per/90"
+          )}
         >
-          <Plus className="size-4" />
+          <Plus className="size-5 stroke-[2.5]" />
+          Thêm
         </Button>
       </div>
 
-      <div className="flex flex-wrap items-center gap-2">
+      <div className="mt-2.5 flex flex-wrap items-center gap-2">
+        <span className="text-xs text-muted-foreground">Thuộc dự án</span>
         <Select value={effective} onValueChange={setProject}>
-          <SelectTrigger className="h-9 w-auto min-w-[9rem] gap-1.5 text-sm" aria-label="Dự án">
+          <SelectTrigger
+            className="h-9 w-auto min-w-[10rem] gap-1.5 border-2 bg-background text-sm"
+            aria-label="Chọn dự án cho việc mới"
+          >
             <SelectValue />
           </SelectTrigger>
           <SelectContent className="max-h-72">
@@ -133,24 +170,28 @@ export function QuickAdd({ projects, fields, category, onAdd }: QuickAddProps) {
           type="button"
           onClick={() => setStarred((s) => !s)}
           aria-pressed={starred}
-          aria-label="Đánh dấu ưu tiên"
           className={cn(
-            "tap flex items-center gap-1.5 rounded-lg border px-2.5 text-sm transition-colors",
+            "flex h-9 items-center gap-1.5 rounded-lg border-2 px-3 text-sm transition-colors",
             starred
-              ? "border-amber-400 bg-amber-50 text-amber-700 dark:bg-amber-950/40 dark:text-amber-300"
-              : "border-border text-muted-foreground hover:text-foreground"
+              ? "border-amber-400 bg-amber-400/15 font-medium text-amber-700 dark:text-amber-300"
+              : "border-border bg-background text-muted-foreground hover:text-foreground"
           )}
         >
           <Star className={cn("size-4", starred && "fill-current")} />
           Ưu tiên
         </button>
 
-        {preview.tags.length > 0 && (
-          <span className="text-xs text-muted-foreground">
-            nhãn: {preview.tags.map((t) => `#${t}`).join(" ")}
-          </span>
-        )}
+        <span className="ml-auto hidden items-center gap-1 text-xs text-muted-foreground sm:flex">
+          <CornerDownLeft className="size-3.5" />
+          Enter để thêm nhanh
+        </span>
       </div>
-    </div>
+
+      {preview.tags.length > 0 && (
+        <p className={cn("mt-2 text-xs", category === "WRK" ? "text-wrk" : "text-per")}>
+          Sẽ gắn nhãn: {preview.tags.map((t) => `#${t}`).join(" ")}
+        </p>
+      )}
+    </section>
   );
 }

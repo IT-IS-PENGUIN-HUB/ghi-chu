@@ -4,6 +4,9 @@ Checklist và ghi chú công việc mỗi ngày. Chạy hoàn toàn trong trình
 có server, không cần đăng nhập. Dữ liệu là file Markdown nằm trong một repo
 GitHub riêng tư của bạn — đọc và sửa được ngay trên github.com.
 
+Trong app có sẵn trang **Hướng dẫn** (biểu tượng sách ở góc trên) giải thích
+từng thao tác. Phần dưới đây là ghi chú kỹ thuật.
+
 ## Ý tưởng
 
 Hai mã số hoàn toàn tách biệt, cố ý khác hẳn nhau về hình dạng:

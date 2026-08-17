@@ -1,71 +1,61 @@
 import React, { createContext, useCallback, useContext, useEffect, useState } from "react";
 
 /**
- * Three-state theme: an explicit light/dark choice, or "system" which tracks
- * the OS. A checklist gets opened at 7am and at midnight, so following the
- * phone's own schedule is the sensible default.
+ * Light or dark, nothing else.
+ *
+ * A separate "system" option was confusing: it looks identical to whichever of
+ * the two the OS happens to be on, so the toggle appeared to do nothing. The
+ * OS preference still decides the *initial* value on a fresh device; after that
+ * the choice is explicit and sticky.
  */
-export type ThemeMode = "light" | "dark" | "system";
+export type Theme = "light" | "dark";
 
 const STORAGE_KEY = "theme";
 
 interface ThemeContextValue {
-  /** What the user picked. */
-  mode: ThemeMode;
-  /** What is actually painted right now. */
-  resolved: "light" | "dark";
-  setMode: (mode: ThemeMode) => void;
-  cycle: () => void;
+  theme: Theme;
+  setTheme: (theme: Theme) => void;
+  toggle: () => void;
 }
 
 const ThemeContext = createContext<ThemeContextValue | undefined>(undefined);
 
-const prefersDark = () =>
-  typeof window !== "undefined" &&
-  window.matchMedia("(prefers-color-scheme: dark)").matches;
-
-function readStored(): ThemeMode {
-  if (typeof localStorage === "undefined") return "system";
-  const stored = localStorage.getItem(STORAGE_KEY);
-  return stored === "light" || stored === "dark" || stored === "system" ? stored : "system";
+function initialTheme(): Theme {
+  if (typeof localStorage !== "undefined") {
+    const stored = localStorage.getItem(STORAGE_KEY);
+    if (stored === "light" || stored === "dark") return stored;
+  }
+  return typeof window !== "undefined" &&
+    window.matchMedia("(prefers-color-scheme: dark)").matches
+    ? "dark"
+    : "light";
 }
 
 export function ThemeProvider({ children }: { children: React.ReactNode }) {
-  const [mode, setModeState] = useState<ThemeMode>(readStored);
-  const [systemDark, setSystemDark] = useState(prefersDark);
+  const [theme, setThemeState] = useState<Theme>(initialTheme);
 
   useEffect(() => {
-    const media = window.matchMedia("(prefers-color-scheme: dark)");
-    const onChange = (e: MediaQueryListEvent) => setSystemDark(e.matches);
-    media.addEventListener("change", onChange);
-    return () => media.removeEventListener("change", onChange);
-  }, []);
-
-  const resolved: "light" | "dark" =
-    mode === "system" ? (systemDark ? "dark" : "light") : mode;
-
-  useEffect(() => {
-    document.documentElement.classList.toggle("dark", resolved === "dark");
-    // Keep the iOS status bar and Windows title bar in step with the app.
+    document.documentElement.classList.toggle("dark", theme === "dark");
+    // Keep the iOS status bar and the Windows title bar in step with the app.
     const meta = document.querySelector('meta[name="theme-color"]:not([media])');
-    if (meta) meta.setAttribute("content", resolved === "dark" ? "#12140f" : "#f7f8f7");
-  }, [resolved]);
+    if (meta) meta.setAttribute("content", theme === "dark" ? "#12140f" : "#f7f8f7");
+  }, [theme]);
 
-  const setMode = useCallback((next: ThemeMode) => {
-    setModeState(next);
+  const setTheme = useCallback((next: Theme) => {
+    setThemeState(next);
     localStorage.setItem(STORAGE_KEY, next);
   }, []);
 
-  const cycle = useCallback(() => {
-    setModeState((prev) => {
-      const next: ThemeMode = prev === "system" ? "light" : prev === "light" ? "dark" : "system";
+  const toggle = useCallback(() => {
+    setThemeState((prev) => {
+      const next = prev === "light" ? "dark" : "light";
       localStorage.setItem(STORAGE_KEY, next);
       return next;
     });
   }, []);
 
   return (
-    <ThemeContext.Provider value={{ mode, resolved, setMode, cycle }}>
+    <ThemeContext.Provider value={{ theme, setTheme, toggle }}>
       {children}
     </ThemeContext.Provider>
   );

@@ -7,6 +7,7 @@ import { ThemeProvider } from "@/contexts/ThemeContext";
 import { useRecurring } from "@/hooks/useStore";
 import { useGitHubSync } from "@/hooks/useGitHubSync";
 import Contacts from "@/pages/Contacts";
+import Guide from "@/pages/Guide";
 import History from "@/pages/History";
 import NotFound from "@/pages/NotFound";
 import ProjectDetail from "@/pages/ProjectDetail";
@@ -30,6 +31,7 @@ function Routes() {
       <Route path="/lich-su/:date" component={History} />
       <Route path="/tim-kiem" component={SearchPage} />
       <Route path="/danh-ba" component={Contacts} />
+      <Route path="/huong-dan" component={Guide} />
       <Route path="/cai-dat" component={Settings} />
       <Route component={NotFound} />
     </Switch>
