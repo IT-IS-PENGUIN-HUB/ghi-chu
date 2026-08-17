@@ -1,0 +1,44 @@
+<!doctype html>
+<html lang="vi">
+  <head>
+    <meta charset="UTF-8" />
+    <!-- viewport-fit=cover lets the app paint under the notch; no maximum-scale
+         so pinch-zoom still works (iOS refuses to zoom text otherwise). -->
+    <meta
+      name="viewport"
+      content="width=device-width, initial-scale=1, viewport-fit=cover" />
+    <title>Ghi chú hàng ngày</title>
+    <meta
+      name="description"
+      content="Checklist và ghi chú hàng ngày — chạy offline, đồng bộ qua GitHub" />
+
+    <!-- Theme colour follows the active scheme so the iOS status bar and the
+         Windows title bar match the app instead of flashing white. -->
+    <meta
+      name="theme-color"
+      content="#f7f8f7"
+      media="(prefers-color-scheme: light)" />
+    <meta
+      name="theme-color"
+      content="#12140f"
+      media="(prefers-color-scheme: dark)" />
+
+    <!-- iOS standalone mode: required for Add to Home Screen to open without
+         Safari chrome, and for IndexedDB to survive 7 days of inactivity. -->
+    <meta name="apple-mobile-web-app-capable" content="yes" />
+    <meta name="mobile-web-app-capable" content="yes" />
+    <meta
+      name="apple-mobile-web-app-status-bar-style"
+      content="black-translucent" />
+    <meta name="apple-mobile-web-app-title" content="Ghi chú" />
+    <meta name="format-detection" content="telephone=no" />
+
+    <link rel="icon" type="image/svg+xml" href="./favicon.svg" />
+    <link rel="apple-touch-icon" href="./apple-touch-icon.png" />
+  </head>
+
+  <body>
+    <div id="root"></div>
+    <script type="module" src="/src/main.tsx"></script>
+  </body>
+</html>
