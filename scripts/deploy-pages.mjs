@@ -16,12 +16,19 @@ import path from "node:path";
 const ROOT = path.resolve(import.meta.dirname, "..");
 const BRANCH = "gh-pages";
 
+// The local binaries are invoked through node directly rather than through
+// `npm run build`: on Windows npm is a .cmd shim that execFileSync refuses to
+// spawn without a shell, and going through a shell would then mangle the
+// leading-slash base path under Git Bash.
+const TSC = path.join(ROOT, "node_modules", "typescript", "bin", "tsc");
+const VITE = path.join(ROOT, "node_modules", "vite", "bin", "vite.js");
+
 function run(cmd, args, cwd = ROOT) {
   return execFileSync(cmd, args, { cwd, stdio: "pipe", encoding: "utf8" }).trim();
 }
 
-function loud(cmd, args, cwd = ROOT) {
-  execFileSync(cmd, args, { cwd, stdio: "inherit" });
+function loud(cmd, args, cwd = ROOT, env) {
+  execFileSync(cmd, args, { cwd, stdio: "inherit", env: { ...process.env, ...env } });
 }
 
 const remote = run("git", ["remote", "get-url", "origin"]);
@@ -30,8 +37,13 @@ const remote = run("git", ["remote", "get-url", "origin"]);
 const repo = remote.replace(/\.git$/, "").split("/").pop();
 const base = `/${repo}/`;
 
-console.log(`Building for ${base} …`);
-loud("npm", ["run", "build"], ROOT);
+console.log("Kiểm tra kiểu …");
+loud(process.execPath, [TSC, "--noEmit"]);
+
+console.log(`Build cho ${base} …`);
+// Passed through the environment rather than the shell, so the value survives
+// Git Bash on Windows rewriting leading-slash arguments into Windows paths.
+loud(process.execPath, [VITE, "build"], ROOT, { VITE_BASE: base });
 
 const dist = path.join(ROOT, "dist");
 // GitHub Pages serves 404.html for unknown paths; handing it the app shell is
