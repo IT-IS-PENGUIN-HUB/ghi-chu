@@ -60,35 +60,59 @@ next: 43
 Không có comment ẩn, không có UUID. Sửa tay trên github.com an toàn — dòng nào
 app không hiểu thì giữ nguyên chứ không xoá.
 
-## Cài đặt lần đầu
+## Đang chạy ở đâu
 
-### 1. Tạo repo dữ liệu (riêng tư)
+- App: **https://it-is-penguin-hub.github.io/ghi-chu/**
+- Code (public): `IT-IS-PENGUIN-HUB/ghi-chu` — không chứa dữ liệu nào
+- Dữ liệu (**private**): `IT-IS-PENGUIN-HUB/ghi-chu-data`
 
-Tạo một repo **private** rỗng, ví dụ `ghi-chu-data`, có ít nhất một file
-(README) để nhánh `main` tồn tại. Repo private trên GitHub miễn phí không giới
-hạn.
+Hai repo tách nhau vì GitHub Pages bản miễn phí chỉ host được từ repo public,
+còn ghi chú thì phải riêng tư.
 
-### 2. Tạo token
+## Việc còn lại: tạo token
+
+Đây là bước duy nhất phải làm bằng tay — GitHub không có API để sinh token,
+chỉ tạo được trên web.
 
 1. Mở [Fine-grained personal access token](https://github.com/settings/personal-access-tokens/new)
 2. **Repository access** → Only select repositories → chọn `ghi-chu-data`
 3. **Permissions** → Repository permissions → **Contents** → Read and write
-4. Hạn 1 năm
+4. Hạn 1 năm → Generate
 
-Token chỉ dùng được đúng repo dữ liệu, không đụng được repo nào khác. Mất máy
-thì vào GitHub thu hồi.
+Rồi mở app → **Cài đặt** → điền:
 
-### 3. Deploy app
+| Ô | Giá trị |
+| --- | --- |
+| Chủ repo | `IT-IS-PENGUIN-HUB` |
+| Tên repo | `ghi-chu-data` |
+| Nhánh | `main` |
+| Token | token vừa tạo |
 
-Push repo **code** này lên GitHub (public — GitHub Pages bản miễn phí chỉ host
-từ repo public; repo này không chứa dữ liệu gì của bạn). Vào
-Settings → Pages → Source: **GitHub Actions**. Workflow
-[deploy.yml](.github/workflows/deploy.yml) tự build và deploy mỗi lần push lên
-`main`.
+→ **Kết nối**. Token chỉ mở được đúng repo dữ liệu, không đụng được repo nào
+khác. Mất máy thì vào GitHub thu hồi.
 
-### 4. Kết nối
+## Cập nhật app sau khi sửa code
 
-Mở app → **Cài đặt** → điền chủ repo, tên repo, token → **Kết nối**.
+```bash
+npm run deploy
+```
+
+Lệnh này build rồi đẩy thẳng lên nhánh `gh-pages`, khoảng một phút sau trang
+cập nhật.
+
+### Bật deploy tự động (tuỳ chọn)
+
+File [.github/workflows/deploy.yml](.github/workflows/deploy.yml) có sẵn trên
+máy nhưng **chưa được push**, vì token `gh` mặc định không có scope `workflow`.
+Muốn bật thì chạy:
+
+```bash
+gh auth refresh -h github.com -s workflow
+```
+
+Sau đó xoá dòng `.github/workflows/` trong `.gitignore`, commit và push. Vào
+Settings → Pages → Source đổi sang **GitHub Actions**. Từ đó mỗi lần push lên
+`main` là tự build và deploy, không cần `npm run deploy` nữa.
 
 ## Cài lên máy
 
@@ -148,7 +172,7 @@ npm run dev
 npm test
 ```
 
-Build thử bản production (PowerShell — Git Bash sẽ làm hỏng đường dẫn base):
+Build thử bản production:
 
 ```bash
 npm run build

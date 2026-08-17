@@ -9,6 +9,8 @@
     "build": "tsc --noEmit && vite build",
     "preview": "vite preview",
     "check": "tsc --noEmit",
+    "deploy": "node scripts/deploy-pages.mjs",
+    "icons": "node scripts/gen-icons.mjs",
     "format": "prettier --write .",
     "test": "vitest run",
     "test:watch": "vitest"
