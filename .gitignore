@@ -117,3 +117,7 @@ client/public/__manus__/version.json
 
 # Chua push duoc vi token gh thieu scope workflow (xem README)
 .github/workflows/
+
+# Tauri build artifacts
+src-tauri/target/
+src-tauri/gen/

@@ -244,7 +244,15 @@ Cá nhân (PER)
             <b>iPhone:</b> mở bằng Safari → nút Chia sẻ → <b>Thêm vào MH chính</b>.
           </Bullet>
           <Bullet>
-            <b>Windows:</b> mở bằng Edge hoặc Chrome → menu → <b>Cài đặt ứng dụng này</b>.
+            <b>Windows (bản nhẹ):</b> mở bằng Edge hoặc Chrome → menu →{" "}
+            <b>Cài đặt ứng dụng này</b>.
+          </Bullet>
+          <Bullet>
+            <b>Windows (bản nổi trên màn hình):</b> cài file <b>GhiChu-setup.exe</b> từ
+            mục Releases trên GitHub. Bản này có thêm: nút <b>ghim 📌</b> trên thanh công
+            cụ để cửa sổ luôn nổi trên mọi ứng dụng khác, phím tắt toàn cục{" "}
+            <Kbd>Ctrl</Kbd>+<Kbd>Alt</Kbd>+<Kbd>G</Kbd> gọi app từ bất cứ đâu, và icon ở
+            khay hệ thống — bấm ✕ chỉ ẩn xuống khay chứ không thoát.
           </Bullet>
         </ul>
         <Tip variant="warn">

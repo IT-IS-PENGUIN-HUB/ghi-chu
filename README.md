@@ -126,12 +126,35 @@ Safari → nút Chia sẻ → **Thêm vào MH chính**.
 > **Bắt buộc làm bước này.** Nếu chỉ mở trong Safari như một web thường, iOS sẽ
 > xoá dữ liệu offline sau 7 ngày không dùng. PWA đã cài thì không bị xoá.
 
-### Windows
+### Windows — bản nhẹ (PWA)
 
 Edge hoặc Chrome → menu → **Cài đặt ứng dụng này**. App có cửa sổ riêng, icon
 riêng trên taskbar, không có thanh địa chỉ.
 
-Chưa hỗ trợ luôn-nổi-trên-cùng — đó là giai đoạn sau, khi bọc bằng Tauri.
+### Windows — bản nổi trên màn hình (Tauri)
+
+Tải **GhiChu-setup.exe** từ [Releases](https://github.com/IT-IS-PENGUIN-HUB/ghi-chu/releases)
+và cài. Khác bản PWA ở ba điểm:
+
+- Nút **ghim 📌** trên thanh công cụ: cửa sổ luôn nổi trên mọi app khác —
+  đúng nghĩa tờ giấy note dán cạnh màn hình CAD/Excel
+- Phím tắt toàn cục **Ctrl+Alt+G**: gọi/ẩn app từ trong bất kỳ chương trình nào
+- Icon **khay hệ thống**: bấm ✕ chỉ ẩn xuống khay chứ không thoát; muốn thoát
+  hẳn thì chuột phải icon khay → Thoát hẳn
+
+Dữ liệu của bản desktop và bản chạy trong trình duyệt là **hai kho riêng**
+(WebView khác profile trình duyệt) — cùng kết nối một repo GitHub thì tự đồng
+bộ với nhau như hai thiết bị.
+
+#### Tự build bản desktop
+
+Cần Rust (rustup, toolchain MSVC) và VS Build Tools C++. Sau đó:
+
+```bash
+npx tauri build
+```
+
+File cài đặt nằm ở `src-tauri/target/release/bundle/nsis/`.
 
 ## Đồng bộ nặng máy không?
 

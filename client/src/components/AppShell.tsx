@@ -9,6 +9,7 @@ import {
   Search,
   Settings,
 } from "lucide-react";
+import { PinToggle } from "@/components/PinToggle";
 import { SyncBadge } from "@/components/SyncBadge";
 import { ThemeToggle } from "@/components/ThemeToggle";
 import { cn } from "@/lib/utils";
@@ -63,6 +64,7 @@ export function AppShell({ children }: { children: ReactNode }) {
           <div className="ml-auto flex items-center gap-0.5">
             <IconLink href="/tim-kiem" label="Tìm kiếm" icon={Search} active={isActive("/tim-kiem")} />
             <IconLink href="/huong-dan" label="Hướng dẫn" icon={BookOpen} active={isActive("/huong-dan")} />
+            <PinToggle />
             <SyncBadge />
             <ThemeToggle />
             <IconLink href="/cai-dat" label="Cài đặt" icon={Settings} active={isActive("/cai-dat")} />
@@ -82,6 +84,7 @@ export function AppShell({ children }: { children: ReactNode }) {
           <div className="ml-auto flex items-center gap-0.5">
             <IconLink href="/tim-kiem" label="Tìm kiếm" icon={Search} active={isActive("/tim-kiem")} />
             <IconLink href="/huong-dan" label="Hướng dẫn" icon={BookOpen} active={isActive("/huong-dan")} />
+            <PinToggle />
             <SyncBadge />
             <ThemeToggle />
             <IconLink href="/cai-dat" label="Cài đặt" icon={Settings} active={isActive("/cai-dat")} />

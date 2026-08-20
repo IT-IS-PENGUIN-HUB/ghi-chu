@@ -9,6 +9,7 @@ import { writeFileSync, mkdirSync } from "node:fs";
 import path from "node:path";
 
 const OUT_DIR = path.resolve(import.meta.dirname, "..", "client", "public");
+const TAURI_DIR = path.resolve(import.meta.dirname, "..", "src-tauri", "icons");
 
 const BG = [5, 150, 105]; // emerald-600, matches --primary in index.css
 const BG_DARK = [4, 120, 87]; // emerald-700, for the subtle vertical ramp
@@ -176,3 +177,42 @@ for (const [name, size, opts] of targets) {
 
 writeFileSync(path.join(OUT_DIR, "favicon.svg"), FAVICON_SVG);
 console.log("wrote favicon.svg");
+
+// ------------------------------------------------------------ tauri icons --
+// Windows wants an .ico; modern ICO files may simply embed PNG blobs, which
+// Windows 10+ (and Tauri's own icon pipeline) fully support.
+
+function packIco(pngs) {
+  const header = Buffer.alloc(6);
+  header.writeUInt16LE(0, 0); // reserved
+  header.writeUInt16LE(1, 2); // type: icon
+  header.writeUInt16LE(pngs.length, 4);
+
+  const dirs = [];
+  let offset = 6 + 16 * pngs.length;
+  for (const { size, png } of pngs) {
+    const d = Buffer.alloc(16);
+    d.writeUInt8(size === 256 ? 0 : size, 0); // 0 means 256
+    d.writeUInt8(size === 256 ? 0 : size, 1);
+    d.writeUInt16LE(1, 4); // colour planes
+    d.writeUInt16LE(32, 6); // bits per pixel
+    d.writeUInt32LE(png.length, 8);
+    d.writeUInt32LE(offset, 12);
+    offset += png.length;
+    dirs.push(d);
+  }
+  return Buffer.concat([header, ...dirs, ...pngs.map((e) => e.png)]);
+}
+
+mkdirSync(TAURI_DIR, { recursive: true });
+
+const icoEntries = [16, 32, 48, 256].map((size) => ({
+  size,
+  png: encodePng(render(size, {}), size),
+}));
+writeFileSync(path.join(TAURI_DIR, "icon.ico"), packIco(icoEntries));
+
+for (const [name, size] of [["32x32.png", 32], ["128x128.png", 128], ["icon.png", 512]]) {
+  writeFileSync(path.join(TAURI_DIR, name), encodePng(render(size, {}), size));
+}
+console.log("wrote src-tauri icons (icon.ico + png)");

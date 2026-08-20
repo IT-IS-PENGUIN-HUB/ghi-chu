@@ -26,5 +26,8 @@ async function boot() {
 void boot();
 
 // Update in the background; the new version is picked up on next launch rather
-// than reloading mid-edit.
-registerSW({ immediate: false });
+// than reloading mid-edit. Skipped inside the desktop shell: Tauri serves the
+// bundled files directly, and a service worker would only cache them stale.
+if (!("__TAURI__" in window)) {
+  registerSW({ immediate: false });
+}
