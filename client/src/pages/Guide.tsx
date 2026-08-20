@@ -57,7 +57,15 @@ export default function Guide() {
             <b>Xong:</b> tick vào ô vuông bên trái. Việc chuyển xuống mục “Đã xong hôm nay”.
           </Bullet>
           <Bullet>
-            <b>Sửa / xoá / chuyển dự án / đánh dấu ưu tiên:</b> bấm nút ba chấm ⋮ bên phải dòng.
+            <b>Trên điện thoại:</b> <b>vuốt sang phải</b> để đánh dấu xong,{" "}
+            <b>vuốt sang trái</b> để xoá — không cần mở menu.
+          </Bullet>
+          <Bullet>
+            <b>Sửa / chuyển dự án / đánh dấu ưu tiên:</b> bấm nút ba chấm ⋮ bên phải dòng.
+          </Bullet>
+          <Bullet>
+            <b>Lỡ tay xoá?</b> Bấm <b>Hoàn tác</b> trên thông báo hiện ra trong 6 giây —
+            việc quay lại nguyên vẹn, đúng mã cũ.
           </Bullet>
           <Bullet>
             Bỏ tick thì việc quay lại danh sách, dấu thời gian hoàn thành bị xoá.
@@ -252,6 +260,9 @@ Cá nhân (PER)
           </Bullet>
           <Bullet>
             <Kbd>Space</Kbd> — đánh dấu xong việc đang chọn
+          </Bullet>
+          <Bullet>
+            <Kbd>N</Kbd> — nhảy tới ô thêm việc
           </Bullet>
           <Bullet>
             <Kbd>Esc</Kbd> — bỏ chọn

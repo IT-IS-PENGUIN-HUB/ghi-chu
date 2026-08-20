@@ -99,17 +99,20 @@ export default function Projects() {
         return (
           <section key={field.code} className="space-y-2">
             <div className="flex items-center gap-2">
+              <span className="rounded bg-primary/10 px-1.5 py-0.5 text-[0.625rem] font-semibold uppercase tracking-wider text-primary">
+                Lĩnh vực
+              </span>
               <h2 className="text-sm font-semibold">{field.name}</h2>
               <span className="font-mono text-xs text-muted-foreground">{field.code}</span>
               <span className="text-xs text-muted-foreground">· {list.length} dự án</span>
-              <div className="ml-auto flex gap-0.5">
+              <div className="ml-auto flex gap-1.5">
                 <button
                   type="button"
                   onClick={() => setEditingField(field)}
                   aria-label={`Sửa lĩnh vực ${field.name}`}
                   className="tap flex items-center justify-center rounded-lg text-muted-foreground hover:bg-accent hover:text-foreground"
                 >
-                  <Pencil className="size-3.5" />
+                  <Pencil className="size-4" />
                 </button>
                 <button
                   type="button"
@@ -117,7 +120,7 @@ export default function Projects() {
                   aria-label={`Xoá lĩnh vực ${field.name}`}
                   className="tap flex items-center justify-center rounded-lg text-muted-foreground hover:bg-accent hover:text-destructive"
                 >
-                  <Trash2 className="size-3.5" />
+                  <Trash2 className="size-4" />
                 </button>
               </div>
             </div>
@@ -127,7 +130,7 @@ export default function Projects() {
                 Chưa có dự án nào trong lĩnh vực này.
               </p>
             ) : (
-              <ul className="space-y-1.5">
+              <ul className="ml-2 space-y-1.5 border-l-2 border-primary/20 pl-3">
                 {list.map((p) => (
                   <ProjectItem
                     key={p.code}
@@ -251,7 +254,7 @@ function ProjectItem({
         aria-label={`Sửa dự án ${project.name}`}
         className="tap flex items-center justify-center rounded-lg text-muted-foreground hover:bg-accent hover:text-foreground"
       >
-        <Pencil className="size-3.5" />
+        <Pencil className="size-4" />
       </button>
     </li>
   );

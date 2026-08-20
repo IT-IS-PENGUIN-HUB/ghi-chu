@@ -186,3 +186,70 @@ describe("file format survives a full mutation cycle", () => {
     expect(reparsed.tasks.find((t) => t.id === a.id)).toBeUndefined();
   });
 });
+
+describe("delete with undo", () => {
+  it("restores a deleted task exactly as it was", () => {
+    const store = seeded();
+    const task = store.addTask({ title: "Sắp bị xoá #quan-trọng", project: "ALP" })!;
+    store.toggleTask(task.id);
+    const before = store.getSnapshot().tasks.find((t) => t.id === task.id)!;
+
+    store.deleteTask(task.id);
+    expect(store.getSnapshot().tasks.find((t) => t.id === task.id)).toBeUndefined();
+
+    store.restoreTask(before);
+    expect(store.getSnapshot().tasks.find((t) => t.id === task.id)).toEqual(before);
+  });
+
+  it("does not duplicate when restore is called twice", () => {
+    const store = seeded();
+    const task = store.addTask({ title: "Xoá rồi cứu", project: "ALP" })!;
+    store.deleteTask(task.id);
+
+    store.restoreTask(task);
+    store.restoreTask(task);
+
+    expect(store.getSnapshot().tasks.filter((t) => t.id === task.id)).toHaveLength(1);
+  });
+
+  it("keeps the counter ahead so the restored id never collides", () => {
+    const store = seeded();
+    const a = store.addTask({ title: "A", project: "ALP" })!;
+    store.deleteTask(a.id);
+    const b = store.addTask({ title: "B", project: "ALP" })!;
+    store.restoreTask(a);
+
+    expect(a.id).not.toBe(b.id);
+    expect(store.getSnapshot().tasks.filter((t) => t.id === a.id)).toHaveLength(1);
+  });
+});
+
+describe("deleting a project", () => {
+  it("refuses while the project still holds tasks", () => {
+    const store = seeded();
+    expect(store.deleteProject("ALP").ok).toBe(false);
+    expect(store.getSnapshot().projects.some((p) => p.code === "ALP")).toBe(true);
+  });
+
+  it("removes an empty project and its file", () => {
+    const store = seeded();
+    store.createProject("Tạo nhầm", "NHAM", "WRK");
+    expect(store.getSnapshot().projects.some((p) => p.code === "NHAM")).toBe(true);
+
+    expect(store.deleteProject("NHAM").ok).toBe(true);
+    expect(store.getSnapshot().projects.some((p) => p.code === "NHAM")).toBe(false);
+    expect(
+      store.allFiles().some((f) => f.path === paths.project("NHAM") && !f.deleted)
+    ).toBe(false);
+  });
+
+  it("becomes deletable once its last task is removed", () => {
+    const store = seeded();
+    store.createProject("Tạm", "TAM", "WRK");
+    const t = store.addTask({ title: "Việc duy nhất", project: "TAM" })!;
+    expect(store.deleteProject("TAM").ok).toBe(false);
+
+    store.deleteTask(t.id);
+    expect(store.deleteProject("TAM").ok).toBe(true);
+  });
+});

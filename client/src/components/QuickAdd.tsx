@@ -116,6 +116,7 @@ export function QuickAdd({ projects, fields, category, onAdd }: QuickAddProps) {
 
       <div className="flex flex-col gap-2 sm:flex-row">
         <Input
+          id="quick-add-input"
           ref={inputRef}
           value={title}
           onChange={(e) => setTitle(e.target.value)}

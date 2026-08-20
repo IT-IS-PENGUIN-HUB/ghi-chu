@@ -10,6 +10,16 @@ import {
   Repeat,
   Upload,
 } from "lucide-react";
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from "@/components/ui/alert-dialog";
 import { RecurringRules } from "@/components/RecurringRules";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -27,6 +37,7 @@ export default function Settings() {
   const [branch, setBranch] = useState(settings.branch);
   const [token, setToken] = useState(settings.token);
   const [checking, setChecking] = useState(false);
+  const [confirmingDisconnect, setConfirmingDisconnect] = useState(false);
 
   const configured = Boolean(settings.owner && settings.repo && settings.token);
   const changed =
@@ -184,9 +195,37 @@ export default function Settings() {
                 />
                 Đồng bộ ngay
               </Button>
-              <Button variant="ghost" onClick={disconnect}>
+              <Button variant="ghost" onClick={() => setConfirmingDisconnect(true)}>
                 Ngắt kết nối
               </Button>
+              {/* A fine-grained PAT cannot be viewed again on GitHub, so one
+                  stray tap here used to mean redoing the whole token flow. */}
+              <AlertDialog
+                open={confirmingDisconnect}
+                onOpenChange={(o) => !o && setConfirmingDisconnect(false)}
+              >
+                <AlertDialogContent>
+                  <AlertDialogHeader>
+                    <AlertDialogTitle>Ngắt kết nối GitHub?</AlertDialogTitle>
+                    <AlertDialogDescription>
+                      Token sẽ bị xoá khỏi máy này. GitHub không cho xem lại token cũ —
+                      muốn kết nối lại bạn sẽ phải tạo token mới. Dữ liệu ghi chú không
+                      bị ảnh hưởng.
+                    </AlertDialogDescription>
+                  </AlertDialogHeader>
+                  <AlertDialogFooter>
+                    <AlertDialogCancel>Huỷ</AlertDialogCancel>
+                    <AlertDialogAction
+                      onClick={() => {
+                        setConfirmingDisconnect(false);
+                        void disconnect();
+                      }}
+                    >
+                      Ngắt kết nối
+                    </AlertDialogAction>
+                  </AlertDialogFooter>
+                </AlertDialogContent>
+              </AlertDialog>
             </>
           )}
         </div>

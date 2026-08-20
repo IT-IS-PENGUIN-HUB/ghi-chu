@@ -580,6 +580,50 @@ export class Store {
     ]);
   }
 
+  /**
+   * Re-marks a task done with a specific stamp — the undo path for an
+   * accidental reopen, which would otherwise silently discard the original
+   * completion time.
+   */
+  markDone(id: string, completed: string): void {
+    this.mutateTask(id, (t) => ({ ...t, done: true, completed }));
+  }
+
+  /**
+   * Removes a project outright — allowed only while it holds no tasks, so a
+   * typo project can be cleaned up but real work can never vanish with it.
+   */
+  deleteProject(code: string): { ok: boolean; reason?: string } {
+    const project = this.projectOf(code.toUpperCase());
+    if (!project) return { ok: false, reason: "Không tìm thấy dự án." };
+    if (this.tasksOf(project.code).length > 0) {
+      return { ok: false, reason: "Dự án còn việc — chỉ xoá được dự án rỗng." };
+    }
+
+    const registry = this.snapshot.projects.filter((p) => p.code !== project.code);
+    this.remove(paths.project(project.code));
+    this.write([{ path: paths.projects, content: serializeProjectsFile(registry) }]);
+    return { ok: true };
+  }
+
+  /**
+   * Puts a deleted task back, exactly as it was.
+   *
+   * Exists so that deleting can be undone from a toast instead of guarded by a
+   * confirm dialog — one accidental tap should never cost real work. Safe to
+   * call late: the id was allocated before the delete and counters never roll
+   * back, so the restored id can never collide with a newer task.
+   */
+  restoreTask(task: Task): void {
+    if (this.snapshot.tasks.some((t) => t.id === task.id)) return; // already back
+    const project = this.projectOf(task.project);
+    if (!project) return; // project itself was removed meanwhile
+
+    this.writeProjects([], [
+      { project, tasks: [...this.tasksOf(project.code), task] },
+    ]);
+  }
+
   /** Moves a task to another project. The permanent id stays, like a ticket key. */
   moveTask(id: string, toCode: string): void {
     const task = this.snapshot.tasks.find((t) => t.id === id);

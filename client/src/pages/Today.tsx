@@ -1,5 +1,6 @@
-import { useCallback, useEffect, useMemo, useState } from "react";
-import { ArrowUp, CheckCircle2, ChevronDown, ClockAlert, ListTodo } from "lucide-react";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
+import { ArrowUp, CheckCircle2, ChevronDown, ClockAlert, ListTodo, Plus } from "lucide-react";
+import { toast } from "sonner";
 import { QuickAdd } from "@/components/QuickAdd";
 import { TaskRow } from "@/components/TaskRow";
 import { DayNoteEditor } from "@/components/DayNoteEditor";
@@ -19,6 +20,7 @@ import {
   type Task,
 } from "@/core/model";
 import { store } from "@/core/store";
+import { deleteTaskWithUndo, toggleTaskWithUndo } from "@/lib/taskActions";
 import { useStore } from "@/hooks/useStore";
 import { cn } from "@/lib/utils";
 
@@ -60,15 +62,37 @@ export default function Today() {
   const stale = open.filter((e) => ageInDays(e.task.created) >= 7).length;
   const totalOpen = tasks.filter((t) => !t.done).length;
 
-  const onToggle = useCallback((id: string) => store.toggleTask(id), []);
+  const onToggle = useCallback((id: string) => toggleTaskWithUndo(id), []);
   const onRename = useCallback((id: string, title: string) => store.updateTask(id, { title }), []);
   const onStar = useCallback((id: string, starred: boolean) => store.updateTask(id, { starred }), []);
-  const onDelete = useCallback((id: string) => store.deleteTask(id), []);
+  const onDelete = useCallback((id: string) => deleteTaskWithUndo(id), []);
   const onMove = useCallback((id: string, project: string) => store.moveTask(id, project), []);
   const onAdd = useCallback(
-    (input: { title: string; project: string; starred: boolean }) => store.addTask(input),
+    (input: { title: string; project: string; starred: boolean }) => {
+      const added = store.addTask(input);
+      if (!added) return;
+      // With oldest-first sort the new row lands at the bottom — off-screen on
+      // a phone. Ring it and bring it into view so the add visibly worked.
+      setSelected(added.id);
+      setTimeout(() => {
+        document
+          .querySelector(`[data-task-id="${added.id}"]`)
+          ?.scrollIntoView({ block: "nearest", behavior: "smooth" });
+      }, 80);
+    },
     []
   );
+
+  // A small reward for clearing the list — Things 3 and TickTick both mark the
+  // moment, and it is the single cheapest piece of positive feedback an app
+  // can give. Fires only on the transition, never on load.
+  const prevOpen = useRef<number | null>(null);
+  useEffect(() => {
+    if (prevOpen.current !== null && prevOpen.current > 0 && open.length === 0 && doneToday.length > 0) {
+      toast.success("🎉 Xong hết việc trong nhóm này. Làm tốt lắm!", { duration: 4000 });
+    }
+    prevOpen.current = open.length;
+  }, [open.length, doneToday.length]);
 
   useKeyboardShortcuts({ open, selected, setSelected, onToggle });
 
@@ -94,7 +118,7 @@ export default function Today() {
             <div className="text-right">
               <div className="text-2xl font-bold tabular-nums text-done">{percent}%</div>
               <div className="text-xs text-muted-foreground">
-                {doneToday.length}/{progress} xong hôm nay
+                {doneToday.length}/{progress} xong · {CATEGORY_LABEL[category]}
               </div>
             </div>
             <div className="h-11 w-1.5 overflow-hidden rounded-full bg-muted">
@@ -150,10 +174,15 @@ export default function Today() {
       <QuickAdd projects={projects} fields={fields} category={category} onAdd={onAdd} />
 
       {stale > 0 && (
-        <div className="flex items-center gap-2 rounded-xl border-2 border-destructive/25 bg-destructive/5 px-3 py-2.5 text-sm font-medium text-destructive">
+        <button
+          type="button"
+          onClick={() => setSort("age")}
+          className="flex w-full items-center gap-2 rounded-xl border-2 border-destructive/25 bg-destructive/5 px-3 py-2.5 text-left text-sm font-medium text-destructive transition-colors hover:bg-destructive/10"
+        >
           <ClockAlert className="size-4 shrink-0" />
-          {stale} việc đã tồn quá 7 ngày — nên xử lý hoặc bỏ bớt
-        </div>
+          <span className="flex-1">{stale} việc đã tồn quá 7 ngày</span>
+          <span className="text-xs font-normal opacity-80">bấm để xếp lên đầu</span>
+        </button>
       )}
 
       {/* Two columns on a wide screen: the checklist is the work, the note sits
@@ -247,6 +276,23 @@ export default function Today() {
           />
         </div>
       </div>
+      {/* Mobile-only floating add button. The quick-add box scrolls away on a
+          long list; one thumb-reach tap brings it back with the keyboard up. */}
+      <button
+        type="button"
+        onClick={() => {
+          const input = document.getElementById("quick-add-input") as HTMLInputElement | null;
+          input?.scrollIntoView({ behavior: "smooth", block: "center" });
+          setTimeout(() => input?.focus({ preventScroll: true }), 350);
+        }}
+        aria-label="Thêm việc mới"
+        className={cn(
+          "fixed bottom-24 right-4 z-40 flex size-14 items-center justify-center rounded-full text-white shadow-lg transition-transform active:scale-95 sm:hidden",
+          category === "WRK" ? "bg-wrk" : "bg-per"
+        )}
+      >
+        <Plus className="size-7 stroke-[2.5]" />
+      </button>
     </div>
   );
 }
@@ -322,6 +368,9 @@ function useKeyboardShortcuts({
       } else if (e.key === " " && selected) {
         e.preventDefault();
         onToggle(selected);
+      } else if (e.key === "n") {
+        e.preventDefault();
+        (document.getElementById("quick-add-input") as HTMLInputElement | null)?.focus();
       } else if (e.key === "Escape") {
         setSelected(null);
       }

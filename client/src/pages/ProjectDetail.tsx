@@ -7,6 +7,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { CATEGORY_LABEL, type Project } from "@/core/model";
 import { store } from "@/core/store";
+import { deleteTaskWithUndo, toggleTaskWithUndo } from "@/lib/taskActions";
 import { useStore } from "@/hooks/useStore";
 
 /**
@@ -41,10 +42,10 @@ export default function ProjectDetail() {
     [mine]
   );
 
-  const onToggle = useCallback((id: string) => store.toggleTask(id), []);
+  const onToggle = useCallback((id: string) => toggleTaskWithUndo(id), []);
   const onRename = useCallback((id: string, title: string) => store.updateTask(id, { title }), []);
   const onStar = useCallback((id: string, starred: boolean) => store.updateTask(id, { starred }), []);
-  const onDelete = useCallback((id: string) => store.deleteTask(id), []);
+  const onDelete = useCallback((id: string) => deleteTaskWithUndo(id), []);
   const onMove = useCallback((id: string, target: string) => store.moveTask(id, target), []);
 
   if (!project) {

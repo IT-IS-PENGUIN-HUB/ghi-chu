@@ -1,4 +1,4 @@
-import { memo, useEffect, useState } from "react";
+import { memo, useEffect, useRef, useState } from "react";
 import { Check, MoreVertical, Pencil, Star, Trash2 } from "lucide-react";
 import { Checkbox } from "@/components/ui/checkbox";
 import {
@@ -81,29 +81,108 @@ function TaskRowInner({
   // treats that class as conflicting with `border-l-4` and silently drops it.
   const edge = task.done ? "var(--done)" : task.category === "WRK" ? "var(--wrk)" : "var(--per)";
 
+  // ------------------------------------------------------------- swipe -----
+  // Swipe right = done, swipe left = delete — the pattern every major todo
+  // app trained people on. `touch-action: pan-y` leaves vertical scrolling to
+  // the browser, so only a clearly horizontal drag reaches this code, and the
+  // delete side is safe because deletes go through an undo toast.
+  const SWIPE_TRIGGER = 72;
+  const [dragX, setDragX] = useState(0);
+  const [snapping, setSnapping] = useState(false);
+  const touchRef = useRef<{ x: number; y: number; locked: boolean | null } | null>(null);
+
+  const onTouchStart = (e: React.TouchEvent) => {
+    if (editing) return;
+    const t = e.touches[0];
+    touchRef.current = { x: t.clientX, y: t.clientY, locked: null };
+    setSnapping(false);
+  };
+
+  const onTouchMove = (e: React.TouchEvent) => {
+    const start = touchRef.current;
+    if (!start) return;
+    const t = e.touches[0];
+    const dx = t.clientX - start.x;
+    const dy = t.clientY - start.y;
+    // Decide once, after ~10px of movement, whether this is a swipe or a scroll.
+    if (start.locked === null && (Math.abs(dx) > 10 || Math.abs(dy) > 10)) {
+      start.locked = Math.abs(dx) > Math.abs(dy);
+    }
+    if (start.locked) setDragX(Math.max(-112, Math.min(112, dx)));
+  };
+
+  const onTouchEnd = () => {
+    const start = touchRef.current;
+    touchRef.current = null;
+    if (!start?.locked) return setDragX(0);
+    setSnapping(true);
+    if (dragX >= SWIPE_TRIGGER) {
+      navigator.vibrate?.(10);
+      onToggle(task.id);
+    } else if (dragX <= -SWIPE_TRIGGER) onDelete(task.id);
+    setDragX(0);
+  };
+
   return (
-    <div
-      data-task-id={task.id}
-      style={{ borderLeftColor: edge }}
-      className={cn(
-        // A coloured left edge tells you the group at a glance without reading
-        // anything, which is what makes a long mixed list scannable.
-        "group flex items-start gap-3 rounded-xl border border-l-4 px-3 py-2.5 shadow-sm transition-colors no-tap-highlight",
-        task.done
-          ? "border-border/60 bg-done-soft/50"
-          : task.category === "WRK"
-            ? "border-border bg-card hover:border-wrk/50"
-            : "border-border bg-card hover:border-per/50",
-        selected && "ring-2 ring-ring ring-offset-1 ring-offset-background"
+    <div className="relative">
+      {/* Layer revealed behind the card while swiping. */}
+      {dragX !== 0 && (
+        <div
+          aria-hidden
+          className={cn(
+            "absolute inset-0 flex items-center justify-between rounded-xl px-5",
+            dragX > 0 ? "bg-done/85" : "bg-destructive/85"
+          )}
+        >
+          <Check className={cn("size-5 text-white", dragX <= 0 && "opacity-0")} />
+          <Trash2 className={cn("size-5 text-white", dragX >= 0 && "opacity-0")} />
+        </div>
       )}
-      onClick={() => onFocus?.(task.id)}
-    >
-      <Checkbox
-        checked={task.done}
-        onCheckedChange={() => onToggle(task.id)}
-        aria-label={task.done ? "Bỏ đánh dấu hoàn thành" : "Đánh dấu hoàn thành"}
-        className="mt-0.5 size-5 shrink-0"
-      />
+
+      <div
+        data-task-id={task.id}
+        style={{
+          borderLeftColor: edge,
+          transform: dragX ? `translateX(${dragX}px)` : undefined,
+          touchAction: "pan-y",
+        }}
+        className={cn(
+          // A coloured left edge tells you the group at a glance without reading
+          // anything, which is what makes a long mixed list scannable.
+          "group flex items-start gap-2 rounded-xl border border-l-4 py-2.5 pl-1 pr-3 shadow-sm transition-colors no-tap-highlight",
+          snapping && "transition-transform duration-200",
+          task.done
+            ? "border-border/60 bg-done-soft/50"
+            : task.category === "WRK"
+              ? "border-border bg-card hover:border-wrk/50"
+              : "border-border bg-card hover:border-per/50",
+          selected && "ring-2 ring-ring ring-offset-1 ring-offset-background"
+        )}
+        onClick={() => onFocus?.(task.id)}
+        onTouchStart={onTouchStart}
+        onTouchMove={onTouchMove}
+        onTouchEnd={onTouchEnd}
+        onTouchCancel={onTouchEnd}
+      >
+        {/* The checkbox is the most-used control in the app, so it gets a
+            finger-sized (44px) hit area; the visible box stays modest. */}
+        <button
+          type="button"
+          onClick={(e) => {
+            e.stopPropagation();
+            navigator.vibrate?.(10);
+            onToggle(task.id);
+          }}
+          aria-label={task.done ? "Bỏ đánh dấu hoàn thành" : "Đánh dấu hoàn thành"}
+          className="tap flex shrink-0 items-start justify-center pt-0.5"
+        >
+          <Checkbox
+            checked={task.done}
+            tabIndex={-1}
+            aria-hidden
+            className="pointer-events-none size-6"
+          />
+        </button>
 
       <div className="min-w-0 flex-1">
         {editing ? (
@@ -119,6 +198,11 @@ function TaskRowInner({
           <>
             <div className="flex flex-wrap items-baseline gap-x-2 gap-y-0.5">
               <span
+                title={
+                  label.includes("-")
+                    ? "Mã việc cố định — dùng để tra cứu lâu dài"
+                    : "Số thứ tự hôm nay — tự đánh lại mỗi ngày"
+                }
                 className={cn(
                   "shrink-0 rounded px-1.5 py-0.5 font-mono text-xs font-semibold tabular-nums",
                   task.done
@@ -134,6 +218,8 @@ function TaskRowInner({
                 <Star className="size-3.5 shrink-0 fill-amber-400 text-amber-400" />
               )}
               <span
+                onDoubleClick={() => !task.done && setEditing(true)}
+                title={task.done ? undefined : "Bấm đúp để sửa"}
                 className={cn(
                   "min-w-0 break-words text-base leading-snug",
                   task.done && "text-muted-foreground line-through"
@@ -149,7 +235,7 @@ function TaskRowInner({
                   {project.name}
                 </span>
               )}
-              <span className="font-mono tabular-nums">{task.id}</span>
+              <span className="font-mono tabular-nums" title="Mã việc cố định — dùng để tra cứu lâu dài">{task.id}</span>
               {task.done ? (
                 <span className="tabular-nums text-done">
                   ✓ xong {task.completed?.slice(0, 10) ?? ""}
@@ -233,6 +319,7 @@ function TaskRowInner({
           </DropdownMenuContent>
         </DropdownMenu>
       )}
+      </div>
     </div>
   );
 }

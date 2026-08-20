@@ -1,5 +1,5 @@
 import { useMemo, useState } from "react";
-import { Phone, Plus, Trash2, UserRoundPlus } from "lucide-react";
+import { Pencil, Phone, Plus, Trash2, UserRoundPlus } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import {
   Dialog,
@@ -23,6 +23,7 @@ export default function Contacts() {
   const { contacts } = useStore();
   const [query, setQuery] = useState("");
   const [adding, setAdding] = useState(false);
+  const [editing, setEditing] = useState<Contact | null>(null);
   const [removing, setRemoving] = useState<Contact | null>(null);
 
   const filtered = useMemo(() => {
@@ -96,28 +97,40 @@ export default function Contacts() {
             <ul className="space-y-1.5">
               {list.map((c, i) => (
                 <li key={`${c.phone}-${i}`} className="flex items-center gap-1">
-                  <a
-                    href={`tel:${c.phone.replace(/[^\d+]/g, "")}`}
-                    className="flex flex-1 items-center gap-3 rounded-xl border border-border bg-card px-3 py-2.5 transition-colors hover:border-foreground/20"
-                  >
-                    <Phone className="size-4 shrink-0 text-muted-foreground" />
-                    <div className="min-w-0 flex-1">
-                      <div className="truncate text-base">{c.label}</div>
-                      {c.note && (
-                        <div className="truncate text-xs text-muted-foreground">{c.note}</div>
-                      )}
-                    </div>
-                    <span className="shrink-0 font-mono text-sm tabular-nums text-primary">
+                  <div className="flex flex-1 items-center gap-1 rounded-xl border border-border bg-card py-1.5 pl-3 pr-1.5 transition-colors hover:border-foreground/20">
+                    {/* Tapping the name edits; only the number itself dials, so
+                        a stray tap while scrolling can no longer start a call. */}
+                    <button
+                      type="button"
+                      onClick={() => setEditing(c)}
+                      className="flex min-w-0 flex-1 items-center gap-3 py-1 text-left"
+                      aria-label={`Sửa ${c.label}`}
+                      title="Bấm để sửa"
+                    >
+                      <Pencil className="size-4 shrink-0 text-muted-foreground/60" />
+                      <span className="min-w-0 flex-1">
+                        <span className="block truncate text-base">{c.label}</span>
+                        {c.note && (
+                          <span className="block truncate text-xs text-muted-foreground">{c.note}</span>
+                        )}
+                      </span>
+                    </button>
+                    <a
+                      href={`tel:${c.phone.replace(/[^\d+]/g, "")}`}
+                      aria-label={`Gọi ${c.phone}`}
+                      className="tap flex shrink-0 items-center gap-1.5 rounded-lg bg-primary/10 px-3 font-mono text-sm font-medium tabular-nums text-primary transition-colors hover:bg-primary/20"
+                    >
+                      <Phone className="size-3.5" />
                       {c.phone}
-                    </span>
-                  </a>
+                    </a>
+                  </div>
                   <button
                     type="button"
                     onClick={() => setRemoving(c)}
                     aria-label={`Xoá ${c.label}`}
                     className="tap flex items-center justify-center rounded-lg text-muted-foreground hover:bg-accent hover:text-destructive"
                   >
-                    <Trash2 className="size-3.5" />
+                    <Trash2 className="size-4" />
                   </button>
                 </li>
               ))}
@@ -126,14 +139,23 @@ export default function Contacts() {
         ))
       )}
 
-      {adding && (
+      {(adding || editing) && (
         <ContactDialog
           groups={[...new Set(contacts.map((c) => c.group))]}
+          initial={editing ?? undefined}
           onSave={(contact) => {
-            store.setContacts([...contacts, contact]);
+            store.setContacts(
+              editing
+                ? contacts.map((c) => (c === editing ? contact : c))
+                : [...contacts, contact]
+            );
             setAdding(false);
+            setEditing(null);
           }}
-          onClose={() => setAdding(false)}
+          onClose={() => {
+            setAdding(false);
+            setEditing(null);
+          }}
         />
       )}
 
@@ -159,17 +181,19 @@ export default function Contacts() {
 
 function ContactDialog({
   groups,
+  initial,
   onSave,
   onClose,
 }: {
   groups: string[];
+  initial?: Contact;
   onSave: (contact: Contact) => void;
   onClose: () => void;
 }) {
-  const [group, setGroup] = useState(groups[0] ?? "");
-  const [label, setLabel] = useState("");
-  const [phone, setPhone] = useState("");
-  const [note, setNote] = useState("");
+  const [group, setGroup] = useState(initial?.group ?? groups[0] ?? "");
+  const [label, setLabel] = useState(initial?.label ?? "");
+  const [phone, setPhone] = useState(initial?.phone ?? "");
+  const [note, setNote] = useState(initial?.note ?? "");
 
   const submit = () => {
     if (!label.trim() || !phone.trim()) return;
@@ -185,7 +209,7 @@ function ContactDialog({
     <Dialog open onOpenChange={(o) => !o && onClose()}>
       <DialogContent className="sm:max-w-md">
         <DialogHeader>
-          <DialogTitle>Thêm số điện thoại</DialogTitle>
+          <DialogTitle>{initial ? "Sửa số điện thoại" : "Thêm số điện thoại"}</DialogTitle>
           <DialogDescription>Lưu vào data/contacts.md trong repo của bạn.</DialogDescription>
         </DialogHeader>
 

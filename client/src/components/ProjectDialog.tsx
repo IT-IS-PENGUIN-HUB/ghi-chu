@@ -198,13 +198,37 @@ export function ProjectDialog({
           )}
         </div>
 
-        <DialogFooter>
-          <Button variant="outline" onClick={onClose}>
-            Huỷ
-          </Button>
-          <Button onClick={submit} disabled={!name.trim() || Boolean(codeError)}>
-            {editing ? "Lưu" : "Tạo"}
-          </Button>
+        <DialogFooter className="gap-2 sm:justify-between">
+          {/* A mistyped project used to be un-deletable and haunted the
+              archive forever. Deleting is offered only while it holds no
+              tasks, so real work can never disappear with it. */}
+          {editing && existingTaskCount === 0 ? (
+            <Button
+              variant="ghost"
+              onClick={() => {
+                const result = store.deleteProject(project.code);
+                if (!result.ok) {
+                  toast.error(result.reason ?? "Không xoá được");
+                  return;
+                }
+                toast.success(`Đã xoá dự án ${project.name}`);
+                onClose();
+              }}
+              className="text-destructive hover:text-destructive sm:mr-auto"
+            >
+              Xoá dự án rỗng
+            </Button>
+          ) : (
+            <span className="hidden sm:block" />
+          )}
+          <div className="flex gap-2">
+            <Button variant="outline" onClick={onClose}>
+              Huỷ
+            </Button>
+            <Button onClick={submit} disabled={!name.trim() || Boolean(codeError)}>
+              {editing ? "Lưu" : "Tạo"}
+            </Button>
+          </div>
         </DialogFooter>
       </DialogContent>
     </Dialog>
