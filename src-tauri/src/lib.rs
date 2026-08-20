@@ -10,7 +10,7 @@ use tauri::{
     tray::{MouseButton, MouseButtonState, TrayIconBuilder, TrayIconEvent},
     Manager,
 };
-use tauri_plugin_global_shortcut::ShortcutState;
+use tauri_plugin_global_shortcut::{GlobalShortcutExt, ShortcutState};
 
 /// Show the window if hidden, hide it if visible. Used by the tray icon and
 /// the global shortcut alike.
@@ -30,28 +30,44 @@ fn toggle_window(app: &tauri::AppHandle) {
 #[cfg_attr(mobile, tauri::mobile_entry_point)]
 pub fn run() {
     tauri::Builder::default()
-        .plugin(
-            // Ctrl+Alt+G summons the note from inside any application.
-            // (Ctrl+Shift+Space was rejected: several Vietnamese/Japanese
-            // IMEs already claim it.)
-            tauri_plugin_global_shortcut::Builder::new()
-                .with_shortcuts(["ctrl+alt+g"])
-                .expect("shortcut parses")
-                .with_handler(|app, _shortcut, event| {
+        .plugin(tauri_plugin_global_shortcut::Builder::new().build())
+        .setup(|app| {
+            // A summoning shortcut, tried in order of preference. Some other
+            // program may already own any given combination (this machine had
+            // Ctrl+Alt+G taken), and a taken hotkey must never be fatal — the
+            // tray icon still works without one.
+            let candidates = [
+                ("ctrl+alt+g", "Ctrl+Alt+G"),
+                ("ctrl+shift+g", "Ctrl+Shift+G"),
+                ("ctrl+alt+j", "Ctrl+Alt+J"),
+                ("alt+shift+g", "Alt+Shift+G"),
+            ];
+            let mut hotkey_label = "phím tắt đang bị app khác chiếm";
+            for (combo, label) in candidates {
+                let registered = app.global_shortcut().on_shortcut(combo, |app, _s, event| {
                     if event.state() == ShortcutState::Pressed {
                         toggle_window(app);
                     }
-                })
-                .build(),
-        )
-        .setup(|app| {
-            let show = MenuItem::with_id(app, "show", "Hiện / ẩn  (Ctrl+Alt+G)", true, None::<&str>)?;
+                });
+                if registered.is_ok() {
+                    hotkey_label = label;
+                    break;
+                }
+            }
+
+            let show = MenuItem::with_id(
+                app,
+                "show",
+                format!("Hiện / ẩn  ({hotkey_label})"),
+                true,
+                None::<&str>,
+            )?;
             let quit = MenuItem::with_id(app, "quit", "Thoát hẳn", true, None::<&str>)?;
             let menu = Menu::with_items(app, &[&show, &quit])?;
 
             TrayIconBuilder::with_id("tray")
                 .icon(app.default_window_icon().expect("bundled icon").clone())
-                .tooltip("Ghi chú — Ctrl+Alt+G")
+                .tooltip(format!("Ghi chú — {hotkey_label}"))
                 .menu(&menu)
                 .show_menu_on_left_click(false)
                 .on_menu_event(|app, event| match event.id.as_ref() {
