@@ -251,7 +251,8 @@ Cá nhân (PER)
             <b>Windows (bản nổi trên màn hình):</b> cài file <b>GhiChu-setup.exe</b> từ
             mục Releases trên GitHub. Bản này có thêm: nút <b>ghim 📌</b> trên thanh công
             cụ để cửa sổ luôn nổi trên mọi ứng dụng khác, phím tắt toàn cục{" "}
-            <Kbd>Ctrl</Kbd>+<Kbd>Alt</Kbd>+<Kbd>G</Kbd> gọi app từ bất cứ đâu, và icon ở
+            <Kbd>Ctrl</Kbd>+<Kbd>Alt</Kbd>+<Kbd>G</Kbd> gọi app từ bất cứ đâu (bị app khác
+            chiếm thì tự đổi phím — di chuột lên icon khay để xem), và icon ở
             khay hệ thống — bấm ✕ chỉ ẩn xuống khay chứ không thoát.
           </Bullet>
         </ul>

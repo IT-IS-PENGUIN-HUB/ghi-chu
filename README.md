@@ -138,7 +138,9 @@ và cài. Khác bản PWA ở ba điểm:
 
 - Nút **ghim 📌** trên thanh công cụ: cửa sổ luôn nổi trên mọi app khác —
   đúng nghĩa tờ giấy note dán cạnh màn hình CAD/Excel
-- Phím tắt toàn cục **Ctrl+Alt+G**: gọi/ẩn app từ trong bất kỳ chương trình nào
+- Phím tắt toàn cục **Ctrl+Alt+G**: gọi/ẩn app từ trong bất kỳ chương trình nào.
+  Nếu phím này đã bị app khác chiếm, app tự chuyển sang Ctrl+Shift+G → Ctrl+Alt+J
+  → Alt+Shift+G — di chuột lên icon khay để xem phím đang dùng
 - Icon **khay hệ thống**: bấm ✕ chỉ ẩn xuống khay chứ không thoát; muốn thoát
   hẳn thì chuột phải icon khay → Thoát hẳn
 
