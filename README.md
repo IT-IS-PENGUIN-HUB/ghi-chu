@@ -11,10 +11,10 @@ từng thao tác. Phần dưới đây là ghi chú kỹ thuật.
 
 Hai mã số hoàn toàn tách biệt, cố ý khác hẳn nhau về hình dạng:
 
-| Mã | Ví dụ | Vai trò |
-| --- | --- | --- |
-| Mã ngày | `WRK_01` | Thứ tự trong danh sách **hôm nay**. Suy từ vị trí, không lưu → tự đánh lại mỗi sáng. |
-| Mã việc | `ALP-0042` | **Vĩnh viễn.** Cấp một lần, không bao giờ đổi, kể cả khi việc chuyển dự án. |
+| Mã      | Ví dụ                 | Vai trò                                                                                                                                           |
+| ------- | --------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------- |
+| Mã ngày | `WORK_01` / `HOME_01` | Thứ tự trong danh sách **hôm nay**. Suy từ vị trí, không lưu → tự đánh lại mỗi sáng. Chỉ là nhãn hiển thị — trong file nhóm vẫn là `WRK` / `PER`. |
+| Mã việc | `ALP-0042`            | **Vĩnh viễn.** Cấp một lần, không bao giờ đổi, kể cả khi việc chuyển dự án. Không in trên dòng; lấy qua menu ⋮ → Sao chép mã.                     |
 
 Phân cấp bốn tầng:
 
@@ -84,12 +84,12 @@ chỉ tạo được trên web.
 
 Rồi mở app → **Cài đặt** → điền:
 
-| Ô | Giá trị |
-| --- | --- |
+| Ô        | Giá trị             |
+| -------- | ------------------- |
 | Chủ repo | `IT-IS-PENGUIN-HUB` |
-| Tên repo | `ghi-chu-data` |
-| Nhánh | `main` |
-| Token | token vừa tạo |
+| Tên repo | `ghi-chu-data`      |
+| Nhánh    | `main`              |
+| Token    | token vừa tạo       |
 
 → **Kết nối**. Token chỉ mở được đúng repo dữ liệu, không đụng được repo nào
 khác. Mất máy thì vào GitHub thu hồi.

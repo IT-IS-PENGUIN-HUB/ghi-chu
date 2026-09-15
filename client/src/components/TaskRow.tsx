@@ -1,5 +1,6 @@
 import { memo, useEffect, useRef, useState } from "react";
-import { Check, MoreVertical, Pencil, Star, Trash2 } from "lucide-react";
+import { Check, Copy, MoreVertical, Pencil, Star, Trash2 } from "lucide-react";
+import { toast } from "sonner";
 import { Checkbox } from "@/components/ui/checkbox";
 import {
   DropdownMenu,
@@ -16,9 +17,20 @@ import { useComposition } from "@/hooks/useComposition";
 import { ageInDays, type Project, type Task } from "@/core/model";
 import { cn } from "@/lib/utils";
 
+function copyId(id: string) {
+  if (!navigator.clipboard) {
+    toast.error(`Không sao chép được — mã là ${id}`);
+    return;
+  }
+  void navigator.clipboard.writeText(id).then(
+    () => toast.success(`Đã sao chép ${id}`, { duration: 1500 }),
+    () => toast.error(`Không sao chép được — mã là ${id}`)
+  );
+}
+
 export interface TaskRowProps {
   task: Task;
-  /** "WRK_01" — today's position, or the permanent id on archive screens. */
+  /** "WORK_01" — today's position, or the permanent id on archive screens. */
   label: string;
   project?: Project;
   projects?: Project[];
@@ -66,12 +78,13 @@ function TaskRowInner({
 
   // Vietnamese and Japanese input methods fire Enter to accept a candidate
   // word; without this guard that Enter would commit a half-typed title.
-  const { isComposing: _isComposing, ...compositionHandlers } = useComposition<HTMLInputElement>({
-    onKeyDown: (e) => {
-      if (e.key === "Enter") commit();
-      if (e.key === "Escape") setEditing(false);
-    },
-  });
+  const { isComposing: _isComposing, ...compositionHandlers } =
+    useComposition<HTMLInputElement>({
+      onKeyDown: e => {
+        if (e.key === "Enter") commit();
+        if (e.key === "Escape") setEditing(false);
+      },
+    });
   void _isComposing;
 
   const age = ageInDays(task.created);
@@ -79,7 +92,11 @@ function TaskRowInner({
   // The left edge colour is set inline rather than with a `border-l-<colour>`
   // class: tailwind-merge does not know `wrk`/`per`/`done` are colours, so it
   // treats that class as conflicting with `border-l-4` and silently drops it.
-  const edge = task.done ? "var(--done)" : task.category === "WRK" ? "var(--wrk)" : "var(--per)";
+  const edge = task.done
+    ? "var(--done)"
+    : task.category === "WRK"
+      ? "var(--wrk)"
+      : "var(--per)";
 
   // ------------------------------------------------------------- swipe -----
   // Swipe right = done, swipe left = delete — the pattern every major todo
@@ -89,7 +106,11 @@ function TaskRowInner({
   const SWIPE_TRIGGER = 72;
   const [dragX, setDragX] = useState(0);
   const [snapping, setSnapping] = useState(false);
-  const touchRef = useRef<{ x: number; y: number; locked: boolean | null } | null>(null);
+  const touchRef = useRef<{
+    x: number;
+    y: number;
+    locked: boolean | null;
+  } | null>(null);
 
   const onTouchStart = (e: React.TouchEvent) => {
     if (editing) return;
@@ -134,8 +155,12 @@ function TaskRowInner({
             dragX > 0 ? "bg-done/85" : "bg-destructive/85"
           )}
         >
-          <Check className={cn("size-5 text-white", dragX <= 0 && "opacity-0")} />
-          <Trash2 className={cn("size-5 text-white", dragX >= 0 && "opacity-0")} />
+          <Check
+            className={cn("size-5 text-white", dragX <= 0 && "opacity-0")}
+          />
+          <Trash2
+            className={cn("size-5 text-white", dragX >= 0 && "opacity-0")}
+          />
         </div>
       )}
 
@@ -168,12 +193,14 @@ function TaskRowInner({
             finger-sized (44px) hit area; the visible box stays modest. */}
         <button
           type="button"
-          onClick={(e) => {
+          onClick={e => {
             e.stopPropagation();
             navigator.vibrate?.(10);
             onToggle(task.id);
           }}
-          aria-label={task.done ? "Bỏ đánh dấu hoàn thành" : "Đánh dấu hoàn thành"}
+          aria-label={
+            task.done ? "Bỏ đánh dấu hoàn thành" : "Đánh dấu hoàn thành"
+          }
           className="tap flex shrink-0 items-start justify-center pt-0.5"
         >
           <Checkbox
@@ -184,141 +211,152 @@ function TaskRowInner({
           />
         </button>
 
-      <div className="min-w-0 flex-1">
-        {editing ? (
-          <Input
-            autoFocus
-            value={draft}
-            onChange={(e) => setDraft(e.target.value)}
-            onBlur={commit}
-            {...compositionHandlers}
-            className="h-9"
-          />
-        ) : (
-          <>
-            <div className="flex flex-wrap items-baseline gap-x-2 gap-y-0.5">
-              <span
-                title={
-                  label.includes("-")
-                    ? "Mã việc cố định — dùng để tra cứu lâu dài"
-                    : "Số thứ tự hôm nay — tự đánh lại mỗi ngày"
-                }
-                className={cn(
-                  "shrink-0 rounded px-1.5 py-0.5 font-mono text-xs font-semibold tabular-nums",
-                  task.done
-                    ? "bg-muted text-muted-foreground"
-                    : task.category === "WRK"
-                      ? "bg-wrk-soft text-wrk"
-                      : "bg-per-soft text-per"
-                )}
-              >
-                {label}
-              </span>
-              {task.starred && !task.done && (
-                <Star className="size-3.5 shrink-0 fill-amber-400 text-amber-400" />
-              )}
-              <span
-                onDoubleClick={() => !task.done && setEditing(true)}
-                title={task.done ? undefined : "Bấm đúp để sửa"}
-                className={cn(
-                  "min-w-0 break-words text-base leading-snug",
-                  task.done && "text-muted-foreground line-through"
-                )}
-              >
-                {task.title}
-              </span>
-            </div>
-
-            <div className="mt-1 flex flex-wrap items-center gap-x-2 gap-y-1 text-xs text-muted-foreground">
-              {project && (
-                <span className="rounded bg-muted px-1.5 py-0.5 font-medium">
-                  {project.name}
-                </span>
-              )}
-              <span className="font-mono tabular-nums" title="Mã việc cố định — dùng để tra cứu lâu dài">{task.id}</span>
-              {task.done ? (
-                <span className="tabular-nums text-done">
-                  ✓ xong {task.completed?.slice(0, 10) ?? ""}
-                </span>
-              ) : (
+        <div className="min-w-0 flex-1">
+          {editing ? (
+            <Input
+              autoFocus
+              value={draft}
+              onChange={e => setDraft(e.target.value)}
+              onBlur={commit}
+              {...compositionHandlers}
+              className="h-9"
+            />
+          ) : (
+            <>
+              <div className="flex flex-wrap items-baseline gap-x-2 gap-y-0.5">
                 <span
+                  title={
+                    label === task.id
+                      ? "Mã việc cố định — dùng để tra cứu lâu dài"
+                      : `Số thứ tự hôm nay — tự đánh lại mỗi sáng. Mã cố định: ${task.id}`
+                  }
                   className={cn(
-                    "rounded px-1.5 py-0.5 font-medium tabular-nums",
-                    // Three steps, because "how long has this been sitting
-                    // there" is the question the timestamp exists to answer.
-                    age === 0
-                      ? "bg-done-soft text-done"
-                      : age < 7
-                        ? "bg-muted text-muted-foreground"
-                        : "bg-destructive/10 text-destructive"
+                    "shrink-0 rounded px-1.5 py-0.5 font-mono text-xs font-semibold tabular-nums",
+                    task.done
+                      ? "bg-muted text-muted-foreground"
+                      : task.category === "WRK"
+                        ? "bg-wrk-soft text-wrk"
+                        : "bg-per-soft text-per"
                   )}
-                  title={`Thêm lúc ${task.created}`}
                 >
-                  {age === 0 ? "hôm nay" : `+${age} ngày`}
+                  {label}
                 </span>
-              )}
-              {task.tags?.map((tag) => (
-                <span key={tag} className="text-muted-foreground/80">
-                  #{tag}
+                {task.starred && !task.done && (
+                  <Star className="size-3.5 shrink-0 fill-amber-400 text-amber-400" />
+                )}
+                <span
+                  onDoubleClick={() => !task.done && setEditing(true)}
+                  title={task.done ? undefined : "Bấm đúp để sửa"}
+                  className={cn(
+                    "min-w-0 break-words text-base leading-snug",
+                    task.done && "text-muted-foreground line-through"
+                  )}
+                >
+                  {task.title}
                 </span>
-              ))}
-            </div>
-          </>
-        )}
-      </div>
+              </div>
 
-      {!editing && (
-        <DropdownMenu>
-          <DropdownMenuTrigger
-            aria-label="Tuỳ chọn"
-            className="tap -mr-1 flex shrink-0 items-center justify-center rounded-lg text-muted-foreground hover:bg-accent hover:text-foreground focus:outline-none focus-visible:ring-2 focus-visible:ring-ring"
-          >
-            <MoreVertical className="size-4" />
-          </DropdownMenuTrigger>
-          <DropdownMenuContent align="end" className="w-52">
-            <DropdownMenuItem onClick={() => setEditing(true)}>
-              <Pencil className="mr-2 size-4" /> Sửa nội dung
-            </DropdownMenuItem>
-            <DropdownMenuItem onClick={() => onStar(task.id, !task.starred)}>
-              <Star className="mr-2 size-4" />
-              {task.starred ? "Bỏ ưu tiên" : "Đánh dấu ưu tiên"}
-            </DropdownMenuItem>
-            <DropdownMenuItem onClick={() => onToggle(task.id)}>
-              <Check className="mr-2 size-4" />
-              {task.done ? "Mở lại" : "Đánh dấu xong"}
-            </DropdownMenuItem>
+              <div className="mt-1 flex flex-wrap items-center gap-x-2 gap-y-1 text-xs text-muted-foreground">
+                {project && (
+                  <span className="rounded bg-muted px-1.5 py-0.5 font-medium">
+                    {project.name}
+                  </span>
+                )}
+                {task.done ? (
+                  <span className="tabular-nums text-done">
+                    ✓ xong {task.completed?.slice(0, 10) ?? ""}
+                  </span>
+                ) : (
+                  <span
+                    className={cn(
+                      "rounded px-1.5 py-0.5 font-medium tabular-nums",
+                      // Three steps, because "how long has this been sitting
+                      // there" is the question the timestamp exists to answer.
+                      age === 0
+                        ? "bg-done-soft text-done"
+                        : age < 7
+                          ? "bg-muted text-muted-foreground"
+                          : "bg-destructive/10 text-destructive"
+                    )}
+                    title={`Thêm lúc ${task.created}`}
+                  >
+                    {age === 0 ? "hôm nay" : `+${age} ngày`}
+                  </span>
+                )}
+                {task.tags?.map(tag => (
+                  <span key={tag} className="text-muted-foreground/80">
+                    #{tag}
+                  </span>
+                ))}
+              </div>
+            </>
+          )}
+        </div>
 
-            {onMove && projects && projects.length > 1 && (
-              <>
-                <DropdownMenuSeparator />
-                <DropdownMenuSub>
-                  <DropdownMenuSubTrigger>Chuyển dự án</DropdownMenuSubTrigger>
-                  <DropdownMenuSubContent className="max-h-72 overflow-y-auto">
-                    {projects
-                      .filter((p) => !p.archived && p.code !== task.project)
-                      .map((p) => (
-                        <DropdownMenuItem key={p.code} onClick={() => onMove(task.id, p.code)}>
-                          <span className="mr-2 font-mono text-xs text-muted-foreground">
-                            {p.code}
-                          </span>
-                          {p.name}
-                        </DropdownMenuItem>
-                      ))}
-                  </DropdownMenuSubContent>
-                </DropdownMenuSub>
-              </>
-            )}
-
-            <DropdownMenuSeparator />
-            <DropdownMenuItem
-              onClick={() => onDelete(task.id)}
-              className="text-destructive focus:text-destructive"
+        {!editing && (
+          <DropdownMenu>
+            <DropdownMenuTrigger
+              aria-label="Tuỳ chọn"
+              className="tap -mr-1 flex shrink-0 items-center justify-center rounded-lg text-muted-foreground hover:bg-accent hover:text-foreground focus:outline-none focus-visible:ring-2 focus-visible:ring-ring"
             >
-              <Trash2 className="mr-2 size-4" /> Xoá
-            </DropdownMenuItem>
-          </DropdownMenuContent>
-        </DropdownMenu>
-      )}
+              <MoreVertical className="size-4" />
+            </DropdownMenuTrigger>
+            <DropdownMenuContent align="end" className="w-52">
+              <DropdownMenuItem onClick={() => setEditing(true)}>
+                <Pencil className="mr-2 size-4" /> Sửa nội dung
+              </DropdownMenuItem>
+              <DropdownMenuItem onClick={() => onStar(task.id, !task.starred)}>
+                <Star className="mr-2 size-4" />
+                {task.starred ? "Bỏ ưu tiên" : "Đánh dấu ưu tiên"}
+              </DropdownMenuItem>
+              <DropdownMenuItem onClick={() => onToggle(task.id)}>
+                <Check className="mr-2 size-4" />
+                {task.done ? "Mở lại" : "Đánh dấu xong"}
+              </DropdownMenuItem>
+
+              {onMove && projects && projects.length > 1 && (
+                <>
+                  <DropdownMenuSeparator />
+                  <DropdownMenuSub>
+                    <DropdownMenuSubTrigger>
+                      Chuyển dự án
+                    </DropdownMenuSubTrigger>
+                    <DropdownMenuSubContent className="max-h-72 overflow-y-auto">
+                      {projects
+                        .filter(p => !p.archived && p.code !== task.project)
+                        .map(p => (
+                          <DropdownMenuItem
+                            key={p.code}
+                            onClick={() => onMove(task.id, p.code)}
+                          >
+                            <span className="mr-2 font-mono text-xs text-muted-foreground">
+                              {p.code}
+                            </span>
+                            {p.name}
+                          </DropdownMenuItem>
+                        ))}
+                    </DropdownMenuSubContent>
+                  </DropdownMenuSub>
+                </>
+              )}
+
+              <DropdownMenuSeparator />
+              {/* The permanent id used to sit on every row beside the day
+                number, and two codes per line was the single most confusing
+                thing in the app. It lives here now — still one tap away. */}
+              <DropdownMenuItem onClick={() => copyId(task.id)}>
+                <Copy className="mr-2 size-4" /> Sao chép mã {task.id}
+              </DropdownMenuItem>
+              <DropdownMenuSeparator />
+              <DropdownMenuItem
+                onClick={() => onDelete(task.id)}
+                className="text-destructive focus:text-destructive"
+              >
+                <Trash2 className="mr-2 size-4" /> Xoá
+              </DropdownMenuItem>
+            </DropdownMenuContent>
+          </DropdownMenu>
+        )}
       </div>
     </div>
   );

@@ -62,12 +62,30 @@ export function AppShell({ children }: { children: ReactNode }) {
           ))}
 
           <div className="ml-auto flex items-center gap-0.5">
-            <IconLink href="/tim-kiem" label="Tìm kiếm" icon={Search} active={isActive("/tim-kiem")} />
-            <IconLink href="/huong-dan" label="Hướng dẫn" icon={BookOpen} active={isActive("/huong-dan")} />
+            <IconLink
+              href="/tim-kiem"
+              label="Tìm kiếm"
+              icon={Search}
+              active={isActive("/tim-kiem")}
+              showLabel
+            />
+            <IconLink
+              href="/huong-dan"
+              label="Hướng dẫn"
+              icon={BookOpen}
+              active={isActive("/huong-dan")}
+              showLabel
+            />
             <PinToggle />
             <SyncBadge />
             <ThemeToggle />
-            <IconLink href="/cai-dat" label="Cài đặt" icon={Settings} active={isActive("/cai-dat")} />
+            <IconLink
+              href="/cai-dat"
+              label="Cài đặt"
+              icon={Settings}
+              active={isActive("/cai-dat")}
+              showLabel
+            />
           </div>
         </div>
       </header>
@@ -82,12 +100,27 @@ export function AppShell({ children }: { children: ReactNode }) {
             <span className="font-bold tracking-tight">Ghi chú</span>
           </Link>
           <div className="ml-auto flex items-center gap-0.5">
-            <IconLink href="/tim-kiem" label="Tìm kiếm" icon={Search} active={isActive("/tim-kiem")} />
-            <IconLink href="/huong-dan" label="Hướng dẫn" icon={BookOpen} active={isActive("/huong-dan")} />
+            <IconLink
+              href="/tim-kiem"
+              label="Tìm kiếm"
+              icon={Search}
+              active={isActive("/tim-kiem")}
+            />
+            <IconLink
+              href="/huong-dan"
+              label="Hướng dẫn"
+              icon={BookOpen}
+              active={isActive("/huong-dan")}
+            />
             <PinToggle />
             <SyncBadge />
             <ThemeToggle />
-            <IconLink href="/cai-dat" label="Cài đặt" icon={Settings} active={isActive("/cai-dat")} />
+            <IconLink
+              href="/cai-dat"
+              label="Cài đặt"
+              icon={Settings}
+              active={isActive("/cai-dat")}
+            />
           </div>
         </div>
       </header>
@@ -106,10 +139,14 @@ export function AppShell({ children }: { children: ReactNode }) {
               aria-current={isActive(path) ? "page" : undefined}
               className={cn(
                 "no-tap-highlight flex flex-1 flex-col items-center gap-0.5 py-2 text-xs transition-colors",
-                isActive(path) ? "font-semibold text-primary" : "text-muted-foreground"
+                isActive(path)
+                  ? "font-semibold text-primary"
+                  : "text-muted-foreground"
               )}
             >
-              <Icon className={cn("size-5", isActive(path) && "stroke-[2.5]")} />
+              <Icon
+                className={cn("size-5", isActive(path) && "stroke-[2.5]")}
+              />
               {label}
             </Link>
           ))}
@@ -119,16 +156,23 @@ export function AppShell({ children }: { children: ReactNode }) {
   );
 }
 
+/**
+ * `showLabel` spells the name out beside the icon once the window is wide
+ * enough (lg). A row of five bare glyphs was unreadable after a few weeks
+ * away; on a phone the tooltip has to do, but a monitor has the room.
+ */
 function IconLink({
   href,
   label,
   icon: Icon,
   active,
+  showLabel,
 }: {
   href: string;
   label: string;
   icon: typeof Search;
   active: boolean;
+  showLabel?: boolean;
 }) {
   return (
     <Link
@@ -136,13 +180,15 @@ function IconLink({
       aria-label={label}
       title={label}
       className={cn(
-        "tap flex items-center justify-center rounded-lg transition-colors",
+        "tap flex items-center justify-center gap-1.5 rounded-lg transition-colors",
+        showLabel && "lg:px-2.5",
         active
           ? "bg-primary/10 text-primary"
           : "text-muted-foreground hover:bg-accent hover:text-foreground"
       )}
     >
       <Icon className="size-[1.125rem]" />
+      {showLabel && <span className="hidden text-sm lg:inline">{label}</span>}
     </Link>
   );
 }

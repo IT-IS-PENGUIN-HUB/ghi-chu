@@ -1,8 +1,20 @@
 import { describe, expect, it } from "vitest";
-import { allocateTaskId, buildDailyList, formatDailyCode, formatTaskId, suggestProjectCode } from "./codes";
+import {
+  allocateTaskId,
+  buildDailyList,
+  formatDailyCode,
+  formatTaskId,
+  suggestProjectCode,
+} from "./codes";
 import type { Project, Task } from "./model";
 
-const ALP: Project = { code: "ALP", name: "Alpha", category: "WRK", next: 1, archived: false };
+const ALP: Project = {
+  code: "ALP",
+  name: "Alpha",
+  category: "WRK",
+  next: 1,
+  archived: false,
+};
 
 function task(id: string, created: string, extra: Partial<Task> = {}): Task {
   return {
@@ -28,7 +40,8 @@ describe("permanent ids", () => {
     // The old app numbered by list position, so both ids looked the same and
     // the permanent one silently changed. Hyphen + 4 digits vs underscore + 2.
     expect(formatTaskId("WRK", 1)).toBe("WRK-0001");
-    expect(formatDailyCode("WRK", 0)).toBe("WRK_01");
+    expect(formatDailyCode("WRK", 0)).toBe("WORK_01");
+    expect(formatDailyCode("PER", 0)).toBe("HOME_01");
     expect(formatTaskId("WRK", 1)).not.toBe(formatDailyCode("WRK", 0));
   });
 
@@ -88,25 +101,34 @@ describe("today's list", () => {
 
   it("numbers by position, oldest first", () => {
     const list = buildDailyList(tasks, "WRK");
-    expect(list.map((e) => [e.daily, e.task.id])).toEqual([
-      ["WRK_01", "ALP-0001"],
-      ["WRK_02", "ETC-0003"],
-      ["WRK_03", "BET-0002"],
+    expect(list.map(e => [e.daily, e.task.id])).toEqual([
+      ["WORK_01", "ALP-0001"],
+      ["WORK_02", "ETC-0003"],
+      ["WORK_03", "BET-0002"],
     ]);
   });
 
   it("excludes done tasks and other categories", () => {
-    expect(buildDailyList(tasks, "WRK").map((e) => e.task.id)).not.toContain("ALP-0004");
-    expect(buildDailyList(tasks, "PER").map((e) => e.task.id)).toEqual(["BANK-0005"]);
+    expect(buildDailyList(tasks, "WRK").map(e => e.task.id)).not.toContain(
+      "ALP-0004"
+    );
+    expect(buildDailyList(tasks, "PER").map(e => e.task.id)).toEqual([
+      "BANK-0005",
+    ]);
   });
 
   it("renumbers when the list changes, so codes never leave holes", () => {
-    const without = tasks.filter((t) => t.id !== "ALP-0001");
-    expect(buildDailyList(without, "WRK").map((e) => e.daily)).toEqual(["WRK_01", "WRK_02"]);
+    const without = tasks.filter(t => t.id !== "ALP-0001");
+    expect(buildDailyList(without, "WRK").map(e => e.daily)).toEqual([
+      "WORK_01",
+      "WORK_02",
+    ]);
   });
 
   it("floats starred work to the top", () => {
-    const starred = tasks.map((t) => (t.id === "BET-0002" ? { ...t, starred: true } : t));
+    const starred = tasks.map(t =>
+      t.id === "BET-0002" ? { ...t, starred: true } : t
+    );
     expect(buildDailyList(starred, "WRK")[0].task.id).toBe("BET-0002");
   });
 });

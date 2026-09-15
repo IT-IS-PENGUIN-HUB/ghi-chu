@@ -11,6 +11,7 @@ import {
 } from "@/components/ui/dialog";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
+import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
 import {
   Select,
   SelectContent,
@@ -21,6 +22,7 @@ import {
 import { Switch } from "@/components/ui/switch";
 import { suggestProjectCode } from "@/core/codes";
 import {
+  CATEGORIES,
   CATEGORY_LABEL,
   CODE_RE,
   CODE_RULE_TEXT,
@@ -37,6 +39,8 @@ const NO_FIELD = "__none__";
 export interface ProjectDialogProps {
   project: Project | null;
   defaultCategory: Category;
+  /** Pre-selected field when the dialog is opened from a field's own menu. */
+  defaultField?: string;
   fields: Field[];
   existing: Project[];
   onClose: () => void;
@@ -50,29 +54,38 @@ export interface ProjectDialogProps {
 export function ProjectDialog({
   project,
   defaultCategory,
+  defaultField,
   fields,
   existing,
   onClose,
 }: ProjectDialogProps) {
   const { tasks } = useStore();
   const editing = project !== null;
-  const existingTaskCount = tasks.filter((t) => t.project === project?.code).length;
+  const existingTaskCount = tasks.filter(
+    t => t.project === project?.code
+  ).length;
   const [name, setName] = useState(project?.name ?? "");
   const [code, setCode] = useState(project?.code ?? "");
-  const [field, setField] = useState(project?.field ?? NO_FIELD);
+  const [field, setField] = useState(
+    project?.field ?? defaultField ?? NO_FIELD
+  );
+  const [pickedCategory, setPickedCategory] = useState<Category>(
+    project?.category ?? defaultCategory
+  );
   const [archived, setArchived] = useState(project?.archived ?? false);
   const [codeTouched, setCodeTouched] = useState(editing);
 
-  const taken = existing.filter((p) => p.code !== project?.code).map((p) => p.code);
+  const taken = existing.filter(p => p.code !== project?.code).map(p => p.code);
   const effectiveCode = codeTouched
     ? normaliseCode(code)
     : suggestProjectCode(name, taken);
   const codeChanged = editing && effectiveCode !== project.code;
 
   // A field owns the group, so the group is shown as a consequence of the
-  // field rather than as a separate question the user could contradict.
-  const owner = fields.find((f) => f.code === field);
-  const category: Category = owner?.category ?? project?.category ?? defaultCategory;
+  // field rather than as a separate question the user could contradict. Only
+  // an unfiled project needs to be asked which group it belongs to.
+  const owner = fields.find(f => f.code === field);
+  const category: Category = owner?.category ?? pickedCategory;
 
   const codeError =
     effectiveCode && !CODE_RE.test(effectiveCode)
@@ -106,18 +119,21 @@ export function ProjectDialog({
       );
     } else {
       store.createProject(name.trim(), effectiveCode, category, fieldCode);
-      toast.success(`Đã tạo dự án ${name.trim()} · mã việc ${effectiveCode}-0001`);
+      toast.success(
+        `Đã tạo dự án ${name.trim()} · mã việc ${effectiveCode}-0001`
+      );
     }
     onClose();
   };
 
   return (
-    <Dialog open onOpenChange={(o) => !o && onClose()}>
+    <Dialog open onOpenChange={o => !o && onClose()}>
       <DialogContent className="sm:max-w-md">
         <DialogHeader>
           <DialogTitle>{editing ? "Sửa dự án" : "Dự án mới"}</DialogTitle>
           <DialogDescription>
-            Mã dự án là tiền tố của mọi mã việc bên trong, ví dụ {effectiveCode || "ALP"}-0042.
+            Mã dự án là tiền tố của mọi mã việc bên trong, ví dụ{" "}
+            {effectiveCode || "ALP"}-0042.
           </DialogDescription>
         </DialogHeader>
 
@@ -128,8 +144,8 @@ export function ProjectDialog({
               id="project-name"
               autoFocus
               value={name}
-              onChange={(e) => setName(e.target.value)}
-              onKeyDown={(e) => e.key === "Enter" && submit()}
+              onChange={e => setName(e.target.value)}
+              onKeyDown={e => e.key === "Enter" && submit()}
               placeholder="Alpha"
             />
           </div>
@@ -141,8 +157,10 @@ export function ProjectDialog({
                 <SelectValue />
               </SelectTrigger>
               <SelectContent>
-                <SelectItem value={NO_FIELD}>Chưa gán — phân loại sau</SelectItem>
-                {fields.map((f) => (
+                <SelectItem value={NO_FIELD}>
+                  Chưa gán — phân loại sau
+                </SelectItem>
+                {fields.map(f => (
                   <SelectItem key={f.code} value={f.code}>
                     {f.name}
                     <span className="ml-2 text-xs text-muted-foreground">
@@ -152,10 +170,29 @@ export function ProjectDialog({
                 ))}
               </SelectContent>
             </Select>
-            <p className="text-xs text-muted-foreground">
-              Nhóm: <span className="font-medium">{CATEGORY_LABEL[category]}</span>
-              {owner ? " (theo lĩnh vực đã chọn)" : ""}
-            </p>
+            {owner ? (
+              <p className="text-xs text-muted-foreground">
+                Nhóm:{" "}
+                <span className="font-medium">{CATEGORY_LABEL[category]}</span>{" "}
+                (theo lĩnh vực đã chọn)
+              </p>
+            ) : (
+              <RadioGroup
+                value={category}
+                onValueChange={v => setPickedCategory(v as Category)}
+                aria-label="Thuộc nhóm"
+                className="flex gap-4 pt-1"
+              >
+                {CATEGORIES.map(c => (
+                  <div key={c} className="flex items-center gap-2">
+                    <RadioGroupItem value={c} id={`project-cat-${c}`} />
+                    <Label htmlFor={`project-cat-${c}`} className="font-normal">
+                      Nhóm {CATEGORY_LABEL[c]}
+                    </Label>
+                  </div>
+                ))}
+              </RadioGroup>
+            )}
           </div>
 
           <div className="space-y-1.5">
@@ -163,7 +200,7 @@ export function ProjectDialog({
             <Input
               id="project-code"
               value={effectiveCode}
-              onChange={(e) => {
+              onChange={e => {
                 setCodeTouched(true);
                 setCode(e.target.value);
               }}
@@ -171,14 +208,16 @@ export function ProjectDialog({
               className="font-mono"
             />
             <p className="text-xs text-muted-foreground">{CODE_RULE_TEXT}</p>
-            {codeError && <p className="text-xs text-destructive">{codeError}</p>}
+            {codeError && (
+              <p className="text-xs text-destructive">{codeError}</p>
+            )}
             {codeChanged && !codeError && (
               <p className="rounded-lg border-l-4 border-l-amber-500 bg-amber-500/10 px-2.5 py-2 text-xs">
-                Đổi mã sẽ đánh lại mã của{" "}
-                <b>{existingTaskCount} việc</b> trong dự án này:{" "}
+                Đổi mã sẽ đánh lại mã của <b>{existingTaskCount} việc</b> trong
+                dự án này:{" "}
                 <code className="font-mono">{project.code}-0001</code> →{" "}
-                <code className="font-mono">{effectiveCode}-0001</code>. File trên GitHub
-                cũng đổi tên theo.
+                <code className="font-mono">{effectiveCode}-0001</code>. File
+                trên GitHub cũng đổi tên theo.
               </p>
             )}
           </div>
@@ -193,7 +232,11 @@ export function ProjectDialog({
                   Ẩn khỏi ô thêm nhanh, việc cũ vẫn tra cứu được.
                 </p>
               </div>
-              <Switch id="project-archived" checked={archived} onCheckedChange={setArchived} />
+              <Switch
+                id="project-archived"
+                checked={archived}
+                onCheckedChange={setArchived}
+              />
             </div>
           )}
         </div>
@@ -225,7 +268,10 @@ export function ProjectDialog({
             <Button variant="outline" onClick={onClose}>
               Huỷ
             </Button>
-            <Button onClick={submit} disabled={!name.trim() || Boolean(codeError)}>
+            <Button
+              onClick={submit}
+              disabled={!name.trim() || Boolean(codeError)}
+            >
               {editing ? "Lưu" : "Tạo"}
             </Button>
           </div>

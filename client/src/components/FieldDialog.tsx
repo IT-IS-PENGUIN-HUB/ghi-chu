@@ -32,15 +32,24 @@ export interface FieldDialogProps {
 }
 
 /** Create or rename a field — 分野A, 分野B, Cuộc sống, Học tập, anything next. */
-export function FieldDialog({ field, defaultCategory, existing, onClose }: FieldDialogProps) {
+export function FieldDialog({
+  field,
+  defaultCategory,
+  existing,
+  onClose,
+}: FieldDialogProps) {
   const editing = field !== null;
   const [name, setName] = useState(field?.name ?? "");
   const [code, setCode] = useState(field?.code ?? "");
-  const [category, setCategory] = useState<Category>(field?.category ?? defaultCategory);
+  const [category, setCategory] = useState<Category>(
+    field?.category ?? defaultCategory
+  );
   const [codeTouched, setCodeTouched] = useState(editing);
 
-  const taken = existing.filter((f) => f.code !== field?.code).map((f) => f.code);
-  const effectiveCode = codeTouched ? normaliseCode(code) : suggestProjectCode(name, taken);
+  const taken = existing.filter(f => f.code !== field?.code).map(f => f.code);
+  const effectiveCode = codeTouched
+    ? normaliseCode(code)
+    : suggestProjectCode(name, taken);
   const codeChanged = editing && effectiveCode !== field.code;
   const codeError =
     effectiveCode && !CODE_RE.test(effectiveCode)
@@ -76,12 +85,13 @@ export function FieldDialog({ field, defaultCategory, existing, onClose }: Field
   };
 
   return (
-    <Dialog open onOpenChange={(o) => !o && onClose()}>
+    <Dialog open onOpenChange={o => !o && onClose()}>
       <DialogContent className="sm:max-w-md">
         <DialogHeader>
           <DialogTitle>{editing ? "Sửa lĩnh vực" : "Lĩnh vực mới"}</DialogTitle>
           <DialogDescription>
-            Tầng giữa Nhóm và Dự án. Ví dụ: 分野A, 分野B, Cuộc sống, Học tập.
+            Một ngăn để gom các dự án cùng loại — ví dụ 積算, 積算照査, Học tập.
+            Không bắt buộc: dự án không có lĩnh vực vẫn dùng bình thường.
           </DialogDescription>
         </DialogHeader>
 
@@ -92,9 +102,9 @@ export function FieldDialog({ field, defaultCategory, existing, onClose }: Field
               id="field-name"
               autoFocus
               value={name}
-              onChange={(e) => setName(e.target.value)}
-              onKeyDown={(e) => e.key === "Enter" && submit()}
-              placeholder="分野A"
+              onChange={e => setName(e.target.value)}
+              onKeyDown={e => e.key === "Enter" && submit()}
+              placeholder="積算"
             />
           </div>
 
@@ -103,7 +113,7 @@ export function FieldDialog({ field, defaultCategory, existing, onClose }: Field
             <Input
               id="field-code"
               value={effectiveCode}
-              onChange={(e) => {
+              onChange={e => {
                 setCodeTouched(true);
                 setCode(e.target.value);
               }}
@@ -111,7 +121,9 @@ export function FieldDialog({ field, defaultCategory, existing, onClose }: Field
               className="font-mono"
             />
             <p className="text-xs text-muted-foreground">{CODE_RULE_TEXT}</p>
-            {codeError && <p className="text-xs text-destructive">{codeError}</p>}
+            {codeError && (
+              <p className="text-xs text-destructive">{codeError}</p>
+            )}
             {codeChanged && !codeError && (
               <p className="text-xs text-muted-foreground">
                 Các dự án thuộc lĩnh vực này sẽ tự trỏ sang mã mới.
@@ -123,10 +135,10 @@ export function FieldDialog({ field, defaultCategory, existing, onClose }: Field
             <Label>Thuộc nhóm</Label>
             <RadioGroup
               value={category}
-              onValueChange={(v) => setCategory(v as Category)}
+              onValueChange={v => setCategory(v as Category)}
               className="flex gap-4"
             >
-              {CATEGORIES.map((c) => (
+              {CATEGORIES.map(c => (
                 <div key={c} className="flex items-center gap-2">
                   <RadioGroupItem value={c} id={`field-cat-${c}`} />
                   <Label htmlFor={`field-cat-${c}`} className="font-normal">
@@ -148,7 +160,10 @@ export function FieldDialog({ field, defaultCategory, existing, onClose }: Field
           <Button variant="outline" onClick={onClose}>
             Huỷ
           </Button>
-          <Button onClick={submit} disabled={!name.trim() || Boolean(codeError)}>
+          <Button
+            onClick={submit}
+            disabled={!name.trim() || Boolean(codeError)}
+          >
             {editing ? "Lưu" : "Tạo"}
           </Button>
         </DialogFooter>

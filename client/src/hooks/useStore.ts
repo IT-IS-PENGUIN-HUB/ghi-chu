@@ -7,13 +7,20 @@ import { store, type Snapshot } from "@/core/store";
 
 /** Whole-store subscription. The snapshot is immutable, so React can diff it. */
 export function useStore(): Snapshot {
-  return useSyncExternalStore(store.subscribe, store.getSnapshot, store.getSnapshot);
+  return useSyncExternalStore(
+    store.subscribe,
+    store.getSnapshot,
+    store.getSnapshot
+  );
 }
 
-/** Today's list for one category, numbered WRK_01, WRK_02, … */
+/** Today's list for one category, numbered WORK_01, WORK_02, … */
 export function useDailyList(category: Category, sort: SortMode = "age") {
   const { tasks } = useStore();
-  return useMemo(() => buildDailyList(tasks, category, sort), [tasks, category, sort]);
+  return useMemo(
+    () => buildDailyList(tasks, category, sort),
+    [tasks, category, sort]
+  );
 }
 
 /**
@@ -36,9 +43,11 @@ export function useSearchIndex(): { index: SearchIndex; version: number } {
   const signature = useMemo(
     () =>
       [
-        tasks.map((t) => `${t.id}${t.done ? "1" : "0"}${t.title.length}`).join(","),
-        days.map((d) => `${d.date}:${d.body.length}`).join(","),
-        contacts.map((c) => c.phone).join(","),
+        tasks
+          .map(t => `${t.id}${t.done ? "1" : "0"}${t.title.length}`)
+          .join(","),
+        days.map(d => `${d.date}:${d.body.length}`).join(","),
+        contacts.map(c => c.phone).join(","),
       ].join("|"),
     [tasks, days, contacts]
   );
@@ -46,7 +55,7 @@ export function useSearchIndex(): { index: SearchIndex; version: number } {
   useEffect(() => {
     const id = setTimeout(() => {
       index.rebuild({ tasks, notes: days, contacts });
-      setVersion((v) => v + 1);
+      setVersion(v => v + 1);
     }, 150);
     return () => clearTimeout(id);
     // Rebuilding is keyed on the signature; the arrays are read at fire time.
@@ -68,12 +77,22 @@ export function useRecurring(): void {
 
     const run = () => {
       const snapshot = store.getSnapshot();
-      const { created, rules } = materialise(snapshot.recurring, snapshot.tasks);
-      if (!created.length && rules.every((r, i) => r.lastRun === snapshot.recurring[i]?.lastRun)) {
+      const { created, rules } = materialise(
+        snapshot.recurring,
+        snapshot.tasks
+      );
+      if (
+        !created.length &&
+        rules.every((r, i) => r.lastRun === snapshot.recurring[i]?.lastRun)
+      ) {
         return;
       }
       for (const task of created) {
-        store.addTask({ title: task.title, project: task.project, category: task.category });
+        store.addTask({
+          title: task.title,
+          project: task.project,
+          category: task.category,
+        });
       }
       store.setRecurring(rules);
     };
@@ -98,13 +117,13 @@ export function useStats() {
   const { tasks } = useStore();
   return useMemo(() => {
     const today = toDateKey(new Date());
-    const open = tasks.filter((t) => !t.done);
+    const open = tasks.filter(t => !t.done);
     const doneToday = tasks.filter(
-      (t) => t.done && t.completed?.slice(0, 10).replace(/\./g, "-") === today
+      t => t.done && t.completed?.slice(0, 10).replace(/\./g, "-") === today
     );
 
     const byCategory = Object.fromEntries(
-      CATEGORIES.map((c) => [c, open.filter((t) => t.category === c).length])
+      CATEGORIES.map(c => [c, open.filter(t => t.category === c).length])
     ) as Record<Category, number>;
 
     return {

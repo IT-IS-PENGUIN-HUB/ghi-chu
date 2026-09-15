@@ -1,9 +1,22 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
-import { ArrowUp, CheckCircle2, ChevronDown, ClockAlert, ListTodo, Plus } from "lucide-react";
+import {
+  ArrowUp,
+  CheckCircle2,
+  ChevronDown,
+  ClockAlert,
+  ListTodo,
+  Plus,
+} from "lucide-react";
 import { toast } from "sonner";
 import { QuickAdd } from "@/components/QuickAdd";
 import { TaskRow } from "@/components/TaskRow";
 import { DayNoteEditor } from "@/components/DayNoteEditor";
+import {
+  HelpButton,
+  HelpPanel,
+  useScreenHelp,
+  type HelpItem,
+} from "@/components/ScreenHelp";
 import { WelcomeCard } from "@/components/WelcomeCard";
 import {
   Collapsible,
@@ -30,18 +43,71 @@ const SORT_LABEL: Record<SortMode, string> = {
   project: "Theo dự án",
 };
 
-const WEEKDAYS = ["Chủ Nhật", "Thứ Hai", "Thứ Ba", "Thứ Tư", "Thứ Năm", "Thứ Sáu", "Thứ Bảy"];
+const WEEKDAYS = [
+  "Chủ Nhật",
+  "Thứ Hai",
+  "Thứ Ba",
+  "Thứ Tư",
+  "Thứ Năm",
+  "Thứ Sáu",
+  "Thứ Bảy",
+];
+
+const HELP: HelpItem[] = [
+  {
+    label: "Công việc / Cá nhân",
+    text: "hai nhóm việc riêng, bấm để chuyển. Số tròn là số việc chưa xong trong nhóm đó.",
+  },
+  {
+    label: "Thêm việc mới",
+    text: "gõ rồi bấm Enter. “Thuộc dự án” là nơi việc được cất (như bìa hồ sơ) — app nhớ dự án bạn dùng lần trước.",
+  },
+  {
+    label: "Ô vuông bên trái mỗi việc",
+    text: "tick khi xong. Trên điện thoại: vuốt sang phải = xong, vuốt sang trái = xoá. Lỡ tay thì bấm Hoàn tác.",
+  },
+  {
+    label: "WORK_01 / HOME_01",
+    text: (
+      <>
+        số thứ tự trong danh sách <b>hôm nay</b>, tự đánh lại mỗi sáng. Mã cố
+        định để tra cứu lâu dài (kiểu{" "}
+        <code className="font-mono">ALP-0042</code>) nằm trong menu ⋮ → Sao chép
+        mã.
+      </>
+    ),
+  },
+  {
+    label: "+3 ngày",
+    text: "việc đã nằm trong danh sách bao lâu. Đỏ là quá 7 ngày — nên làm hoặc xoá.",
+  },
+  {
+    label: "Nút ⋮ cuối dòng",
+    text: "sửa nội dung, đánh dấu ưu tiên, chuyển sang dự án khác, sao chép mã, xoá.",
+  },
+  {
+    label: "Ghi chú hôm nay",
+    text: "ghi tự do những gì không phải checklist: nội dung họp, số liệu, ý tưởng.",
+  },
+];
 
 export default function Today() {
   const { tasks, projects, fields, days, ready } = useStore();
+  const help = useScreenHelp("today");
   const [category, setCategory] = useState<Category>("WRK");
   const [sort, setSort] = useState<SortMode>("age");
   const [selected, setSelected] = useState<string | null>(null);
 
   const today = toDateKey(new Date());
-  const projectByCode = useMemo(() => new Map(projects.map((p) => [p.code, p])), [projects]);
+  const projectByCode = useMemo(
+    () => new Map(projects.map(p => [p.code, p])),
+    [projects]
+  );
 
-  const open = useMemo(() => buildDailyList(tasks, category, sort), [tasks, category, sort]);
+  const open = useMemo(
+    () => buildDailyList(tasks, category, sort),
+    [tasks, category, sort]
+  );
 
   // Only work finished today — yesterday's completions belong to the archive,
   // not to a list you are trying to clear.
@@ -49,7 +115,7 @@ export default function Today() {
     () =>
       tasks
         .filter(
-          (t) =>
+          t =>
             t.done &&
             t.category === category &&
             t.completed?.slice(0, 10).replace(/\./g, "-") === today
@@ -58,15 +124,24 @@ export default function Today() {
     [tasks, category, today]
   );
 
-  const note = days.find((d) => d.date === today)?.body ?? "";
-  const stale = open.filter((e) => ageInDays(e.task.created) >= 7).length;
-  const totalOpen = tasks.filter((t) => !t.done).length;
+  const note = days.find(d => d.date === today)?.body ?? "";
+  const stale = open.filter(e => ageInDays(e.task.created) >= 7).length;
+  const totalOpen = tasks.filter(t => !t.done).length;
 
   const onToggle = useCallback((id: string) => toggleTaskWithUndo(id), []);
-  const onRename = useCallback((id: string, title: string) => store.updateTask(id, { title }), []);
-  const onStar = useCallback((id: string, starred: boolean) => store.updateTask(id, { starred }), []);
+  const onRename = useCallback(
+    (id: string, title: string) => store.updateTask(id, { title }),
+    []
+  );
+  const onStar = useCallback(
+    (id: string, starred: boolean) => store.updateTask(id, { starred }),
+    []
+  );
   const onDelete = useCallback((id: string) => deleteTaskWithUndo(id), []);
-  const onMove = useCallback((id: string, project: string) => store.moveTask(id, project), []);
+  const onMove = useCallback(
+    (id: string, project: string) => store.moveTask(id, project),
+    []
+  );
   const onAdd = useCallback(
     (input: { title: string; project: string; starred: boolean }) => {
       const added = store.addTask(input);
@@ -88,8 +163,15 @@ export default function Today() {
   // can give. Fires only on the transition, never on load.
   const prevOpen = useRef<number | null>(null);
   useEffect(() => {
-    if (prevOpen.current !== null && prevOpen.current > 0 && open.length === 0 && doneToday.length > 0) {
-      toast.success("🎉 Xong hết việc trong nhóm này. Làm tốt lắm!", { duration: 4000 });
+    if (
+      prevOpen.current !== null &&
+      prevOpen.current > 0 &&
+      open.length === 0 &&
+      doneToday.length > 0
+    ) {
+      toast.success("🎉 Xong hết việc trong nhóm này. Làm tốt lắm!", {
+        duration: 4000,
+      });
     }
     prevOpen.current = open.length;
   }, [open.length, doneToday.length]);
@@ -97,12 +179,17 @@ export default function Today() {
   useKeyboardShortcuts({ open, selected, setSelected, onToggle });
 
   if (!ready) {
-    return <div className="py-16 text-center text-muted-foreground">Đang mở dữ liệu…</div>;
+    return (
+      <div className="py-16 text-center text-muted-foreground">
+        Đang mở dữ liệu…
+      </div>
+    );
   }
 
   const now = new Date();
   const progress = open.length + doneToday.length;
-  const percent = progress === 0 ? 0 : Math.round((doneToday.length / progress) * 100);
+  const percent =
+    progress === 0 ? 0 : Math.round((doneToday.length / progress) * 100);
 
   return (
     <div className="space-y-5">
@@ -110,33 +197,45 @@ export default function Today() {
         <div>
           <h1 className="text-3xl font-bold tracking-tight">Hôm nay</h1>
           <p className="mt-1 text-sm text-muted-foreground">
-            {WEEKDAYS[now.getDay()]}, {now.getDate()}/{now.getMonth() + 1}/{now.getFullYear()}
+            {WEEKDAYS[now.getDay()]}, {now.getDate()}/{now.getMonth() + 1}/
+            {now.getFullYear()}
           </p>
         </div>
-        {progress > 0 && (
-          <div className="flex items-center gap-3">
-            <div className="text-right">
-              <div className="text-2xl font-bold tabular-nums text-done">{percent}%</div>
-              <div className="text-xs text-muted-foreground">
-                {doneToday.length}/{progress} xong · {CATEGORY_LABEL[category]}
+        <div className="flex items-center gap-4">
+          {progress > 0 && (
+            <div className="flex items-center gap-3">
+              <div className="text-right">
+                <div className="text-2xl font-bold tabular-nums text-done">
+                  {percent}%
+                </div>
+                <div className="text-xs text-muted-foreground">
+                  {doneToday.length}/{progress} xong ·{" "}
+                  {CATEGORY_LABEL[category]}
+                </div>
+              </div>
+              <div className="h-11 w-1.5 overflow-hidden rounded-full bg-muted">
+                <div
+                  className="w-full rounded-full bg-done transition-all"
+                  style={{
+                    height: `${percent}%`,
+                    marginTop: `${100 - percent}%`,
+                  }}
+                />
               </div>
             </div>
-            <div className="h-11 w-1.5 overflow-hidden rounded-full bg-muted">
-              <div
-                className="w-full rounded-full bg-done transition-all"
-                style={{ height: `${percent}%`, marginTop: `${100 - percent}%` }}
-              />
-            </div>
-          </div>
-        )}
+          )}
+          <HelpButton {...help} />
+        </div>
       </header>
+
+      <HelpPanel {...help} items={HELP} />
 
       {totalOpen === 0 && doneToday.length === 0 && <WelcomeCard />}
 
       {/* Group switch — big, coloured, unmistakably a switch. */}
       <div className="grid grid-cols-2 gap-2">
-        {CATEGORIES.map((c) => {
-          const count = tasks.filter((t) => !t.done && t.category === c).length;
+        {CATEGORIES.map(c => {
+          const count = tasks.filter(t => !t.done && t.category === c).length;
           const active = category === c;
           return (
             <button
@@ -171,7 +270,12 @@ export default function Today() {
         })}
       </div>
 
-      <QuickAdd projects={projects} fields={fields} category={category} onAdd={onAdd} />
+      <QuickAdd
+        projects={projects}
+        fields={fields}
+        category={category}
+        onAdd={onAdd}
+      />
 
       {stale > 0 && (
         <button
@@ -181,7 +285,9 @@ export default function Today() {
         >
           <ClockAlert className="size-4 shrink-0" />
           <span className="flex-1">{stale} việc đã tồn quá 7 ngày</span>
-          <span className="text-xs font-normal opacity-80">bấm để xếp lên đầu</span>
+          <span className="text-xs font-normal opacity-80">
+            bấm để xếp lên đầu
+          </span>
         </button>
       )}
 
@@ -198,11 +304,11 @@ export default function Today() {
             {open.length > 1 && (
               <select
                 value={sort}
-                onChange={(e) => setSort(e.target.value as SortMode)}
+                onChange={e => setSort(e.target.value as SortMode)}
                 aria-label="Sắp xếp"
                 className="rounded-md border border-border bg-card px-2 py-1 text-xs text-muted-foreground"
               >
-                {(Object.keys(SORT_LABEL) as SortMode[]).map((mode) => (
+                {(Object.keys(SORT_LABEL) as SortMode[]).map(mode => (
                   <option key={mode} value={mode}>
                     {SORT_LABEL[mode]}
                   </option>
@@ -214,7 +320,7 @@ export default function Today() {
           {open.length === 0 ? (
             <EmptyState
               category={category}
-              hasAny={tasks.some((t) => t.category === category)}
+              hasAny={tasks.some(t => t.category === category)}
             />
           ) : (
             <ul className="space-y-2">
@@ -247,7 +353,7 @@ export default function Today() {
               </CollapsibleTrigger>
               <CollapsibleContent className="mt-2">
                 <ul className="space-y-2">
-                  {doneToday.map((task) => (
+                  {doneToday.map(task => (
                     <li key={task.id}>
                       <TaskRow
                         task={task}
@@ -272,7 +378,7 @@ export default function Today() {
           <DayNoteEditor
             date={today}
             value={note}
-            onChange={(body) => store.setDayNote(today, body)}
+            onChange={body => store.setDayNote(today, body)}
           />
         </div>
       </div>
@@ -281,7 +387,9 @@ export default function Today() {
       <button
         type="button"
         onClick={() => {
-          const input = document.getElementById("quick-add-input") as HTMLInputElement | null;
+          const input = document.getElementById(
+            "quick-add-input"
+          ) as HTMLInputElement | null;
           input?.scrollIntoView({ behavior: "smooth", block: "center" });
           setTimeout(() => input?.focus({ preventScroll: true }), 350);
         }}
@@ -297,7 +405,13 @@ export default function Today() {
   );
 }
 
-function EmptyState({ category, hasAny }: { category: Category; hasAny: boolean }) {
+function EmptyState({
+  category,
+  hasAny,
+}: {
+  category: Category;
+  hasAny: boolean;
+}) {
   return (
     <div
       className={cn(
@@ -310,7 +424,8 @@ function EmptyState({ category, hasAny }: { category: Category; hasAny: boolean 
           <CheckCircle2 className="mx-auto mb-2 size-7 text-done" />
           <p className="text-sm font-semibold text-done">Xong hết rồi</p>
           <p className="mt-0.5 text-xs text-muted-foreground">
-            Không còn việc {CATEGORY_LABEL[category].toLowerCase()} nào đang tồn.
+            Không còn việc {CATEGORY_LABEL[category].toLowerCase()} nào đang
+            tồn.
           </p>
         </>
       ) : (
@@ -318,8 +433,9 @@ function EmptyState({ category, hasAny }: { category: Category; hasAny: boolean 
           <ArrowUp className="mx-auto mb-2 size-6 animate-bounce text-muted-foreground" />
           <p className="text-sm font-medium">Chưa có việc nào</p>
           <p className="mt-0.5 text-xs text-muted-foreground">
-            Gõ vào ô <span className="font-medium text-foreground">“Thêm việc”</span> phía
-            trên rồi bấm Enter.
+            Gõ vào ô{" "}
+            <span className="font-medium text-foreground">“Thêm việc mới”</span>{" "}
+            phía trên rồi bấm Enter.
           </p>
         </>
       )}
@@ -357,11 +473,13 @@ function useKeyboardShortcuts({
       }
       if (e.metaKey || e.ctrlKey || e.altKey) return;
 
-      const index = open.findIndex((e2) => e2.task.id === selected);
+      const index = open.findIndex(e2 => e2.task.id === selected);
 
       if (e.key === "j" || e.key === "ArrowDown") {
         e.preventDefault();
-        setSelected(open[Math.min(index + 1, open.length - 1)]?.task.id ?? null);
+        setSelected(
+          open[Math.min(index + 1, open.length - 1)]?.task.id ?? null
+        );
       } else if (e.key === "k" || e.key === "ArrowUp") {
         e.preventDefault();
         setSelected(open[Math.max(index - 1, 0)]?.task.id ?? null);
@@ -370,7 +488,9 @@ function useKeyboardShortcuts({
         onToggle(selected);
       } else if (e.key === "n") {
         e.preventDefault();
-        (document.getElementById("quick-add-input") as HTMLInputElement | null)?.focus();
+        (
+          document.getElementById("quick-add-input") as HTMLInputElement | null
+        )?.focus();
       } else if (e.key === "Escape") {
         setSelected(null);
       }

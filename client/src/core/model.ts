@@ -13,7 +13,7 @@
  *
  *   `ALP-0042`  permanent task id. Assigned once, frozen for life. Scoped to a
  *               project, which is what makes long-term retrieval possible.
- *   `WRK_01`    position in *today's* list. Derived from order at render time,
+ *   `WORK_01`   position in *today's* list. Derived from order at render time,
  *               never stored, so it renumbers itself every day and can never
  *               drift out of sync with the file.
  */
@@ -59,6 +59,18 @@ export const CATEGORIES: Category[] = ["WRK", "PER"];
 export const CATEGORY_LABEL: Record<Category, string> = {
   WRK: "Công việc",
   PER: "Cá nhân",
+};
+
+/**
+ * Prefix of today's positional code, e.g. `WORK_01`.
+ *
+ * Display only — files keep the two-letter category above. Spelled out
+ * because `WRK_01` next to `ALP-0042` read as two cryptic ids, and a whole
+ * word tells you which list you are looking at without decoding anything.
+ */
+export const DAILY_PREFIX: Record<Category, string> = {
+  WRK: "WORK",
+  PER: "HOME",
 };
 
 /**
