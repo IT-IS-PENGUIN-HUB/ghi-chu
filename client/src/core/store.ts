@@ -33,6 +33,7 @@ import {
 } from "./markdown";
 import {
   defaultProjectFor,
+  isDefaultProject,
   toStamp,
   type Category,
   type Contact,
@@ -91,12 +92,23 @@ export interface Snapshot {
   /** Number of files with unpushed changes. Drives the sync indicator. */
   pending: number;
   syncState: SyncState;
+  /** Most recent sync failures, newest first. Shown in Cài đặt. */
+  syncErrors: SyncError[];
 }
 
 export type SyncState =
   | { status: "idle"; lastSync: number | null }
   | { status: "syncing" }
   | { status: "error"; message: string };
+
+/** One past failure, kept so a run of errors can be read back afterwards. */
+export interface SyncError {
+  at: number;
+  message: string;
+}
+
+/** Enough to see a pattern, few enough to read at a glance. */
+const SYNC_ERROR_LOG_SIZE = 5;
 
 const EMPTY: Snapshot = {
   ready: false,
@@ -109,6 +121,7 @@ const EMPTY: Snapshot = {
   settings: DEFAULT_SETTINGS,
   pending: 0,
   syncState: { status: "idle", lastSync: null },
+  syncErrors: [],
 };
 
 // --------------------------------------------------------------------------
@@ -144,10 +157,13 @@ export class Store {
       Settings | undefined;
     const lastSync = (await this.db.get("meta", "lastSync")) as
       number | undefined;
+    const syncErrors = (await this.db.get("meta", "syncErrors")) as
+      SyncError[] | undefined;
 
     this.rebuild({
       settings: { ...DEFAULT_SETTINGS, ...settings },
       syncState: { status: "idle", lastSync: lastSync ?? null },
+      syncErrors: syncErrors ?? [],
       ready: true,
     });
   }
@@ -170,12 +186,14 @@ export class Store {
     const fields = parseFieldsFile(this.read(paths.fields) ?? "");
     const fieldByCode = new Map(fields.map(f => [f.code, f]));
 
-    const registry = new Map<string, Project>();
+    // projects.md is the index; `data/tasks/<CODE>.md` is the project itself.
+    const rows = new Map<string, Project>();
     for (const p of parseProjectsFile(this.read(paths.projects) ?? "")) {
-      registry.set(p.code, p);
+      rows.set(p.code, p);
     }
 
     this.projectFiles.clear();
+    const registry = new Map<string, Project>();
     const tasks: Task[] = [];
 
     for (const [path, file] of this.files) {
@@ -188,7 +206,17 @@ export class Store {
 
       // The project file's own frontmatter wins on `next`: it sits next to the
       // ids it hands out, so it cannot lag behind them.
-      const known = registry.get(code);
+      const known = rows.get(code);
+
+      // Deleting a project deletes two things: its row above and this file.
+      // A sync can hand either half back on its own — a row another device
+      // still listed, a file it never dropped — and either half alone used to
+      // be enough to bring the whole project back from the dead. Now it takes
+      // both: a file nobody lists is a leftover, and a row with no file is a
+      // stale index entry that the next registry write drops. The exception is
+      // a file that still holds tasks, because hiding real work is the one
+      // outcome worse than a stray project.
+      if (!known && parsed.tasks.length === 0) continue;
       const merged: Project = {
         ...parsed.project,
         ...(known ? { name: known.name, archived: known.archived } : {}),
@@ -641,6 +669,12 @@ export class Store {
   deleteProject(code: string): { ok: boolean; reason?: string } {
     const project = this.projectOf(code.toUpperCase());
     if (!project) return { ok: false, reason: "Không tìm thấy dự án." };
+    if (isDefaultProject(project.code)) {
+      return {
+        ok: false,
+        reason: `"${project.name}" là ngăn mặc định — việc chưa chọn dự án rơi vào đây.`,
+      };
+    }
     if (this.tasksOf(project.code).length > 0) {
       return { ok: false, reason: "Dự án còn việc — chỉ xoá được dự án rỗng." };
     }
@@ -750,20 +784,26 @@ export class Store {
   }
 
   /** Records a successful push: clears dirty, stores the new blob SHA. */
-  markPushed(results: Array<{ path: string; sha: string | null }>): void {
-    for (const { path, sha } of results) {
+  markPushed(
+    results: Array<{ path: string; sha: string | null; content?: string }>
+  ): void {
+    for (const { path, sha, content } of results) {
       const file = this.files.get(path);
       if (!file) continue;
       if (sha === null) {
         this.files.delete(path);
         void this.db?.delete("files", path);
       } else {
-        // What we just pushed becomes the shared base for the next merge.
+        // Typing during a push used to be lost: the file was marked clean
+        // although what went up was the text from before the keystroke. The
+        // remote version still becomes the base — that part is true — but the
+        // file stays dirty so the newer text goes out on the next round.
+        const stale = content !== undefined && content !== file.content;
         this.files.set(path, {
           ...file,
           sha,
-          base: file.content,
-          dirty: false,
+          base: content ?? file.content,
+          dirty: stale,
         });
       }
     }
@@ -814,7 +854,14 @@ export class Store {
   dropMissing(keepPaths: Set<string>): void {
     const removed: string[] = [];
     for (const [path, file] of this.files) {
-      if (keepPaths.has(path) || file.dirty || file.deleted) continue;
+      if (keepPaths.has(path)) continue;
+      // Written here and not pushed yet — the remote is simply behind.
+      if (file.dirty && !file.deleted) continue;
+      // A tombstone for a path the remote no longer has is a delete that has
+      // already arrived: from another device, or from a push of ours whose
+      // answer never came back. Holding on to it would queue the deletion of a
+      // file that is not there, which GitHub refuses — and since nothing ever
+      // cleared the tombstone, every later push would fail on it too.
       this.files.delete(path);
       removed.push(path);
     }
@@ -834,6 +881,24 @@ export class Store {
     if (state.status === "idle" && state.lastSync) {
       void this.db?.put("meta", state.lastSync, "lastSync");
     }
+    // A failure that heals itself on the next edit leaves no trace otherwise,
+    // which is how "it keeps erroring" turns into a question nobody can
+    // answer. The log survives a restart for the same reason.
+    if (state.status === "error") {
+      const errors = [
+        { at: Date.now(), message: state.message },
+        ...this.snapshot.syncErrors,
+      ].slice(0, SYNC_ERROR_LOG_SIZE);
+      this.snapshot = { ...this.snapshot, syncErrors: errors };
+      void this.db?.put("meta", errors, "syncErrors");
+    }
+    this.emit();
+  }
+
+  /** Empties the failure log — the button next to it in Cài đặt. */
+  clearSyncErrors(): void {
+    this.snapshot = { ...this.snapshot, syncErrors: [] };
+    void this.db?.put("meta", [], "syncErrors");
     this.emit();
   }
 

@@ -50,7 +50,7 @@ function encodeBase64(text: string): string {
 
 function decodeBase64(base64: string): string {
   const binary = atob(base64.replace(/\s/g, ""));
-  const bytes = Uint8Array.from(binary, (c) => c.charCodeAt(0));
+  const bytes = Uint8Array.from(binary, c => c.charCodeAt(0));
   return new TextDecoder().decode(bytes);
 }
 
@@ -81,6 +81,7 @@ async function api<T>(
 
 /** Turns GitHub's failure modes into something actionable in Vietnamese. */
 function describeFailure(status: number, body: string): string {
+  const detail = githubMessage(body);
   switch (status) {
     case 401:
       return "Token không hợp lệ hoặc đã hết hạn.";
@@ -93,9 +94,37 @@ function describeFailure(status: number, body: string): string {
     case 409:
       return "Repo còn rỗng — tạo một file bất kỳ (ví dụ README) rồi thử lại.";
     case 422:
-      return "GitHub từ chối dữ liệu gửi lên.";
+      return detail
+        ? `GitHub từ chối dữ liệu gửi lên: ${detail}`
+        : "GitHub từ chối dữ liệu gửi lên.";
     default:
-      return `Lỗi GitHub ${status}.`;
+      return detail
+        ? `Lỗi GitHub ${status}: ${detail}`
+        : `Lỗi GitHub ${status}.`;
+  }
+}
+
+/**
+ * GitHub's own words for the failure.
+ *
+ * A 422 is the one status whose mapped sentence says nothing useful — it can
+ * be a bad tree entry, a stale ref, a path that is not there — and the body is
+ * where GitHub actually explains which. Anything unparseable is dropped rather
+ * than pasted into the UI as HTML.
+ */
+function githubMessage(body: string): string {
+  try {
+    const parsed = JSON.parse(body) as {
+      message?: string;
+      errors?: Array<{ message?: string; field?: string; code?: string }>;
+    };
+    const errors = (parsed.errors ?? [])
+      .map(e => e.message ?? [e.field, e.code].filter(Boolean).join(" "))
+      .filter(Boolean)
+      .join("; ");
+    return [parsed.message, errors].filter(Boolean).join(" — ");
+  } catch {
+    return "";
   }
 }
 
@@ -117,18 +146,22 @@ interface BlobResponse {
   encoding: string;
 }
 
-export async function verifyAccess(config: RepoConfig): Promise<{ defaultBranch: string }> {
-  const repo = await api<{ default_branch: string; permissions?: { push?: boolean } }>(
-    config,
-    `/repos/${config.owner}/${config.repo}`
-  );
+export async function verifyAccess(
+  config: RepoConfig
+): Promise<{ defaultBranch: string }> {
+  const repo = await api<{
+    default_branch: string;
+    permissions?: { push?: boolean };
+  }>(config, `/repos/${config.owner}/${config.repo}`);
   if (repo.permissions && repo.permissions.push === false) {
     throw new GitHubError("Token chỉ có quyền đọc — cần quyền ghi để đồng bộ.");
   }
   return { defaultBranch: repo.default_branch };
 }
 
-async function headCommit(config: RepoConfig): Promise<{ commit: string; tree: string }> {
+async function headCommit(
+  config: RepoConfig
+): Promise<{ commit: string; tree: string }> {
   const ref = await api<RefResponse>(
     config,
     `/repos/${config.owner}/${config.repo}/git/ref/heads/${encodeURIComponent(config.branch)}`
@@ -151,18 +184,28 @@ export async function listRemote(
   );
 
   if (tree.truncated) {
-    throw new GitHubError("Cây thư mục quá lớn để đọc một lần — repo này không hợp lệ cho app.");
+    throw new GitHubError(
+      "Cây thư mục quá lớn để đọc một lần — repo này không hợp lệ cho app."
+    );
   }
 
   return {
     commit: head.commit,
     files: tree.tree
-      .filter((e) => e.type === "blob" && e.path.startsWith("data/") && e.path.endsWith(".md"))
-      .map((e) => ({ path: e.path, sha: e.sha })),
+      .filter(
+        e =>
+          e.type === "blob" &&
+          e.path.startsWith("data/") &&
+          e.path.endsWith(".md")
+      )
+      .map(e => ({ path: e.path, sha: e.sha })),
   };
 }
 
-export async function fetchBlob(config: RepoConfig, sha: string): Promise<string> {
+export async function fetchBlob(
+  config: RepoConfig,
+  sha: string
+): Promise<string> {
   const blob = await api<BlobResponse>(
     config,
     `/repos/${config.owner}/${config.repo}/git/blobs/${sha}`
@@ -173,8 +216,12 @@ export async function fetchBlob(config: RepoConfig, sha: string): Promise<string
 // ------------------------------------------------------------------- write --
 
 export interface PushResult {
-  /** Blob SHA per pushed path; null means the file was deleted. */
-  files: Array<{ path: string; sha: string | null }>;
+  /**
+   * Blob SHA per pushed path; null means the file was deleted. `content` is
+   * the exact text that went up, so the store can tell whether the file was
+   * edited again while the push was in flight.
+   */
+  files: Array<{ path: string; sha: string | null; content?: string }>;
   commit: string;
 }
 
@@ -194,21 +241,24 @@ export async function push(
   const head = await headCommit(config);
   if (expectedCommit && head.commit !== expectedCommit) return null;
 
-  const writes = changes.filter((f) => !f.deleted);
-  const deletes = changes.filter((f) => f.deleted);
+  const writes = changes.filter(f => !f.deleted);
+  const deletes = changes.filter(f => f.deleted);
 
   // Blobs first so the tree can reference them by SHA.
   const blobs = await Promise.all(
-    writes.map(async (file) => {
+    writes.map(async file => {
       const blob = await api<{ sha: string }>(
         config,
         `/repos/${config.owner}/${config.repo}/git/blobs`,
         {
           method: "POST",
-          body: JSON.stringify({ content: encodeBase64(file.content), encoding: "base64" }),
+          body: JSON.stringify({
+            content: encodeBase64(file.content),
+            encoding: "base64",
+          }),
         }
       );
-      return { path: file.path, sha: blob.sha };
+      return { path: file.path, sha: blob.sha, content: file.content };
     })
   );
 
@@ -220,9 +270,19 @@ export async function push(
       body: JSON.stringify({
         base_tree: head.tree,
         tree: [
-          ...blobs.map((b) => ({ path: b.path, mode: "100644", type: "blob", sha: b.sha })),
+          ...blobs.map(b => ({
+            path: b.path,
+            mode: "100644",
+            type: "blob",
+            sha: b.sha,
+          })),
           // A null sha removes the path from the tree.
-          ...deletes.map((d) => ({ path: d.path, mode: "100644", type: "blob", sha: null })),
+          ...deletes.map(d => ({
+            path: d.path,
+            mode: "100644",
+            type: "blob",
+            sha: null,
+          })),
         ],
       }),
     }
@@ -245,10 +305,7 @@ export async function push(
 
   return {
     commit: commit.sha,
-    files: [
-      ...blobs.map((b) => ({ path: b.path, sha: b.sha })),
-      ...deletes.map((d) => ({ path: d.path, sha: null })),
-    ],
+    files: [...blobs, ...deletes.map(d => ({ path: d.path, sha: null }))],
   };
 }
 

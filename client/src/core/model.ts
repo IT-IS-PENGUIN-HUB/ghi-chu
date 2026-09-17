@@ -92,6 +92,17 @@ export function defaultProjectFor(category: Category): string {
 }
 
 /**
+ * True for the two catch-all projects. They are where a task with no project
+ * lands, so they are the one thing the delete button must refuse: remove the
+ * bucket and the next quick-added task has nowhere to go.
+ */
+export function isDefaultProject(code: string): boolean {
+  return (Object.values(DEFAULT_PROJECTS) as string[]).includes(
+    code.toUpperCase()
+  );
+}
+
+/**
  * A field of work sitting between the category and the project — 分野A,
  * 分野B, Cuộc sống, Học tập. Free to add, rename and remove: the set is
  * expected to grow as new lines of work appear.

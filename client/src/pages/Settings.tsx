@@ -32,8 +32,16 @@ import { resetSyncState, syncNow } from "@/core/sync";
 import { useStore } from "@/hooks/useStore";
 
 export default function Settings() {
-  const { settings, pending, syncState, tasks, projects, days, fields } =
-    useStore();
+  const {
+    settings,
+    pending,
+    syncState,
+    syncErrors,
+    tasks,
+    projects,
+    days,
+    fields,
+  } = useStore();
   const [owner, setOwner] = useState(settings.owner);
   const [repo, setRepo] = useState(settings.repo);
   const [branch, setBranch] = useState(settings.branch);
@@ -285,6 +293,44 @@ export default function Settings() {
           <p className="rounded-lg border border-destructive/30 bg-destructive/5 px-3 py-2 text-sm text-destructive">
             {syncState.message}
           </p>
+        )}
+
+        {/* A failure disappears the moment the next edit retries, so "sao lỗi
+            đồng bộ suốt vậy?" had nothing left to look at. These are the last
+            five, kept across restarts, with the exact sentence GitHub sent. */}
+        {syncErrors.length > 0 && (
+          <div className="space-y-1.5 rounded-lg border border-border px-3 py-2.5">
+            <div className="flex items-center justify-between gap-2">
+              <p className="text-xs font-medium">
+                {syncErrors.length} lần đồng bộ hỏng gần đây
+              </p>
+              <button
+                type="button"
+                onClick={() => store.clearSyncErrors()}
+                className="text-xs text-muted-foreground underline-offset-2 hover:underline"
+              >
+                Xoá nhật ký
+              </button>
+            </div>
+            <ul className="space-y-1">
+              {syncErrors.map(error => (
+                <li
+                  key={error.at}
+                  className="flex gap-2 text-xs text-muted-foreground"
+                >
+                  <span className="shrink-0 tabular-nums">
+                    {new Date(error.at).toLocaleString("vi-VN", {
+                      day: "2-digit",
+                      month: "2-digit",
+                      hour: "2-digit",
+                      minute: "2-digit",
+                    })}
+                  </span>
+                  <span className="min-w-0 break-words">{error.message}</span>
+                </li>
+              ))}
+            </ul>
+          </div>
         )}
       </section>
 

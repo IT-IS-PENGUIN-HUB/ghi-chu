@@ -7,7 +7,13 @@
  * brought back to the front or the network returns. An untouched app makes
  * zero requests and burns no CPU.
  */
-import { commitMessage, fetchBlob, listRemote, push, type RepoConfig } from "./github";
+import {
+  commitMessage,
+  fetchBlob,
+  listRemote,
+  push,
+  type RepoConfig,
+} from "./github";
 import { mergeFile } from "./merge";
 import { store } from "./store";
 
@@ -44,7 +50,9 @@ export function resetSyncState(): void {
  * Runs as a single sequence so a merge is always computed against the version
  * the push is about to overwrite.
  */
-export async function syncNow(options: { force?: boolean } = {}): Promise<void> {
+export async function syncNow(
+  options: { force?: boolean } = {}
+): Promise<void> {
   const repo = config();
   if (!repo) return;
   if (running) return running;
@@ -52,8 +60,8 @@ export async function syncNow(options: { force?: boolean } = {}): Promise<void> 
   running = (async () => {
     store.setSyncState({ status: "syncing" });
     try {
-      await pull(repo, options.force ?? false);
-      await pushPending(repo);
+      await step("Tải về", () => pull(repo, options.force ?? false));
+      await step("Đẩy lên", () => pushPending(repo));
       lastPullAt = Date.now();
       store.setSyncState({ status: "idle", lastSync: Date.now() });
     } catch (error) {
@@ -69,6 +77,22 @@ export async function syncNow(options: { force?: boolean } = {}): Promise<void> 
   return running;
 }
 
+/**
+ * Names the half of the sync that failed.
+ *
+ * "Lỗi GitHub 422" on its own says nothing about what to check; "Đẩy lên: …"
+ * versus "Tải về: …" is the difference between a token that cannot write and a
+ * repo that cannot be read.
+ */
+async function step<T>(phase: string, run: () => Promise<T>): Promise<T> {
+  try {
+    return await run();
+  } catch (error) {
+    const message = error instanceof Error ? error.message : String(error);
+    throw new Error(`${phase}: ${message}`);
+  }
+}
+
 async function pull(repo: RepoConfig, force: boolean): Promise<void> {
   const { commit, files: remoteList } = await listRemote(repo);
 
@@ -76,27 +100,31 @@ async function pull(repo: RepoConfig, force: boolean): Promise<void> {
   if (!force && commit === knownCommit) return;
   knownCommit = commit;
 
-  const local = new Map(store.allFiles().map((f) => [f.path, f]));
-  const remotePaths = new Set(remoteList.map((f) => f.path));
+  const local = new Map(store.allFiles().map(f => [f.path, f]));
+  const remotePaths = new Set(remoteList.map(f => f.path));
 
   const fresh: Array<{ path: string; content: string; sha: string }> = [];
-  const merged: Array<{ path: string; content: string; sha: string; base: string }> = [];
+  const merged: Array<{
+    path: string;
+    content: string;
+    sha: string;
+    base: string;
+  }> = [];
 
   for (const entry of remoteList) {
     const mine = local.get(entry.path);
     // Same blob SHA means byte-identical content; skip the download.
     if (mine && mine.sha === entry.sha && !mine.dirty) continue;
 
+    // Deleted here, still present there: the delete is pending and wins on
+    // the next push. Asked before the download, because fetching a file we are
+    // about to remove is a request that can only cost time and fail.
+    if (mine?.deleted) continue;
+
     const content = await fetchBlob(repo, entry.sha);
 
-    if (!mine || (!mine.dirty && !mine.deleted)) {
+    if (!mine || !mine.dirty) {
       fresh.push({ path: entry.path, content, sha: entry.sha });
-      continue;
-    }
-
-    if (mine.deleted) {
-      // Deleted here, still present there: the delete is pending and wins on
-      // the next push, so leave the tombstone alone.
       continue;
     }
 
@@ -106,7 +134,12 @@ async function pull(repo: RepoConfig, force: boolean): Promise<void> {
       local: mine.content,
       remote: content,
     });
-    merged.push({ path: entry.path, content: result.content, sha: entry.sha, base: content });
+    merged.push({
+      path: entry.path,
+      content: result.content,
+      sha: entry.sha,
+      base: content,
+    });
   }
 
   if (fresh.length) store.applyRemote(fresh);
@@ -128,7 +161,12 @@ async function pushPending(repo: RepoConfig): Promise<void> {
     // next scheduled push carries the reconciled version.
     knownCommit = null;
     await pull(repo, true);
-    const retry = await push(repo, store.dirtyFiles(), knownCommit, commitMessage(store.dirtyFiles()));
+    const retry = await push(
+      repo,
+      store.dirtyFiles(),
+      knownCommit,
+      commitMessage(store.dirtyFiles())
+    );
     if (retry) {
       knownCommit = retry.commit;
       store.markPushed(retry.files);
