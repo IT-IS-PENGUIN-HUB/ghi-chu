@@ -75,11 +75,11 @@ export function FieldDialog({
       toast.success(
         codeChanged
           ? `Đã đổi mã ${field.code} → ${effectiveCode}`
-          : `Đã cập nhật lĩnh vực ${name.trim()}`
+          : `Đã cập nhật nhóm ${name.trim()}`
       );
     } else {
       store.createField(name.trim(), effectiveCode, category);
-      toast.success(`Đã tạo lĩnh vực ${name.trim()}`);
+      toast.success(`Đã tạo nhóm ${name.trim()}`);
     }
     onClose();
   };
@@ -88,16 +88,16 @@ export function FieldDialog({
     <Dialog open onOpenChange={o => !o && onClose()}>
       <DialogContent className="sm:max-w-md">
         <DialogHeader>
-          <DialogTitle>{editing ? "Sửa lĩnh vực" : "Lĩnh vực mới"}</DialogTitle>
+          <DialogTitle>{editing ? "Sửa nhóm" : "Nhóm mới"}</DialogTitle>
           <DialogDescription>
             Một ngăn để gom các dự án cùng loại — ví dụ 積算, 積算照査, Học tập.
-            Không bắt buộc: dự án không có lĩnh vực vẫn dùng bình thường.
+            Không bắt buộc: dự án không thuộc nhóm nào vẫn dùng bình thường.
           </DialogDescription>
         </DialogHeader>
 
         <div className="space-y-4">
           <div className="space-y-1.5">
-            <Label htmlFor="field-name">Tên lĩnh vực</Label>
+            <Label htmlFor="field-name">Tên nhóm</Label>
             <Input
               id="field-name"
               autoFocus
@@ -126,13 +126,13 @@ export function FieldDialog({
             )}
             {codeChanged && !codeError && (
               <p className="text-xs text-muted-foreground">
-                Các dự án thuộc lĩnh vực này sẽ tự trỏ sang mã mới.
+                Các dự án thuộc nhóm này sẽ tự trỏ sang mã mới.
               </p>
             )}
           </div>
 
           <div className="space-y-2">
-            <Label>Thuộc nhóm</Label>
+            <Label>Thuộc phạm trù</Label>
             <RadioGroup
               value={category}
               onValueChange={v => setCategory(v as Category)}
@@ -149,7 +149,7 @@ export function FieldDialog({
             </RadioGroup>
             {editing && category !== field.category && (
               <p className="text-xs text-amber-600 dark:text-amber-400">
-                Đổi nhóm sẽ chuyển toàn bộ dự án trong lĩnh vực này sang{" "}
+                Đổi phạm trù sẽ chuyển toàn bộ dự án trong nhóm này sang{" "}
                 {CATEGORY_LABEL[category]}.
               </p>
             )}

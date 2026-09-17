@@ -35,17 +35,19 @@ export default function Guide() {
       <Section icon={CheckSquare} title="Thêm việc" accent="wrk">
         <ol className="space-y-2.5">
           <Step n={1}>
-            Ở màn <b>Hôm nay</b>, chọn nhóm <Chip color="wrk">Công việc</Chip>{" "}
-            hoặc <Chip color="per">Cá nhân</Chip>.
+            Ở màn <b>Hôm nay</b>, chọn phạm trù{" "}
+            <Chip color="wrk">Công việc</Chip> hoặc{" "}
+            <Chip color="per">Cá nhân</Chip> (hoặc <b>Tất cả</b> để xem chung).
           </Step>
           <Step n={2}>
             Gõ nội dung vào ô lớn có chữ <b>“Thêm việc…”</b>, rồi bấm{" "}
             <Kbd>Enter</Kbd> hoặc nút <b>Thêm</b>.
           </Step>
           <Step n={3}>
-            Muốn xếp việc vào dự án nào thì chọn ở ô <b>“Thuộc dự án”</b> ngay
-            dưới. App nhớ dự án bạn dùng lần trước nên thường không phải chọn
-            lại.
+            Chọn nơi cất việc theo hai bước: ô <b>“Nhóm”</b> rồi ô{" "}
+            <b>“Dự án”</b> (chỉ hiện dự án trong nhóm đã chọn). Chưa có? Bấm{" "}
+            <b>“＋ Tạo nhóm mới…”</b> hoặc <b>“＋ Tạo dự án mới…”</b> ngay trong
+            ô đó — không phải rời màn Hôm nay. App nhớ lựa chọn lần trước.
           </Step>
         </ol>
         <Tip>
@@ -134,15 +136,15 @@ export default function Guide() {
 
       <Section
         icon={FolderTree}
-        title="Phân cấp: Nhóm → Lĩnh vực → Dự án → Việc"
+        title="Phân cấp: Phạm trù → Nhóm → Dự án → Việc"
         accent="wrk"
       >
         <p className="mb-3">
           Nghĩ như một <b>tủ hồ sơ</b>: tủ → ngăn kéo → bìa hồ sơ → tờ giấy.
         </p>
         <pre className="overflow-x-auto rounded-lg bg-muted p-3 text-xs leading-relaxed">
-          {`Công việc                  ← Nhóm: 2 tủ lớn, cố định (Công việc / Cá nhân)
- └ 積算                    ← Lĩnh vực: ngăn gom các dự án cùng loại (không bắt buộc)
+          {`Công việc                  ← Phạm trù: 2 tủ lớn, cố định (Công việc / Cá nhân)
+ └ 積算                    ← Nhóm: ngăn gom các dự án cùng loại (không bắt buộc)
     └ Alpha 県道改良        ← Dự án: một 案件 cụ thể
        └ ALP-0042          ← Việc: cái bạn gõ hằng ngày
 
@@ -165,13 +167,13 @@ Cá nhân
             trong, bấm <b>⋮</b> cuối dòng để thêm/sửa/xoá.
           </Bullet>
           <Bullet>
-            Dự án chưa xếp vào lĩnh vực nào nằm trong ngăn{" "}
-            <b>“Chưa xếp vào lĩnh vực”</b> và dùng bình thường — lĩnh vực chỉ để
-            gọn danh sách khi có nhiều dự án.
+            Dự án chưa xếp vào nhóm nào nằm trong ngăn{" "}
+            <b>“Chưa xếp vào nhóm”</b> và dùng bình thường — nhóm chỉ để gọn
+            danh sách khi có nhiều dự án.
           </Bullet>
           <Bullet>
-            Xoá lĩnh vực <b>không xoá việc nào</b>; các dự án bên trong chuyển
-            về ngăn “Chưa xếp”.
+            Xoá nhóm <b>không xoá việc nào</b>; các dự án bên trong chuyển về
+            ngăn “Chưa xếp”.
           </Bullet>
           <Bullet>
             Mã dự án (ví dụ{" "}

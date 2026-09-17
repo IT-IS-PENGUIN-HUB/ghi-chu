@@ -7,7 +7,7 @@ import { cn } from "@/lib/utils";
 const DISMISSED_KEY = "welcome-dismissed";
 
 const STEPS = [
-  "Chọn nhóm: Công việc hay Cá nhân",
+  "Chọn phạm trù: Công việc hay Cá nhân",
   "Gõ việc vào ô bên dưới rồi bấm Enter",
   "Xong việc thì tick vào ô vuông bên trái",
 ];

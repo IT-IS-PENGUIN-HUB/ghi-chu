@@ -89,15 +89,6 @@ function TaskRowInner({
 
   const age = ageInDays(task.created);
 
-  // The left edge colour is set inline rather than with a `border-l-<colour>`
-  // class: tailwind-merge does not know `wrk`/`per`/`done` are colours, so it
-  // treats that class as conflicting with `border-l-4` and silently drops it.
-  const edge = task.done
-    ? "var(--done)"
-    : task.category === "WRK"
-      ? "var(--wrk)"
-      : "var(--per)";
-
   // ------------------------------------------------------------- swipe -----
   // Swipe right = done, swipe left = delete — the pattern every major todo
   // app trained people on. `touch-action: pan-y` leaves vertical scrolling to
@@ -167,20 +158,20 @@ function TaskRowInner({
       <div
         data-task-id={task.id}
         style={{
-          borderLeftColor: edge,
           transform: dragX ? `translateX(${dragX}px)` : undefined,
           touchAction: "pan-y",
         }}
         className={cn(
-          // A coloured left edge tells you the group at a glance without reading
-          // anything, which is what makes a long mixed list scannable.
-          "group flex items-start gap-2 rounded-xl border border-l-4 py-2.5 pl-1 pr-3 shadow-sm transition-colors no-tap-highlight",
+          // A soft whole-row wash plus a matching border tells you the group at
+          // a glance without reading anything — what makes a long mixed list
+          // scannable — without the hard left band, which read as clutter.
+          "group flex items-start gap-2 rounded-xl border py-2.5 pl-2.5 pr-3 shadow-sm transition-colors no-tap-highlight",
           snapping && "transition-transform duration-200",
           task.done
-            ? "border-border/60 bg-done-soft/50"
+            ? "border-border/60 bg-done-soft/40"
             : task.category === "WRK"
-              ? "border-border bg-card hover:border-wrk/50"
-              : "border-border bg-card hover:border-per/50",
+              ? "border-wrk-border bg-wrk-soft/40 hover:bg-wrk-soft/70"
+              : "border-per-border bg-per-soft/40 hover:bg-per-soft/70",
           selected && "ring-2 ring-ring ring-offset-1 ring-offset-background"
         )}
         onClick={() => onFocus?.(task.id)}

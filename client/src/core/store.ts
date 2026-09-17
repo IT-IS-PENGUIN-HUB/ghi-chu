@@ -140,8 +140,10 @@ export class Store {
     for (const file of await this.db.getAll("files")) {
       this.files.set(file.path, file as StoredFile);
     }
-    const settings = (await this.db.get("meta", "settings")) as Settings | undefined;
-    const lastSync = (await this.db.get("meta", "lastSync")) as number | undefined;
+    const settings = (await this.db.get("meta", "settings")) as
+      Settings | undefined;
+    const lastSync = (await this.db.get("meta", "lastSync")) as
+      number | undefined;
 
     this.rebuild({
       settings: { ...DEFAULT_SETTINGS, ...settings },
@@ -166,7 +168,7 @@ export class Store {
   /** Re-derives the whole model from `this.files`. Cheap; a year is ~400 files. */
   private rebuild(patch: Partial<Snapshot> = {}): void {
     const fields = parseFieldsFile(this.read(paths.fields) ?? "");
-    const fieldByCode = new Map(fields.map((f) => [f.code, f]));
+    const fieldByCode = new Map(fields.map(f => [f.code, f]));
 
     const registry = new Map<string, Project>();
     for (const p of parseProjectsFile(this.read(paths.projects) ?? "")) {
@@ -203,7 +205,8 @@ export class Store {
 
       // Category lives on the project, not the task line, so a task always
       // reflects the bucket its project currently sits in.
-      for (const t of parsed.tasks) tasks.push({ ...t, category: merged.category });
+      for (const t of parsed.tasks)
+        tasks.push({ ...t, category: merged.category });
     }
 
     const days: DayNote[] = [];
@@ -219,8 +222,12 @@ export class Store {
 
     this.snapshot = {
       ...this.snapshot,
-      fields: fields.sort((a, b) => a.category.localeCompare(b.category) || a.order - b.order),
-      projects: [...registry.values()].sort((a, b) => a.code.localeCompare(b.code)),
+      fields: fields.sort(
+        (a, b) => a.category.localeCompare(b.category) || a.order - b.order
+      ),
+      projects: [...registry.values()].sort((a, b) =>
+        a.code.localeCompare(b.code)
+      ),
       tasks,
       days,
       contacts: parseContactsFile(this.read(paths.contacts) ?? ""),
@@ -240,7 +247,8 @@ export class Store {
   private write(entries: Array<{ path: string; content: string }>): void {
     for (const { path, content } of entries) {
       const existing = this.files.get(path);
-      if (existing && existing.content === content && !existing.deleted) continue;
+      if (existing && existing.content === content && !existing.deleted)
+        continue;
       this.files.set(path, {
         path,
         content,
@@ -250,7 +258,7 @@ export class Store {
         deleted: false,
       });
     }
-    this.persist(entries.map((e) => e.path));
+    this.persist(entries.map(e => e.path));
     this.rebuild();
   }
 
@@ -262,7 +270,12 @@ export class Store {
       this.files.delete(path);
       void this.db?.delete("files", path);
     } else {
-      this.files.set(path, { ...existing, dirty: true, deleted: true, content: "" });
+      this.files.set(path, {
+        ...existing,
+        dirty: true,
+        deleted: true,
+        content: "",
+      });
       this.persist([path]);
     }
     this.rebuild();
@@ -292,20 +305,26 @@ export class Store {
   }
 
   private tasksOf(code: string): Task[] {
-    return this.snapshot.tasks.filter((t) => t.project === code);
+    return this.snapshot.tasks.filter(t => t.project === code);
   }
 
   private projectOf(code: string): Project | undefined {
-    return this.snapshot.projects.find((p) => p.code === code);
+    return this.snapshot.projects.find(p => p.code === code);
   }
 
   /** Rewrites projects.md plus the given project files in one batch. */
-  private writeProjects(projects: Project[], projectFiles: Array<{ project: Project; tasks: Task[] }>): void {
-    const merged = new Map(this.snapshot.projects.map((p) => [p.code, p]));
+  private writeProjects(
+    projects: Project[],
+    projectFiles: Array<{ project: Project; tasks: Task[] }>
+  ): void {
+    const merged = new Map(this.snapshot.projects.map(p => [p.code, p]));
     for (const p of projects) merged.set(p.code, p);
 
     this.write([
-      { path: paths.projects, content: serializeProjectsFile([...merged.values()]) },
+      {
+        path: paths.projects,
+        content: serializeProjectsFile([...merged.values()]),
+      },
       ...projectFiles.map(({ project, tasks }) => ({
         path: paths.project(project.code),
         content: this.projectFileContent(project, tasks),
@@ -321,7 +340,7 @@ export class Store {
       code: code.toUpperCase(),
       name: name.trim() || code.toUpperCase(),
       category,
-      order: fields.filter((f) => f.category === category).length + 1,
+      order: fields.filter(f => f.category === category).length + 1,
     };
     this.write([
       { path: paths.fields, content: serializeFieldsFile([...fields, field]) },
@@ -330,22 +349,22 @@ export class Store {
   }
 
   updateField(code: string, patch: Partial<Omit<Field, "code">>): void {
-    const fields = this.snapshot.fields.map((f) =>
+    const fields = this.snapshot.fields.map(f =>
       f.code === code ? { ...f, ...patch } : f
     );
-    const changed = fields.find((f) => f.code === code);
+    const changed = fields.find(f => f.code === code);
     if (!changed) return;
 
     // Moving a field to the other group moves its projects too, so the tree
     // never ends up with a work project hanging under a personal field.
-    const affected = this.snapshot.projects.filter((p) => p.field === code);
-    const updated = affected.map((p) => ({ ...p, category: changed.category }));
+    const affected = this.snapshot.projects.filter(p => p.field === code);
+    const updated = affected.map(p => ({ ...p, category: changed.category }));
 
     this.write([{ path: paths.fields, content: serializeFieldsFile(fields) }]);
     if (updated.length) {
       this.writeProjects(
         updated,
-        updated.map((project) => ({ project, tasks: this.tasksOf(project.code) }))
+        updated.map(project => ({ project, tasks: this.tasksOf(project.code) }))
       );
     }
   }
@@ -355,10 +374,10 @@ export class Store {
    * deleting a label must never delete the work filed under it.
    */
   deleteField(code: string): void {
-    const fields = this.snapshot.fields.filter((f) => f.code !== code);
+    const fields = this.snapshot.fields.filter(f => f.code !== code);
     const orphaned = this.snapshot.projects
-      .filter((p) => p.field === code)
-      .map((p) => {
+      .filter(p => p.field === code)
+      .map(p => {
         const next = { ...p };
         delete next.field;
         return next;
@@ -368,15 +387,20 @@ export class Store {
     if (orphaned.length) {
       this.writeProjects(
         orphaned,
-        orphaned.map((project) => ({ project, tasks: this.tasksOf(project.code) }))
+        orphaned.map(project => ({
+          project,
+          tasks: this.tasksOf(project.code),
+        }))
       );
     }
   }
 
   reorderFields(category: Category, orderedCodes: string[]): void {
     const rank = new Map(orderedCodes.map((c, i) => [c, i + 1]));
-    const fields = this.snapshot.fields.map((f) =>
-      f.category === category && rank.has(f.code) ? { ...f, order: rank.get(f.code)! } : f
+    const fields = this.snapshot.fields.map(f =>
+      f.category === category && rank.has(f.code)
+        ? { ...f, order: rank.get(f.code)! }
+        : f
     );
     this.write([{ path: paths.fields, content: serializeFieldsFile(fields) }]);
   }
@@ -393,24 +417,28 @@ export class Store {
    * quoted somewhere else changes. That is the trade for being able to fix a
    * typo, and the dialog says so before you confirm.
    */
-  renameProjectCode(oldCode: string, newCode: string): { ok: boolean; reason?: string } {
+  renameProjectCode(
+    oldCode: string,
+    newCode: string
+  ): { ok: boolean; reason?: string } {
     const from = oldCode.toUpperCase();
     const to = newCode.toUpperCase();
     if (from === to) return { ok: true };
 
     const project = this.projectOf(from);
     if (!project) return { ok: false, reason: "Không tìm thấy dự án." };
-    if (this.projectOf(to)) return { ok: false, reason: `Mã ${to} đã được dùng.` };
+    if (this.projectOf(to))
+      return { ok: false, reason: `Mã ${to} đã được dùng.` };
 
     const renamed: Project = { ...project, code: to };
-    const tasks = this.tasksOf(from).map((t) => ({
+    const tasks = this.tasksOf(from).map(t => ({
       ...t,
       id: `${to}-${t.id.split("-")[1] ?? "0001"}`,
       project: to,
     }));
 
     const registry = this.snapshot.projects
-      .filter((p) => p.code !== from)
+      .filter(p => p.code !== from)
       .concat(renamed);
 
     const writes = [
@@ -426,11 +454,11 @@ export class Store {
     ];
 
     const rules = this.snapshot.recurring;
-    if (rules.some((r) => r.project === from)) {
+    if (rules.some(r => r.project === from)) {
       writes.push({
         path: paths.recurring,
         content: serializeRecurringFile(
-          rules.map((r) => (r.project === from ? { ...r, project: to } : r))
+          rules.map(r => (r.project === from ? { ...r, project: to } : r))
         ),
       });
     }
@@ -443,29 +471,32 @@ export class Store {
   }
 
   /** Changes a field's code, repointing every project that referenced it. */
-  renameFieldCode(oldCode: string, newCode: string): { ok: boolean; reason?: string } {
+  renameFieldCode(
+    oldCode: string,
+    newCode: string
+  ): { ok: boolean; reason?: string } {
     const from = oldCode.toUpperCase();
     const to = newCode.toUpperCase();
     if (from === to) return { ok: true };
 
-    const field = this.snapshot.fields.find((f) => f.code === from);
-    if (!field) return { ok: false, reason: "Không tìm thấy lĩnh vực." };
-    if (this.snapshot.fields.some((f) => f.code === to)) {
+    const field = this.snapshot.fields.find(f => f.code === from);
+    if (!field) return { ok: false, reason: "Không tìm thấy nhóm." };
+    if (this.snapshot.fields.some(f => f.code === to)) {
       return { ok: false, reason: `Mã ${to} đã được dùng.` };
     }
 
-    const fields = this.snapshot.fields.map((f) =>
+    const fields = this.snapshot.fields.map(f =>
       f.code === from ? { ...f, code: to } : f
     );
     const moved = this.snapshot.projects
-      .filter((p) => p.field === from)
-      .map((p) => ({ ...p, field: to }));
+      .filter(p => p.field === from)
+      .map(p => ({ ...p, field: to }));
 
     this.write([{ path: paths.fields, content: serializeFieldsFile(fields) }]);
     if (moved.length) {
       this.writeProjects(
         moved,
-        moved.map((project) => ({ project, tasks: this.tasksOf(project.code) }))
+        moved.map(project => ({ project, tasks: this.tasksOf(project.code) }))
       );
     }
     return { ok: true };
@@ -479,7 +510,9 @@ export class Store {
   ): Project {
     // The field decides the group when one is given — that is the whole point
     // of the extra level.
-    const owner = field ? this.snapshot.fields.find((f) => f.code === field) : undefined;
+    const owner = field
+      ? this.snapshot.fields.find(f => f.code === field)
+      : undefined;
     const project: Project = {
       code: code.toUpperCase(),
       name: name.trim() || code.toUpperCase(),
@@ -492,7 +525,10 @@ export class Store {
     return project;
   }
 
-  updateProject(code: string, patch: Partial<Omit<Project, "code" | "next">>): void {
+  updateProject(
+    code: string,
+    patch: Partial<Omit<Project, "code" | "next">>
+  ): void {
     const project = this.projectOf(code);
     if (!project) return;
 
@@ -500,11 +536,14 @@ export class Store {
     if (patch.field === undefined && "field" in patch) delete updated.field;
 
     const owner = updated.field
-      ? this.snapshot.fields.find((f) => f.code === updated.field)
+      ? this.snapshot.fields.find(f => f.code === updated.field)
       : undefined;
     if (owner) updated.category = owner.category;
 
-    this.writeProjects([updated], [{ project: updated, tasks: this.tasksOf(code) }]);
+    this.writeProjects(
+      [updated],
+      [{ project: updated, tasks: this.tasksOf(code) }]
+    );
   }
 
   addTask(input: {
@@ -522,7 +561,8 @@ export class Store {
 
     const category = input.category ?? "WRK";
     const code = (input.project || defaultProjectFor(category)).toUpperCase();
-    const project = this.projectOf(code) ?? this.createProject(code, code, category);
+    const project =
+      this.projectOf(code) ?? this.createProject(code, code, category);
 
     const { id, project: advanced } = allocateTaskId(project);
     const task: Task = {
@@ -538,14 +578,18 @@ export class Store {
       ...(allTags.length ? { tags: allTags } : {}),
     };
 
-    this.writeProjects([advanced], [
-      { project: advanced, tasks: [...this.tasksOf(advanced.code), task] },
-    ]);
+    this.writeProjects(
+      [advanced],
+      [{ project: advanced, tasks: [...this.tasksOf(advanced.code), task] }]
+    );
     return task;
   }
 
-  updateTask(id: string, patch: Partial<Pick<Task, "title" | "starred" | "tags">>): void {
-    this.mutateTask(id, (t) => {
+  updateTask(
+    id: string,
+    patch: Partial<Pick<Task, "title" | "starred" | "tags">>
+  ): void {
+    this.mutateTask(id, t => {
       if (patch.title === undefined) return { ...t, ...patch };
       // Editing a title can introduce or remove inline #tags; keep the two in
       // step rather than letting them drift apart.
@@ -559,7 +603,7 @@ export class Store {
   }
 
   toggleTask(id: string): void {
-    this.mutateTask(id, (t) => {
+    this.mutateTask(id, t => {
       const done = !t.done;
       const next: Task = { ...t, done };
       if (done) next.completed = toStamp(new Date());
@@ -569,15 +613,16 @@ export class Store {
   }
 
   deleteTask(id: string): void {
-    const task = this.snapshot.tasks.find((t) => t.id === id);
+    const task = this.snapshot.tasks.find(t => t.id === id);
     const project = task && this.projectOf(task.project);
     if (!task || !project) return;
 
     // The counter is not rolled back: reusing a freed id would break every
     // reference to it, which is the exact defect of the old numbering scheme.
-    this.writeProjects([], [
-      { project, tasks: this.tasksOf(project.code).filter((t) => t.id !== id) },
-    ]);
+    this.writeProjects(
+      [],
+      [{ project, tasks: this.tasksOf(project.code).filter(t => t.id !== id) }]
+    );
   }
 
   /**
@@ -586,7 +631,7 @@ export class Store {
    * completion time.
    */
   markDone(id: string, completed: string): void {
-    this.mutateTask(id, (t) => ({ ...t, done: true, completed }));
+    this.mutateTask(id, t => ({ ...t, done: true, completed }));
   }
 
   /**
@@ -600,9 +645,13 @@ export class Store {
       return { ok: false, reason: "Dự án còn việc — chỉ xoá được dự án rỗng." };
     }
 
-    const registry = this.snapshot.projects.filter((p) => p.code !== project.code);
+    const registry = this.snapshot.projects.filter(
+      p => p.code !== project.code
+    );
     this.remove(paths.project(project.code));
-    this.write([{ path: paths.projects, content: serializeProjectsFile(registry) }]);
+    this.write([
+      { path: paths.projects, content: serializeProjectsFile(registry) },
+    ]);
     return { ok: true };
   }
 
@@ -615,40 +664,50 @@ export class Store {
    * back, so the restored id can never collide with a newer task.
    */
   restoreTask(task: Task): void {
-    if (this.snapshot.tasks.some((t) => t.id === task.id)) return; // already back
+    if (this.snapshot.tasks.some(t => t.id === task.id)) return; // already back
     const project = this.projectOf(task.project);
     if (!project) return; // project itself was removed meanwhile
 
-    this.writeProjects([], [
-      { project, tasks: [...this.tasksOf(project.code), task] },
-    ]);
+    this.writeProjects(
+      [],
+      [{ project, tasks: [...this.tasksOf(project.code), task] }]
+    );
   }
 
   /** Moves a task to another project. The permanent id stays, like a ticket key. */
   moveTask(id: string, toCode: string): void {
-    const task = this.snapshot.tasks.find((t) => t.id === id);
+    const task = this.snapshot.tasks.find(t => t.id === id);
     const from = task && this.projectOf(task.project);
     const to = this.projectOf(toCode.toUpperCase());
     if (!task || !from || !to || from.code === to.code) return;
 
     const moved: Task = { ...task, project: to.code, category: to.category };
-    this.writeProjects([], [
-      { project: from, tasks: this.tasksOf(from.code).filter((t) => t.id !== id) },
-      { project: to, tasks: [...this.tasksOf(to.code), moved] },
-    ]);
+    this.writeProjects(
+      [],
+      [
+        {
+          project: from,
+          tasks: this.tasksOf(from.code).filter(t => t.id !== id),
+        },
+        { project: to, tasks: [...this.tasksOf(to.code), moved] },
+      ]
+    );
   }
 
   private mutateTask(id: string, fn: (task: Task) => Task): void {
-    const task = this.snapshot.tasks.find((t) => t.id === id);
+    const task = this.snapshot.tasks.find(t => t.id === id);
     const project = task && this.projectOf(task.project);
     if (!task || !project) return;
 
-    this.writeProjects([], [
-      {
-        project,
-        tasks: this.tasksOf(project.code).map((t) => (t.id === id ? fn(t) : t)),
-      },
-    ]);
+    this.writeProjects(
+      [],
+      [
+        {
+          project,
+          tasks: this.tasksOf(project.code).map(t => (t.id === id ? fn(t) : t)),
+        },
+      ]
+    );
   }
 
   /** Writes a day's free-form note. An empty body deletes the file. */
@@ -659,11 +718,15 @@ export class Store {
   }
 
   setContacts(contacts: Contact[]): void {
-    this.write([{ path: paths.contacts, content: serializeContactsFile(contacts) }]);
+    this.write([
+      { path: paths.contacts, content: serializeContactsFile(contacts) },
+    ]);
   }
 
   setRecurring(rules: RecurringRule[]): void {
-    this.write([{ path: paths.recurring, content: serializeRecurringFile(rules) }]);
+    this.write([
+      { path: paths.recurring, content: serializeRecurringFile(rules) },
+    ]);
   }
 
   // -------------------------------------------------------------- settings --
@@ -679,7 +742,7 @@ export class Store {
 
   /** Files the sync layer needs to push. */
   dirtyFiles(): StoredFile[] {
-    return [...this.files.values()].filter((f) => f.dirty || f.deleted);
+    return [...this.files.values()].filter(f => f.dirty || f.deleted);
   }
 
   allFiles(): StoredFile[] {
@@ -696,15 +759,22 @@ export class Store {
         void this.db?.delete("files", path);
       } else {
         // What we just pushed becomes the shared base for the next merge.
-        this.files.set(path, { ...file, sha, base: file.content, dirty: false });
+        this.files.set(path, {
+          ...file,
+          sha,
+          base: file.content,
+          dirty: false,
+        });
       }
     }
-    this.persist(results.map((r) => r.path));
+    this.persist(results.map(r => r.path));
     this.rebuild();
   }
 
   /** Applies files fetched from the remote, overwriting local copies. */
-  applyRemote(files: Array<{ path: string; content: string; sha: string }>): void {
+  applyRemote(
+    files: Array<{ path: string; content: string; sha: string }>
+  ): void {
     for (const { path, content, sha } of files) {
       this.files.set(path, {
         path,
@@ -715,7 +785,7 @@ export class Store {
         deleted: false,
       });
     }
-    this.persist(files.map((f) => f.path));
+    this.persist(files.map(f => f.path));
     this.rebuild();
   }
 
@@ -727,9 +797,16 @@ export class Store {
     files: Array<{ path: string; content: string; sha: string; base: string }>
   ): void {
     for (const { path, content, sha, base } of files) {
-      this.files.set(path, { path, content, sha, base, dirty: true, deleted: false });
+      this.files.set(path, {
+        path,
+        content,
+        sha,
+        base,
+        dirty: true,
+        deleted: false,
+      });
     }
-    this.persist(files.map((f) => f.path));
+    this.persist(files.map(f => f.path));
     this.rebuild();
   }
 

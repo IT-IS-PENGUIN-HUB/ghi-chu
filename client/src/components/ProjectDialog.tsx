@@ -151,14 +151,14 @@ export function ProjectDialog({
           </div>
 
           <div className="space-y-1.5">
-            <Label htmlFor="project-field">Lĩnh vực</Label>
+            <Label htmlFor="project-field">Nhóm</Label>
             <Select value={field} onValueChange={setField}>
               <SelectTrigger id="project-field">
                 <SelectValue />
               </SelectTrigger>
               <SelectContent>
                 <SelectItem value={NO_FIELD}>
-                  Chưa gán — phân loại sau
+                  Chưa xếp vào nhóm — phân loại sau
                 </SelectItem>
                 {fields.map(f => (
                   <SelectItem key={f.code} value={f.code}>
@@ -172,22 +172,22 @@ export function ProjectDialog({
             </Select>
             {owner ? (
               <p className="text-xs text-muted-foreground">
-                Nhóm:{" "}
+                Phạm trù:{" "}
                 <span className="font-medium">{CATEGORY_LABEL[category]}</span>{" "}
-                (theo lĩnh vực đã chọn)
+                (theo nhóm đã chọn)
               </p>
             ) : (
               <RadioGroup
                 value={category}
                 onValueChange={v => setPickedCategory(v as Category)}
-                aria-label="Thuộc nhóm"
+                aria-label="Thuộc phạm trù"
                 className="flex gap-4 pt-1"
               >
                 {CATEGORIES.map(c => (
                   <div key={c} className="flex items-center gap-2">
                     <RadioGroupItem value={c} id={`project-cat-${c}`} />
                     <Label htmlFor={`project-cat-${c}`} className="font-normal">
-                      Nhóm {CATEGORY_LABEL[c]}
+                      Phạm trù {CATEGORY_LABEL[c]}
                     </Label>
                   </div>
                 ))}

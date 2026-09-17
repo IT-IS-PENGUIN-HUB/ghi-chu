@@ -31,7 +31,8 @@ import { resetSyncState, syncNow } from "@/core/sync";
 import { useStore } from "@/hooks/useStore";
 
 export default function Settings() {
-  const { settings, pending, syncState, tasks, projects, days, fields } = useStore();
+  const { settings, pending, syncState, tasks, projects, days, fields } =
+    useStore();
   const [owner, setOwner] = useState(settings.owner);
   const [repo, setRepo] = useState(settings.repo);
   const [branch, setBranch] = useState(settings.branch);
@@ -67,7 +68,9 @@ export default function Settings() {
       await syncNow({ force: true });
       toast.success("Đã kết nối GitHub");
     } catch (error) {
-      toast.error(error instanceof Error ? error.message : "Không kết nối được");
+      toast.error(
+        error instanceof Error ? error.message : "Không kết nối được"
+      );
     } finally {
       setChecking(false);
     }
@@ -101,8 +104,8 @@ export default function Settings() {
 
         <p className="text-sm text-muted-foreground">
           Ghi chú được lưu thành file Markdown trong một repo{" "}
-          <strong>riêng tư</strong> của bạn. Repo này chỉ chứa dữ liệu — mã nguồn app
-          nằm ở repo public khác.
+          <strong>riêng tư</strong> của bạn. Repo này chỉ chứa dữ liệu — mã
+          nguồn app nằm ở repo public khác.
         </p>
 
         <div className="grid gap-3 sm:grid-cols-2">
@@ -111,7 +114,7 @@ export default function Settings() {
             <Input
               id="gh-owner"
               value={owner}
-              onChange={(e) => setOwner(e.target.value)}
+              onChange={e => setOwner(e.target.value)}
               placeholder="tên-github-của-bạn"
               autoComplete="off"
             />
@@ -121,7 +124,7 @@ export default function Settings() {
             <Input
               id="gh-repo"
               value={repo}
-              onChange={(e) => setRepo(e.target.value)}
+              onChange={e => setRepo(e.target.value)}
               placeholder="ghi-chu-data"
               autoComplete="off"
             />
@@ -131,7 +134,7 @@ export default function Settings() {
             <Input
               id="gh-branch"
               value={branch}
-              onChange={(e) => setBranch(e.target.value)}
+              onChange={e => setBranch(e.target.value)}
               placeholder="main"
               autoComplete="off"
             />
@@ -142,7 +145,7 @@ export default function Settings() {
               id="gh-token"
               type="password"
               value={token}
-              onChange={(e) => setToken(e.target.value)}
+              onChange={e => setToken(e.target.value)}
               placeholder="github_pat_…"
               autoComplete="off"
             />
@@ -164,17 +167,26 @@ export default function Settings() {
                 <ExternalLink className="size-3" />
               </a>
             </li>
-            <li>Repository access → Only select repositories → chọn đúng repo dữ liệu</li>
-            <li>Permissions → Repository permissions → Contents → Read and write</li>
+            <li>
+              Repository access → Only select repositories → chọn đúng repo dữ
+              liệu
+            </li>
+            <li>
+              Permissions → Repository permissions → Contents → Read and write
+            </li>
             <li>Đặt hạn 1 năm, tạo xong dán vào ô Token ở trên</li>
           </ol>
           <p className="mt-2">
-            Token lưu trong trình duyệt máy này. Mất máy thì vào GitHub thu hồi token.
+            Token lưu trong trình duyệt máy này. Mất máy thì vào GitHub thu hồi
+            token.
           </p>
         </div>
 
         <div className="flex flex-wrap gap-2">
-          <Button onClick={connect} disabled={!owner || !repo || !token || checking}>
+          <Button
+            onClick={connect}
+            disabled={!owner || !repo || !token || checking}
+          >
             {checking ? (
               <Loader2 className="mr-2 size-4 animate-spin" />
             ) : (
@@ -195,22 +207,25 @@ export default function Settings() {
                 />
                 Đồng bộ ngay
               </Button>
-              <Button variant="ghost" onClick={() => setConfirmingDisconnect(true)}>
+              <Button
+                variant="ghost"
+                onClick={() => setConfirmingDisconnect(true)}
+              >
                 Ngắt kết nối
               </Button>
               {/* A fine-grained PAT cannot be viewed again on GitHub, so one
                   stray tap here used to mean redoing the whole token flow. */}
               <AlertDialog
                 open={confirmingDisconnect}
-                onOpenChange={(o) => !o && setConfirmingDisconnect(false)}
+                onOpenChange={o => !o && setConfirmingDisconnect(false)}
               >
                 <AlertDialogContent>
                   <AlertDialogHeader>
                     <AlertDialogTitle>Ngắt kết nối GitHub?</AlertDialogTitle>
                     <AlertDialogDescription>
-                      Token sẽ bị xoá khỏi máy này. GitHub không cho xem lại token cũ —
-                      muốn kết nối lại bạn sẽ phải tạo token mới. Dữ liệu ghi chú không
-                      bị ảnh hưởng.
+                      Token sẽ bị xoá khỏi máy này. GitHub không cho xem lại
+                      token cũ — muốn kết nối lại bạn sẽ phải tạo token mới. Dữ
+                      liệu ghi chú không bị ảnh hưởng.
                     </AlertDialogDescription>
                   </AlertDialogHeader>
                   <AlertDialogFooter>
@@ -243,7 +258,7 @@ export default function Settings() {
             <Switch
               id="autosync"
               checked={settings.autoSync}
-              onCheckedChange={(v) => void store.setSettings({ autoSync: v })}
+              onCheckedChange={v => void store.setSettings({ autoSync: v })}
             />
           </div>
         )}
@@ -290,13 +305,14 @@ export default function Settings() {
           kết nối GitHub hoặc muốn giữ một bản riêng.
         </p>
         <Button variant="outline" onClick={() => exportAll()}>
-          <Download className="mr-2 size-4" /> Tải xuống ({store.allFiles().length} file)
+          <Download className="mr-2 size-4" /> Tải xuống (
+          {store.allFiles().length} file)
         </Button>
       </section>
 
       <p className="pb-4 text-xs text-muted-foreground">
-        {fields.length} lĩnh vực · {projects.length} dự án · dữ liệu nằm trong IndexedDB
-        của trình duyệt này.
+        {fields.length} nhóm · {projects.length} dự án · dữ liệu nằm trong
+        IndexedDB của trình duyệt này.
       </p>
     </div>
   );
@@ -315,11 +331,14 @@ function Stat({ label, value }: { label: string; value: string }) {
 function exportAll() {
   const files = store
     .allFiles()
-    .filter((f) => !f.deleted)
+    .filter(f => !f.deleted)
     .sort((a, b) => a.path.localeCompare(b.path));
 
   const body = files
-    .map((f) => `${"=".repeat(60)}\nFILE: ${f.path}\n${"=".repeat(60)}\n\n${f.content}`)
+    .map(
+      f =>
+        `${"=".repeat(60)}\nFILE: ${f.path}\n${"=".repeat(60)}\n\n${f.content}`
+    )
     .join("\n\n");
 
   const blob = new Blob([body], { type: "text/markdown;charset=utf-8" });

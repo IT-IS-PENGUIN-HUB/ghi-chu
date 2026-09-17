@@ -23,19 +23,15 @@ import {
   CollapsibleContent,
   CollapsibleTrigger,
 } from "@/components/ui/collapsible";
-import { buildDailyList, type SortMode } from "@/core/codes";
-import {
-  CATEGORIES,
-  CATEGORY_LABEL,
-  ageInDays,
-  toDateKey,
-  type Category,
-  type Task,
-} from "@/core/model";
+import { buildDailyList, type DailyEntry, type SortMode } from "@/core/codes";
+import { ageInDays, toDateKey, type Category, type Task } from "@/core/model";
 import { store } from "@/core/store";
 import { deleteTaskWithUndo, toggleTaskWithUndo } from "@/lib/taskActions";
 import { useStore } from "@/hooks/useStore";
 import { cn } from "@/lib/utils";
+
+/** "ALL" merges both phạm trù into one list; the two real ones filter to it. */
+type View = Category | "ALL";
 
 const SORT_LABEL: Record<SortMode, string> = {
   age: "Cũ nhất trước",
@@ -53,14 +49,20 @@ const WEEKDAYS = [
   "Thứ Bảy",
 ];
 
+const VIEW_LABEL: Record<View, string> = {
+  WRK: "Công việc",
+  PER: "Cá nhân",
+  ALL: "Tất cả",
+};
+
 const HELP: HelpItem[] = [
   {
-    label: "Công việc / Cá nhân",
-    text: "hai nhóm việc riêng, bấm để chuyển. Số tròn là số việc chưa xong trong nhóm đó.",
+    label: "Công việc · Cá nhân · Tất cả",
+    text: "hai phạm trù việc riêng, bấm để chuyển. “Tất cả” gộp cả hai vào một danh sách — viền màu bên trái mỗi việc cho biết nó thuộc phạm trù nào.",
   },
   {
     label: "Thêm việc mới",
-    text: "gõ rồi bấm Enter. “Thuộc dự án” là nơi việc được cất (như bìa hồ sơ) — app nhớ dự án bạn dùng lần trước.",
+    text: "gõ rồi bấm Enter. Chọn nơi cất việc theo hai bước: “Nhóm” rồi “Dự án” trong nhóm đó; chưa có thì bấm “＋ Tạo … mới” ngay tại đó.",
   },
   {
     label: "Ô vuông bên trái mỗi việc",
@@ -91,10 +93,28 @@ const HELP: HelpItem[] = [
   },
 ];
 
+/** Reorders a merged (multi-category) list without disturbing daily labels. */
+function sortMerged(entries: DailyEntry[], sort: SortMode): DailyEntry[] {
+  const cmp: Record<SortMode, (a: DailyEntry, b: DailyEntry) => number> = {
+    age: (a, b) => a.task.created.localeCompare(b.task.created),
+    recent: (a, b) => b.task.created.localeCompare(a.task.created),
+    project: (a, b) =>
+      a.task.project.localeCompare(b.task.project) ||
+      a.task.created.localeCompare(b.task.created),
+  };
+  return [...entries].sort((a, b) => {
+    if (Boolean(a.task.starred) !== Boolean(b.task.starred))
+      return a.task.starred ? -1 : 1;
+    return cmp[sort](a, b);
+  });
+}
+
 export default function Today() {
   const { tasks, projects, fields, days, ready } = useStore();
   const help = useScreenHelp("today");
-  const [category, setCategory] = useState<Category>("WRK");
+  // Default to the combined list: most days you want to see everything, and
+  // the coloured edge already tells the two phạm trù apart.
+  const [view, setView] = useState<View>("ALL");
   const [sort, setSort] = useState<SortMode>("age");
   const [selected, setSelected] = useState<string | null>(null);
 
@@ -104,10 +124,18 @@ export default function Today() {
     [projects]
   );
 
-  const open = useMemo(
-    () => buildDailyList(tasks, category, sort),
-    [tasks, category, sort]
-  );
+  const open = useMemo(() => {
+    if (view === "ALL") {
+      return sortMerged(
+        [
+          ...buildDailyList(tasks, "WRK", sort),
+          ...buildDailyList(tasks, "PER", sort),
+        ],
+        sort
+      );
+    }
+    return buildDailyList(tasks, view, sort);
+  }, [tasks, view, sort]);
 
   // Only work finished today — yesterday's completions belong to the archive,
   // not to a list you are trying to clear.
@@ -117,11 +145,11 @@ export default function Today() {
         .filter(
           t =>
             t.done &&
-            t.category === category &&
+            (view === "ALL" || t.category === view) &&
             t.completed?.slice(0, 10).replace(/\./g, "-") === today
         )
         .sort((a, b) => (b.completed ?? "").localeCompare(a.completed ?? "")),
-    [tasks, category, today]
+    [tasks, view, today]
   );
 
   const note = days.find(d => d.date === today)?.body ?? "";
@@ -169,7 +197,7 @@ export default function Today() {
       open.length === 0 &&
       doneToday.length > 0
     ) {
-      toast.success("🎉 Xong hết việc trong nhóm này. Làm tốt lắm!", {
+      toast.success("🎉 Xong hết việc rồi. Làm tốt lắm!", {
         duration: 4000,
       });
     }
@@ -190,6 +218,13 @@ export default function Today() {
   const progress = open.length + doneToday.length;
   const percent =
     progress === 0 ? 0 : Math.round((doneToday.length / progress) * 100);
+  const openCount = (v: View) =>
+    v === "ALL"
+      ? totalOpen
+      : tasks.filter(t => !t.done && t.category === v).length;
+  // The floating add button and quick-add default to Công việc while in ALL.
+  const addTone =
+    view === "PER" ? "bg-per" : view === "WRK" ? "bg-wrk" : "bg-primary";
 
   return (
     <div className="space-y-5">
@@ -209,8 +244,7 @@ export default function Today() {
                   {percent}%
                 </div>
                 <div className="text-xs text-muted-foreground">
-                  {doneToday.length}/{progress} xong ·{" "}
-                  {CATEGORY_LABEL[category]}
+                  {doneToday.length}/{progress} xong · {VIEW_LABEL[view]}
                 </div>
               </div>
               <div className="h-11 w-1.5 overflow-hidden rounded-full bg-muted">
@@ -232,38 +266,44 @@ export default function Today() {
 
       {totalOpen === 0 && doneToday.length === 0 && <WelcomeCard />}
 
-      {/* Group switch — big, coloured, unmistakably a switch. */}
-      <div className="grid grid-cols-2 gap-2">
-        {CATEGORIES.map(c => {
-          const count = tasks.filter(t => !t.done && t.category === c).length;
-          const active = category === c;
+      {/* View switch — big, coloured, unmistakably a switch. */}
+      <div className="grid grid-cols-3 gap-2">
+        {(["WRK", "PER", "ALL"] as View[]).map(v => {
+          const active = view === v;
+          const activeTone =
+            v === "WRK"
+              ? "border-wrk bg-wrk text-white shadow-sm"
+              : v === "PER"
+                ? "border-per bg-per text-white shadow-sm"
+                : "border-primary bg-primary text-primary-foreground shadow-sm";
+          const badgeTone = active
+            ? "bg-white/25 text-white"
+            : v === "WRK"
+              ? "bg-wrk-soft text-wrk"
+              : v === "PER"
+                ? "bg-per-soft text-per"
+                : "bg-primary/15 text-primary";
           return (
             <button
-              key={c}
+              key={v}
               type="button"
-              onClick={() => setCategory(c)}
+              onClick={() => setView(v)}
               aria-pressed={active}
               className={cn(
-                "flex items-center justify-center gap-2 rounded-xl border-2 px-3 py-2.5 text-base font-medium transition-all",
+                "flex items-center justify-center gap-2 rounded-xl border-2 px-2 py-2.5 text-sm font-medium transition-all sm:text-base",
                 active
-                  ? c === "WRK"
-                    ? "border-wrk bg-wrk text-white shadow-sm"
-                    : "border-per bg-per text-white shadow-sm"
+                  ? activeTone
                   : "border-border bg-card text-muted-foreground hover:border-foreground/25 hover:text-foreground"
               )}
             >
-              {CATEGORY_LABEL[c]}
+              {VIEW_LABEL[v]}
               <span
                 className={cn(
                   "min-w-6 rounded-full px-1.5 text-xs font-bold tabular-nums",
-                  active
-                    ? "bg-white/25 text-white"
-                    : c === "WRK"
-                      ? "bg-wrk-soft text-wrk"
-                      : "bg-per-soft text-per"
+                  badgeTone
                 )}
               >
-                {count}
+                {openCount(v)}
               </span>
             </button>
           );
@@ -273,7 +313,7 @@ export default function Today() {
       <QuickAdd
         projects={projects}
         fields={fields}
-        category={category}
+        category={view}
         onAdd={onAdd}
       />
 
@@ -319,8 +359,12 @@ export default function Today() {
 
           {open.length === 0 ? (
             <EmptyState
-              category={category}
-              hasAny={tasks.some(t => t.category === category)}
+              label={VIEW_LABEL[view]}
+              hasAny={
+                view === "ALL"
+                  ? tasks.length > 0
+                  : tasks.some(t => t.category === view)
+              }
             />
           ) : (
             <ul className="space-y-2">
@@ -396,7 +440,7 @@ export default function Today() {
         aria-label="Thêm việc mới"
         className={cn(
           "fixed bottom-24 right-4 z-40 flex size-14 items-center justify-center rounded-full text-white shadow-lg transition-transform active:scale-95 sm:hidden",
-          category === "WRK" ? "bg-wrk" : "bg-per"
+          addTone
         )}
       >
         <Plus className="size-7 stroke-[2.5]" />
@@ -405,13 +449,7 @@ export default function Today() {
   );
 }
 
-function EmptyState({
-  category,
-  hasAny,
-}: {
-  category: Category;
-  hasAny: boolean;
-}) {
+function EmptyState({ label, hasAny }: { label: string; hasAny: boolean }) {
   return (
     <div
       className={cn(
@@ -424,8 +462,7 @@ function EmptyState({
           <CheckCircle2 className="mx-auto mb-2 size-7 text-done" />
           <p className="text-sm font-semibold text-done">Xong hết rồi</p>
           <p className="mt-0.5 text-xs text-muted-foreground">
-            Không còn việc {CATEGORY_LABEL[category].toLowerCase()} nào đang
-            tồn.
+            Không còn việc {label.toLowerCase()} nào đang tồn.
           </p>
         </>
       ) : (

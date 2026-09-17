@@ -1,4 +1,4 @@
-import { useCallback, useMemo, useState } from "react";
+import { useCallback, useMemo, useRef, useState } from "react";
 import { Link, useRoute } from "wouter";
 import {
   ArrowLeft,
@@ -8,11 +8,13 @@ import {
   Folder,
   House,
   Pencil,
+  Plus,
 } from "lucide-react";
 import { ProjectDialog } from "@/components/ProjectDialog";
 import { TaskRow } from "@/components/TaskRow";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
+import { useComposition } from "@/hooks/useComposition";
 import { CATEGORY_LABEL, type Project } from "@/core/model";
 import { store } from "@/core/store";
 import { deleteTaskWithUndo, toggleTaskWithUndo } from "@/lib/taskActions";
@@ -78,6 +80,28 @@ export default function ProjectDetail() {
     []
   );
 
+  // Add work straight into this project — the page used to be read-only, so an
+  // empty project was a dead end you could look at but not fill.
+  const [newTitle, setNewTitle] = useState("");
+  const addInputRef = useRef<HTMLInputElement>(null);
+  const addTask = () => {
+    const t = newTitle.trim();
+    if (!t || !project) return;
+    store.addTask({
+      title: t,
+      project: project.code,
+      category: project.category,
+    });
+    setNewTitle("");
+    addInputRef.current?.focus();
+  };
+  const { isComposing: _c, ...addHandlers } = useComposition<HTMLInputElement>({
+    onKeyDown: e => {
+      if (e.key === "Enter") addTask();
+    },
+  });
+  void _c;
+
   if (!project) {
     return (
       <div className="py-16 text-center">
@@ -128,7 +152,7 @@ export default function ProjectDetail() {
             className={crumbClass}
           >
             <Folder className="size-3.5 text-amber-500" />{" "}
-            {field?.name ?? "Chưa xếp vào lĩnh vực"}
+            {field?.name ?? "Chưa xếp vào nhóm"}
           </Link>
           <ChevronRight className="size-3.5" />
           <span className="inline-flex items-center gap-1 font-medium text-foreground">
@@ -158,6 +182,29 @@ export default function ProjectDetail() {
           <Pencil className="size-4" />
         </button>
       </header>
+
+      {/* Add straight into this project. */}
+      <div className="flex gap-2">
+        <Input
+          ref={addInputRef}
+          value={newTitle}
+          onChange={e => setNewTitle(e.target.value)}
+          {...addHandlers}
+          placeholder={`Thêm việc vào ${project.name}…`}
+          aria-label="Thêm việc vào dự án này"
+          className="h-11 flex-1 border-2 focus-visible:ring-2"
+          enterKeyHint="done"
+          autoComplete="off"
+          autoCorrect="off"
+        />
+        <Button
+          onClick={addTask}
+          disabled={!newTitle.trim()}
+          className="h-11 gap-1.5"
+        >
+          <Plus className="size-4 stroke-[2.5]" /> Thêm
+        </Button>
+      </div>
 
       {mine.length > 6 && (
         <Input
