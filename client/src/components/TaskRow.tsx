@@ -167,11 +167,15 @@ function TaskRowInner({
           // scannable — without the hard left band, which read as clutter.
           "group flex items-start gap-2 rounded-xl border py-2.5 pl-2.5 pr-3 shadow-sm transition-colors no-tap-highlight",
           snapping && "transition-transform duration-200",
+          // The wash is the accent colour at low opacity rather than the pale
+          // `*-soft` token: soft is near-white and vanishes on a dark ground,
+          // while the accent is defined bright in dark mode, so a low-opacity
+          // wash of it reads in both themes.
           task.done
-            ? "border-border/60 bg-done-soft/40"
+            ? "border-border/60 bg-done/10"
             : task.category === "WRK"
-              ? "border-wrk-border bg-wrk-soft/40 hover:bg-wrk-soft/70"
-              : "border-per-border bg-per-soft/40 hover:bg-per-soft/70",
+              ? "border-wrk-border bg-wrk/10 hover:bg-wrk/20"
+              : "border-per-border bg-per/10 hover:bg-per/20",
           selected && "ring-2 ring-ring ring-offset-1 ring-offset-background"
         )}
         onClick={() => onFocus?.(task.id)}
