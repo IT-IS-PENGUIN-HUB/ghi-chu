@@ -140,7 +140,7 @@ export function ProjectDialog({
         fieldCode
       );
       toast.success(
-        `Đã tạo dự án ${name.trim()} · mã việc ${effectiveCode}-0001`
+        `Đã tạo phân nhánh ${name.trim()} · mã việc ${effectiveCode}-0001`
       );
       onCreated?.(created);
     }
@@ -151,16 +151,18 @@ export function ProjectDialog({
     <Dialog open onOpenChange={o => !o && onClose()}>
       <DialogContent className="sm:max-w-md">
         <DialogHeader>
-          <DialogTitle>{editing ? "Sửa dự án" : "Dự án mới"}</DialogTitle>
+          <DialogTitle>
+            {editing ? "Sửa phân nhánh" : "Phân nhánh mới"}
+          </DialogTitle>
           <DialogDescription>
-            Mã dự án là tiền tố của mọi mã việc bên trong, ví dụ{" "}
+            Mã phân nhánh là tiền tố của mọi mã việc bên trong, ví dụ{" "}
             {effectiveCode || "ALP"}-0042.
           </DialogDescription>
         </DialogHeader>
 
         <div className="space-y-4">
           <div className="space-y-1.5">
-            <Label htmlFor="project-name">Tên dự án</Label>
+            <Label htmlFor="project-name">Tên phân nhánh</Label>
             <Input
               id="project-name"
               autoFocus
@@ -171,23 +173,24 @@ export function ProjectDialog({
             />
             {dupName && (
               <p className="rounded-lg border-l-4 border-l-amber-500 bg-amber-500/10 px-2.5 py-2 text-xs">
-                Đã có dự án tên <b>“{dupName.name}”</b> (mã{" "}
+                Đã có phân nhánh tên <b>“{dupName.name}”</b> (mã{" "}
                 <code className="font-mono">{dupName.code}</code>
-                {dupName.field ? "" : ", đang ở ngăn “Chưa xếp vào nhóm”"}). Bạn
-                có định tạo trùng không? Nếu muốn dùng lại, huỷ và mở dự án cũ.
+                {dupName.field ? "" : ", đang ở ngăn “Chưa xếp vào dự án”"}).
+                Bạn có định tạo trùng không? Nếu muốn dùng lại, huỷ và mở phân
+                nhánh cũ.
               </p>
             )}
           </div>
 
           <div className="space-y-1.5">
-            <Label htmlFor="project-field">Nhóm</Label>
+            <Label htmlFor="project-field">Dự án</Label>
             <Select value={field} onValueChange={setField}>
               <SelectTrigger id="project-field">
                 <SelectValue />
               </SelectTrigger>
               <SelectContent>
                 <SelectItem value={NO_FIELD}>
-                  Chưa xếp vào nhóm — phân loại sau
+                  Chưa xếp vào dự án — phân loại sau
                 </SelectItem>
                 {fields.map(f => (
                   <SelectItem key={f.code} value={f.code}>
@@ -203,7 +206,7 @@ export function ProjectDialog({
               <p className="text-xs text-muted-foreground">
                 Phạm trù:{" "}
                 <span className="font-medium">{CATEGORY_LABEL[category]}</span>{" "}
-                (theo nhóm đã chọn)
+                (theo dự án đã chọn)
               </p>
             ) : (
               <RadioGroup
@@ -225,7 +228,7 @@ export function ProjectDialog({
           </div>
 
           <div className="space-y-1.5">
-            <Label htmlFor="project-code">Mã dự án</Label>
+            <Label htmlFor="project-code">Mã phân nhánh</Label>
             <Input
               id="project-code"
               value={effectiveCode}
@@ -243,7 +246,7 @@ export function ProjectDialog({
             {codeChanged && !codeError && (
               <p className="rounded-lg border-l-4 border-l-amber-500 bg-amber-500/10 px-2.5 py-2 text-xs">
                 Đổi mã sẽ đánh lại mã của <b>{existingTaskCount} việc</b> trong
-                dự án này:{" "}
+                phân nhánh này:{" "}
                 <code className="font-mono">{project.code}-0001</code> →{" "}
                 <code className="font-mono">{effectiveCode}-0001</code>. File
                 trên GitHub cũng đổi tên theo.
@@ -285,7 +288,7 @@ export function ProjectDialog({
               }}
               className="gap-1.5 text-destructive hover:bg-destructive/10 hover:text-destructive sm:mr-auto"
             >
-              <Trash2 className="size-4" /> Xoá dự án
+              <Trash2 className="size-4" /> Xoá phân nhánh
             </Button>
           ) : (
             <span className="hidden sm:block" />

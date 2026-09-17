@@ -17,7 +17,7 @@ import { store } from "@/core/store";
 
 export interface QuickProjectDialogProps {
   category: Category;
-  /** Field (Nhóm) to file the new project under, if one is chosen. */
+  /** Field (Dự án) to file the new project under, if one is chosen. */
   field?: string;
   /** Display name of that field, for the dialog subtitle. */
   fieldName?: string;
@@ -56,7 +56,7 @@ export function QuickProjectDialog({
     if (!trimmed) return;
     const code = suggestProjectCode(trimmed, takenCodes);
     store.createProject(trimmed, code, category, field);
-    toast.success(`Đã tạo dự án ${trimmed}`);
+    toast.success(`Đã tạo phân nhánh ${trimmed}`);
     onCreated(code);
   };
 
@@ -65,19 +65,19 @@ export function QuickProjectDialog({
       <DialogContent className="sm:max-w-md">
         <DialogHeader>
           <DialogTitle>
-            Dự án mới
+            Phân nhánh mới
             {fieldName
-              ? ` · nhóm ${fieldName}`
+              ? ` · dự án ${fieldName}`
               : ` · ${CATEGORY_LABEL[category]}`}
           </DialogTitle>
           <DialogDescription>
-            Mỗi công trình, cầu hoặc khách hàng là một dự án. Chỉ cần đặt tên —
-            mã tự tạo, xếp vào nhóm để sau cũng được.
+            Mỗi công trình, cầu hoặc khách hàng là một phân nhánh. Chỉ cần đặt
+            tên — mã tự tạo, xếp vào dự án để sau cũng được.
           </DialogDescription>
         </DialogHeader>
 
         <div className="space-y-1.5">
-          <Label htmlFor="quick-project-name">Tên dự án</Label>
+          <Label htmlFor="quick-project-name">Tên phân nhánh</Label>
           <Input
             id="quick-project-name"
             autoFocus

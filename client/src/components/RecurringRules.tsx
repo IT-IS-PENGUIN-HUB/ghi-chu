@@ -34,7 +34,7 @@ export function RecurringRules() {
   const { recurring, projects } = useStore();
   const [adding, setAdding] = useState(false);
 
-  const projectName = new Map(projects.map((p) => [p.code, p.name]));
+  const projectName = new Map(projects.map(p => [p.code, p.name]));
 
   return (
     <div className="space-y-2">
@@ -44,7 +44,7 @@ export function RecurringRules() {
         </p>
       ) : (
         <ul className="space-y-1.5">
-          {recurring.map((rule) => (
+          {recurring.map(rule => (
             <li
               key={rule.id}
               className="flex items-center gap-3 rounded-xl border border-border bg-card px-3 py-2.5"
@@ -52,13 +52,16 @@ export function RecurringRules() {
               <div className="min-w-0 flex-1">
                 <div className="truncate text-sm">{rule.title}</div>
                 <div className="text-xs text-muted-foreground">
-                  {describeRule(rule)} · {projectName.get(rule.project) ?? rule.project}
+                  {describeRule(rule)} ·{" "}
+                  {projectName.get(rule.project) ?? rule.project}
                   {rule.lastRun && ` · lần cuối ${rule.lastRun}`}
                 </div>
               </div>
               <button
                 type="button"
-                onClick={() => store.setRecurring(recurring.filter((r) => r.id !== rule.id))}
+                onClick={() =>
+                  store.setRecurring(recurring.filter(r => r.id !== rule.id))
+                }
                 aria-label={`Xoá quy tắc ${rule.title}`}
                 className="tap flex items-center justify-center rounded-lg text-muted-foreground hover:bg-accent hover:text-destructive"
               >
@@ -75,7 +78,7 @@ export function RecurringRules() {
 
       {adding && (
         <RuleDialog
-          onSave={(rule) => {
+          onSave={rule => {
             store.setRecurring([...recurring, rule]);
             setAdding(false);
           }}
@@ -94,7 +97,7 @@ function RuleDialog({
   onClose: () => void;
 }) {
   const { recurring, projects } = useStore();
-  const available = projects.filter((p) => !p.archived);
+  const available = projects.filter(p => !p.archived);
 
   const [title, setTitle] = useState("");
   const [project, setProject] = useState(available[0]?.code ?? "ETC");
@@ -103,7 +106,7 @@ function RuleDialog({
 
   const submit = () => {
     if (!title.trim()) return;
-    const owner = available.find((p) => p.code === project);
+    const owner = available.find(p => p.code === project);
     onSave({
       id: nextRuleId(recurring),
       title: title.trim(),
@@ -115,13 +118,13 @@ function RuleDialog({
   };
 
   return (
-    <Dialog open onOpenChange={(o) => !o && onClose()}>
+    <Dialog open onOpenChange={o => !o && onClose()}>
       <DialogContent className="sm:max-w-md">
         <DialogHeader>
           <DialogTitle>Việc lặp lại</DialogTitle>
           <DialogDescription>
-            Việc sẽ tự xuất hiện trong danh sách khi đến hạn, và không nhân đôi nếu
-            việc cũ chưa xong.
+            Việc sẽ tự xuất hiện trong danh sách khi đến hạn, và không nhân đôi
+            nếu việc cũ chưa xong.
           </DialogDescription>
         </DialogHeader>
 
@@ -132,20 +135,20 @@ function RuleDialog({
               id="rule-title"
               autoFocus
               value={title}
-              onChange={(e) => setTitle(e.target.value)}
-              onKeyDown={(e) => e.key === "Enter" && submit()}
+              onChange={e => setTitle(e.target.value)}
+              onKeyDown={e => e.key === "Enter" && submit()}
               placeholder="Nộp báo cáo ngày"
             />
           </div>
 
           <div className="space-y-1.5">
-            <Label htmlFor="rule-project">Dự án</Label>
+            <Label htmlFor="rule-project">Phân nhánh</Label>
             <Select value={project} onValueChange={setProject}>
               <SelectTrigger id="rule-project">
                 <SelectValue />
               </SelectTrigger>
               <SelectContent className="max-h-64">
-                {available.map((p) => (
+                {available.map(p => (
                   <SelectItem key={p.code} value={p.code}>
                     {p.name}
                   </SelectItem>
@@ -156,12 +159,15 @@ function RuleDialog({
 
           <div className="space-y-1.5">
             <Label htmlFor="rule-kind">Lặp lại</Label>
-            <Select value={kind} onValueChange={(v) => setKind(v as RecurrenceKind)}>
+            <Select
+              value={kind}
+              onValueChange={v => setKind(v as RecurrenceKind)}
+            >
               <SelectTrigger id="rule-kind">
                 <SelectValue />
               </SelectTrigger>
               <SelectContent>
-                {(Object.keys(KIND_LABEL) as RecurrenceKind[]).map((k) => (
+                {(Object.keys(KIND_LABEL) as RecurrenceKind[]).map(k => (
                   <SelectItem key={k} value={k}>
                     {KIND_LABEL[k]}
                   </SelectItem>
@@ -183,8 +189,10 @@ function RuleDialog({
                       type="button"
                       aria-pressed={on}
                       onClick={() =>
-                        setDays((prev) =>
-                          prev.includes(day) ? prev.filter((d) => d !== day) : [...prev, day]
+                        setDays(prev =>
+                          prev.includes(day)
+                            ? prev.filter(d => d !== day)
+                            : [...prev, day]
                         )
                       }
                       className={cn(
@@ -209,7 +217,9 @@ function RuleDialog({
           </Button>
           <Button
             onClick={submit}
-            disabled={!title.trim() || (kind === "weekdays" && days.length === 0)}
+            disabled={
+              !title.trim() || (kind === "weekdays" && days.length === 0)
+            }
           >
             Thêm
           </Button>

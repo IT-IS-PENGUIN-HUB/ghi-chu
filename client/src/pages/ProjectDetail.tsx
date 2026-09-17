@@ -110,7 +110,7 @@ export default function ProjectDetail() {
     return (
       <div className="py-16 text-center">
         <p className="text-sm text-muted-foreground">
-          Không tìm thấy dự án {code}.
+          Không tìm thấy phân nhánh {code}.
         </p>
         <Button variant="link" asChild>
           <Link href="/du-an">Quay lại danh sách</Link>
@@ -139,7 +139,7 @@ export default function ProjectDetail() {
             a link back into the tree at that node — an address bar, not a
             caption. The hash names the node for the tree to open and flash. */}
         <nav
-          aria-label="Vị trí trong cây dự án"
+          aria-label="Vị trí trong cây phân nhánh"
           className="flex flex-wrap items-center gap-x-1 gap-y-1 text-sm text-muted-foreground"
         >
           <Link href={`/du-an#root:${project.category}`} className={crumbClass}>
@@ -156,7 +156,7 @@ export default function ProjectDetail() {
             className={crumbClass}
           >
             <Folder className="size-3.5 text-amber-500" />{" "}
-            {field?.name ?? "Chưa xếp vào nhóm"}
+            {field?.name ?? "Chưa xếp vào dự án"}
           </Link>
           <ChevronRight className="size-3.5" />
           <span className="inline-flex items-center gap-1 font-medium text-foreground">
@@ -171,7 +171,7 @@ export default function ProjectDetail() {
             {project.name}
           </h1>
           <p className="mt-0.5 text-sm text-muted-foreground">
-            Mã dự án{" "}
+            Mã phân nhánh{" "}
             <span className="font-mono font-medium">{project.code}</span> — mọi
             việc bên trong có mã dạng{" "}
             <span className="font-mono">{project.code}-0001</span>
@@ -208,7 +208,7 @@ export default function ProjectDetail() {
           onChange={e => setNewTitle(e.target.value)}
           {...addHandlers}
           placeholder={`Thêm việc vào ${project.name}…`}
-          aria-label="Thêm việc vào dự án này"
+          aria-label="Thêm việc vào phân nhánh này"
           className="h-11 flex-1 border-2 focus-visible:ring-2"
           enterKeyHint="done"
           autoComplete="off"
@@ -228,7 +228,7 @@ export default function ProjectDetail() {
           value={query}
           onChange={e => setQuery(e.target.value)}
           placeholder={`Lọc trong ${project.name}…`}
-          aria-label="Lọc công việc trong dự án"
+          aria-label="Lọc công việc trong phân nhánh"
           className="h-10"
         />
       )}

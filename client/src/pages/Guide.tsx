@@ -44,10 +44,11 @@ export default function Guide() {
             <Kbd>Enter</Kbd> hoặc nút <b>Thêm</b>.
           </Step>
           <Step n={3}>
-            Chọn nơi cất việc theo hai bước: ô <b>“Nhóm”</b> rồi ô{" "}
-            <b>“Dự án”</b> (chỉ hiện dự án trong nhóm đã chọn). Chưa có? Bấm{" "}
-            <b>“＋ Tạo nhóm mới…”</b> hoặc <b>“＋ Tạo dự án mới…”</b> ngay trong
-            ô đó — không phải rời màn Hôm nay. App nhớ lựa chọn lần trước.
+            Chọn nơi cất việc theo hai bước: ô <b>“Dự án”</b> rồi ô{" "}
+            <b>“Phân nhánh”</b> (chỉ hiện phân nhánh trong dự án đã chọn). Chưa
+            có? Bấm <b>“＋ Tạo dự án mới…”</b> hoặc{" "}
+            <b>“＋ Tạo phân nhánh mới…”</b> ngay trong ô đó — không phải rời màn
+            Hôm nay. App nhớ lựa chọn lần trước.
           </Step>
         </ol>
         <Tip>
@@ -67,8 +68,8 @@ export default function Guide() {
             <b>vuốt sang trái</b> để xoá — không cần mở menu.
           </Bullet>
           <Bullet>
-            <b>Sửa / chuyển dự án / ưu tiên / sao chép mã:</b> bấm nút ba chấm ⋮
-            bên phải dòng.
+            <b>Sửa / chuyển phân nhánh / ưu tiên / sao chép mã:</b> bấm nút ba
+            chấm ⋮ bên phải dòng.
           </Bullet>
           <Bullet>
             <b>Lỡ tay xoá?</b> Bấm <b>Hoàn tác</b> trên thông báo hiện ra trong
@@ -117,8 +118,8 @@ export default function Guide() {
                 </td>
                 <td className="py-2.5 text-muted-foreground">
                   <b>Vĩnh viễn.</b> Cấp một lần lúc tạo, không bao giờ đổi — kể
-                  cả khi chuyển việc sang dự án khác. Đây là mã để tra cứu sau
-                  một năm. Không in trên dòng cho đỡ rối — cần thì bấm ⋮ →{" "}
+                  cả khi chuyển việc sang phân nhánh khác. Đây là mã để tra cứu
+                  sau một năm. Không in trên dòng cho đỡ rối — cần thì bấm ⋮ →{" "}
                   <b>Sao chép mã</b>.
                 </td>
               </tr>
@@ -136,7 +137,7 @@ export default function Guide() {
 
       <Section
         icon={FolderTree}
-        title="Phân cấp: Phạm trù → Nhóm → Dự án → Việc"
+        title="Phân cấp: Phạm trù → Dự án → Phân nhánh → Việc"
         accent="wrk"
       >
         <p className="mb-3">
@@ -144,8 +145,8 @@ export default function Guide() {
         </p>
         <pre className="overflow-x-auto rounded-lg bg-muted p-3 text-xs leading-relaxed">
           {`Công việc                  ← Phạm trù: 2 tủ lớn, cố định (Công việc / Cá nhân)
- └ 積算                    ← Nhóm: ngăn gom các dự án cùng loại (không bắt buộc)
-    └ Alpha 県道改良        ← Dự án: một 案件 cụ thể
+ └ 積算                    ← Dự án: ngăn gom các phân nhánh cùng loại (không bắt buộc)
+    └ Alpha 県道改良        ← Phân nhánh: một 案件 cụ thể
        └ ALP-0042          ← Việc: cái bạn gõ hằng ngày
 
 Cá nhân
@@ -163,30 +164,31 @@ Cá nhân
               Dự án
             </Link>{" "}
             vẽ đúng cây này, giống cây thư mục bên trái của Explorer hay
-            Regedit: bấm <b>▸</b> để mở, bấm <b>tên dự án</b> để xem việc bên
-            trong, bấm <b>⋮</b> cuối dòng để thêm/sửa/xoá.
+            Regedit: bấm <b>▸</b> để mở, bấm <b>tên phân nhánh</b> để xem việc
+            bên trong, bấm <b>⋮</b> cuối dòng để thêm/sửa/xoá.
           </Bullet>
           <Bullet>
-            Dự án chưa xếp vào nhóm nào nằm trong ngăn{" "}
-            <b>“Chưa xếp vào nhóm”</b> và dùng bình thường — nhóm chỉ để gọn
-            danh sách khi có nhiều dự án.
+            Phân nhánh chưa xếp vào dự án nào nằm trong ngăn{" "}
+            <b>“Chưa xếp vào dự án”</b> và dùng bình thường — dự án chỉ để gọn
+            danh sách khi có nhiều phân nhánh.
           </Bullet>
           <Bullet>
-            Xoá nhóm <b>không xoá việc nào</b>; các dự án bên trong chuyển về
-            ngăn “Chưa xếp”.
+            Xoá dự án <b>không xoá việc nào</b>; các phân nhánh bên trong chuyển
+            về ngăn “Chưa xếp”.
           </Bullet>
           <Bullet>
-            Xoá dự án nằm ở <b>⋮ → Xoá dự án</b> trên dòng đó, hoặc nút{" "}
-            <b>Xoá</b> khi đang mở dự án. Lúc nào app cũng <b>hỏi lại trước</b>,
-            và chỉ dự án <b>rỗng</b> mới xoá được — dự án còn việc thì app nói
-            còn bao nhiêu việc chứ không xoá theo.
+            Xoá phân nhánh nằm ở <b>⋮ → Xoá phân nhánh</b> trên dòng đó, hoặc
+            nút <b>Xoá</b> khi đang mở phân nhánh. Lúc nào app cũng{" "}
+            <b>hỏi lại trước</b>, và chỉ phân nhánh <b>rỗng</b> mới xoá được —
+            phân nhánh còn việc thì app nói còn bao nhiêu việc chứ không xoá
+            theo.
           </Bullet>
           <Bullet>
-            Mã dự án (ví dụ{" "}
+            Mã phân nhánh (ví dụ{" "}
             <code className="rounded bg-muted px-1 font-mono">ALP</code>) là
             tiền tố của mọi mã việc bên trong. <b>Đổi được bất cứ lúc nào</b> —
-            app sẽ đánh lại mã cho toàn bộ việc trong dự án và đổi tên file trên
-            GitHub.
+            app sẽ đánh lại mã cho toàn bộ việc trong phân nhánh và đổi tên file
+            trên GitHub.
           </Bullet>
         </ul>
 

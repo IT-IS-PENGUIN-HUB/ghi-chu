@@ -45,10 +45,10 @@ export function DeleteProjectDialog({
   const confirm = () => {
     const result = store.deleteProject(project.code);
     if (!result.ok) {
-      toast.error(result.reason ?? "Không xoá được dự án");
+      toast.error(result.reason ?? "Không xoá được phân nhánh");
       return;
     }
-    toast.success(`Đã xoá dự án ${project.name}`);
+    toast.success(`Đã xoá phân nhánh ${project.name}`);
     onClose();
     onDeleted?.();
   };
@@ -65,7 +65,7 @@ export function DeleteProjectDialog({
               <AlertDialogDescription>
                 Đây là ngăn mặc định của app: việc bạn gõ nhanh mà chưa chọn dự
                 án nào đều rơi vào đây, nên nó phải luôn tồn tại. Muốn gọn hơn
-                thì đổi tên nó trong “Sửa dự án”.
+                thì đổi tên nó trong “Sửa phân nhánh”.
               </AlertDialogDescription>
             </AlertDialogHeader>
             <AlertDialogFooter>
@@ -79,10 +79,10 @@ export function DeleteProjectDialog({
                 Không xoá được "{project.name}"
               </AlertDialogTitle>
               <AlertDialogDescription>
-                Dự án này còn <b>{count} việc</b> bên trong (cả việc đã xong).
-                App chỉ xoá dự án rỗng, để công việc thật không bao giờ biến mất
-                theo. Mở dự án ra, chuyển việc sang dự án khác hoặc xoá hết
-                việc, rồi quay lại xoá dự án.
+                Phân nhánh này còn <b>{count} việc</b> bên trong (cả việc đã
+                xong). App chỉ xoá phân nhánh rỗng, để công việc thật không bao
+                giờ biến mất theo. Mở phân nhánh ra, chuyển việc sang phân nhánh
+                khác hoặc xoá hết việc, rồi quay lại xoá phân nhánh.
               </AlertDialogDescription>
             </AlertDialogHeader>
             <AlertDialogFooter>
@@ -92,11 +92,13 @@ export function DeleteProjectDialog({
         ) : (
           <>
             <AlertDialogHeader>
-              <AlertDialogTitle>Xoá dự án "{project.name}"?</AlertDialogTitle>
+              <AlertDialogTitle>
+                Xoá phân nhánh "{project.name}"?
+              </AlertDialogTitle>
               <AlertDialogDescription>
-                Dự án đang rỗng nên không có việc nào bị mất. Mã{" "}
+                Phân nhánh đang rỗng nên không có việc nào bị mất. Mã{" "}
                 <code className="font-mono">{project.code}</code> được trả lại
-                để dùng cho dự án khác, và file{" "}
+                để dùng cho phân nhánh khác, và file{" "}
                 <code className="font-mono">data/tasks/{project.code}.md</code>{" "}
                 trên GitHub cũng bị xoá theo. Không hoàn tác được.
               </AlertDialogDescription>
@@ -107,7 +109,7 @@ export function DeleteProjectDialog({
                 onClick={confirm}
                 className={cn(buttonVariants({ variant: "destructive" }))}
               >
-                <Trash2 className="mr-2 size-4" /> Xoá dự án
+                <Trash2 className="mr-2 size-4" /> Xoá phân nhánh
               </AlertDialogAction>
             </AlertDialogFooter>
           </>

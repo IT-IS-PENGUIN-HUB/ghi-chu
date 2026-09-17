@@ -454,7 +454,7 @@ export class Store {
     if (from === to) return { ok: true };
 
     const project = this.projectOf(from);
-    if (!project) return { ok: false, reason: "Không tìm thấy dự án." };
+    if (!project) return { ok: false, reason: "Không tìm thấy phân nhánh." };
     if (this.projectOf(to))
       return { ok: false, reason: `Mã ${to} đã được dùng.` };
 
@@ -508,7 +508,7 @@ export class Store {
     if (from === to) return { ok: true };
 
     const field = this.snapshot.fields.find(f => f.code === from);
-    if (!field) return { ok: false, reason: "Không tìm thấy nhóm." };
+    if (!field) return { ok: false, reason: "Không tìm thấy dự án." };
     if (this.snapshot.fields.some(f => f.code === to)) {
       return { ok: false, reason: `Mã ${to} đã được dùng.` };
     }
@@ -668,15 +668,18 @@ export class Store {
    */
   deleteProject(code: string): { ok: boolean; reason?: string } {
     const project = this.projectOf(code.toUpperCase());
-    if (!project) return { ok: false, reason: "Không tìm thấy dự án." };
+    if (!project) return { ok: false, reason: "Không tìm thấy phân nhánh." };
     if (isDefaultProject(project.code)) {
       return {
         ok: false,
-        reason: `"${project.name}" là ngăn mặc định — việc chưa chọn dự án rơi vào đây.`,
+        reason: `"${project.name}" là ngăn mặc định — việc chưa chọn phân nhánh rơi vào đây.`,
       };
     }
     if (this.tasksOf(project.code).length > 0) {
-      return { ok: false, reason: "Dự án còn việc — chỉ xoá được dự án rỗng." };
+      return {
+        ok: false,
+        reason: "Phân nhánh còn việc — chỉ xoá được phân nhánh rỗng.",
+      };
     }
 
     const registry = this.snapshot.projects.filter(

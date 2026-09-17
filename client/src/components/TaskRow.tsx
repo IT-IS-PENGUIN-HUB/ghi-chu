@@ -43,7 +43,7 @@ export interface TaskRowProps {
   /** "WORK_01" — today's position, or the permanent id on archive screens. */
   label: string;
   project?: Project;
-  /** Name of the nhóm (field) the project sits in, shown on mixed lists. */
+  /** Name of the dự án (field) the project sits in, shown on mixed lists. */
   fieldName?: string;
   projects?: Project[];
   selected?: boolean;
@@ -266,7 +266,7 @@ function TaskRowInner({
 
               <div className="mt-1 flex flex-wrap items-center gap-x-2 gap-y-1 text-xs text-muted-foreground">
                 {project && (
-                  // Where the task lives — nhóm › dự án — so weeks later you can
+                  // Where the task lives — dự án › phân nhánh — so weeks later you can
                   // still tell what it belongs to. A link so a tap opens the
                   // project (with its full breadcrumb) instead of leaving you
                   // guessing. Phạm trù is left off: WORK/HOME already says it.
@@ -275,8 +275,8 @@ function TaskRowInner({
                     onClick={e => e.stopPropagation()}
                     title={
                       fieldName
-                        ? `Nhóm ${fieldName} › ${project.name} — bấm để mở dự án`
-                        : `${project.name} — bấm để mở dự án`
+                        ? `Dự án ${fieldName} › ${project.name} — bấm để mở phân nhánh`
+                        : `${project.name} — bấm để mở phân nhánh`
                     }
                     className="inline-flex min-w-0 max-w-full items-center gap-1 rounded bg-muted px-1.5 py-0.5 font-medium transition-colors hover:bg-accent hover:text-foreground"
                   >
@@ -347,7 +347,7 @@ function TaskRowInner({
                   <DropdownMenuSeparator />
                   <DropdownMenuSub>
                     <DropdownMenuSubTrigger>
-                      Chuyển dự án
+                      Chuyển phân nhánh
                     </DropdownMenuSubTrigger>
                     <DropdownMenuSubContent className="max-h-72 overflow-y-auto">
                       {projects

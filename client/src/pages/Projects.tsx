@@ -91,41 +91,41 @@ const HELP: HelpItem[] = [
     text: (
       <>
         bên trái của Explorer hay Regedit. Từ ngoài vào trong: <b>Phạm trù</b>{" "}
-        (Công việc / Cá nhân — hai tủ lớn, không đổi) → <b>Nhóm</b> (ngăn gom
-        các dự án cùng loại, ví dụ 積算, 照査) → <b>Dự án</b> (một 案件 cụ thể)
-        → <b>Việc</b> (cái bạn gõ hằng ngày).
+        (Công việc / Cá nhân — hai tủ lớn, không đổi) → <b>Dự án</b> (ngăn gom
+        các phân nhánh cùng loại, ví dụ 積算, 照査) → <b>Phân nhánh</b> (một
+        案件 cụ thể) → <b>Việc</b> (cái bạn gõ hằng ngày).
       </>
     ),
   },
   {
-    label: "＋ Dự án / ＋ Việc trên mỗi dòng",
-    text: "bấm ＋ Dự án ở dòng nhóm để thêm dự án vào nhóm đó; bấm ＋ Việc ở dòng dự án để thêm việc ngay, không cần mở dự án ra.",
+    label: "＋ Phân nhánh / ＋ Việc trên mỗi dòng",
+    text: "bấm ＋ Phân nhánh ở dòng dự án để thêm phân nhánh vào dự án đó; bấm ＋ Việc ở dòng phân nhánh để thêm việc ngay, không cần mở phân nhánh ra.",
   },
   {
-    label: "Bấm tên dự án",
-    text: "để mở danh sách việc đang tồn và đã xong của dự án đó.",
+    label: "Bấm tên phân nhánh",
+    text: "để mở danh sách việc đang tồn và đã xong của phân nhánh đó.",
   },
   {
     label: "Bấm ▸ / ▾",
-    text: "để thu gọn hoặc mở rộng một phạm trù, một nhóm. App nhớ trạng thái này.",
+    text: "để thu gọn hoặc mở rộng một phạm trù, một dự án. App nhớ trạng thái này.",
   },
   {
-    label: "Chưa xếp vào nhóm",
-    text: "là ngăn tạm cho dự án chưa thuộc nhóm nào — dùng bình thường, không bắt buộc phải xếp.",
+    label: "Chưa xếp vào dự án",
+    text: "là ngăn tạm cho phân nhánh chưa thuộc dự án nào — dùng bình thường, không bắt buộc phải xếp.",
   },
   {
-    label: "Xoá nhóm không xoá việc",
-    text: "các dự án bên trong chỉ chuyển sang ngăn “Chưa xếp vào nhóm”.",
+    label: "Xoá dự án không xoá việc",
+    text: "các phân nhánh bên trong chỉ chuyển sang ngăn “Chưa xếp vào dự án”.",
   },
   {
-    label: "Xoá dự án",
-    text: "nằm trong menu ⋮ của dòng dự án, và ở nút “Xoá” trong trang dự án. App luôn hỏi lại, và chỉ xoá được dự án rỗng — còn việc bên trong thì nó nói rõ còn bao nhiêu việc thay vì xoá theo.",
+    label: "Xoá phân nhánh",
+    text: "nằm trong menu ⋮ của dòng phân nhánh, và ở nút “Xoá” trong trang phân nhánh. App luôn hỏi lại, và chỉ xoá được phân nhánh rỗng — còn việc bên trong thì nó nói rõ còn bao nhiêu việc thay vì xoá theo.",
   },
   {
     label: "Chữ mờ như ALP",
     text: (
       <>
-        là mã dự án — phần đầu của mã việc (
+        là mã phân nhánh — phần đầu của mã việc (
         <code className="font-mono">ALP-0042</code>). Đổi được trong “Sửa dự
         án”, app tự đánh lại mã cho việc bên trong.
       </>
@@ -141,7 +141,7 @@ type ProjectEditor = {
 type FieldEditor = { field: Field | null; category: Category };
 
 /**
- * The whole hierarchy as one explorer-style tree: phạm trù → nhóm → dự án.
+ * The whole hierarchy as one explorer-style tree: phạm trù → dự án → phân nhánh.
  *
  * Drawing it as a tree with guide lines borrows a shape everyone already knows
  * from Explorer and Regedit, so the structure explains itself before a word is
@@ -159,7 +159,10 @@ export default function Projects() {
   );
   const [deletingField, setDeletingField] = useState<Field | null>(null);
   const [deletingProject, setDeletingProject] = useState<Project | null>(null);
-  const [addingTaskTo, setAddingTaskTo] = useState<Project | null>(null);
+  // { project: null } = the screen-level button, which asks where to file.
+  const [addingTask, setAddingTask] = useState<{
+    project: Project | null;
+  } | null>(null);
 
   const openCount = useMemo(() => {
     const counts = new Map<string, number>();
@@ -233,7 +236,7 @@ export default function Projects() {
   const editProject = (project: Project) =>
     setProjectEditor({ project, category: project.category });
 
-  // A just-created project must be seen to land somewhere: open the nhóm (or
+  // A just-created project must be seen to land somewhere: open the dự án (or
   // the "chưa xếp" bucket) it went into and flash it. Otherwise a project that
   // fell into a collapsed bucket looks lost, and a duplicate gets made.
   const revealProject = (created: Project) => {
@@ -257,8 +260,8 @@ export default function Projects() {
         <div>
           <h1 className="text-2xl font-semibold tracking-tight">Dự án</h1>
           <p className="mt-0.5 text-sm text-muted-foreground">
-            Mỗi việc được cất trong một dự án. Bấm vào dự án để xem việc bên
-            trong.
+            Mỗi việc được cất trong một phân nhánh. Bấm vào phân nhánh để xem
+            việc bên trong.
           </p>
         </div>
         <HelpButton {...help} />
@@ -266,17 +269,33 @@ export default function Projects() {
 
       <HelpPanel {...help} items={HELP} />
 
+      {/* Read left to right, the row is the hierarchy itself: dự án, then
+          phân nhánh, then the việc that goes inside one. Only the last is
+          filled in — making a container is rare housekeeping, writing down a
+          việc is the thing you came here to do. */}
       <div className="flex flex-wrap items-center gap-2">
-        <Button size="sm" onClick={() => newProject("WRK")} className="gap-1.5">
-          <FolderPlus className="size-4" /> Dự án mới
-        </Button>
         <Button
           variant="outline"
           size="sm"
           onClick={() => newField("WRK")}
           className="gap-1.5"
         >
-          <Layers className="size-4" /> Nhóm mới
+          <Layers className="size-4" /> Dự án mới
+        </Button>
+        <Button
+          variant="outline"
+          size="sm"
+          onClick={() => newProject("WRK")}
+          className="gap-1.5"
+        >
+          <FolderPlus className="size-4" /> Phân nhánh mới
+        </Button>
+        <Button
+          size="sm"
+          onClick={() => setAddingTask({ project: null })}
+          className="gap-1.5"
+        >
+          <ListPlus className="size-4" /> Thêm việc mới
         </Button>
         <Legend />
       </div>
@@ -303,7 +322,7 @@ export default function Projects() {
               onDeleteField={setDeletingField}
               onEditProject={editProject}
               onDeleteProject={setDeletingProject}
-              onAddTask={setAddingTaskTo}
+              onAddTask={project => setAddingTask({ project })}
             />
           ))}
         </ul>
@@ -338,10 +357,10 @@ export default function Projects() {
         />
       )}
 
-      {addingTaskTo && (
+      {addingTask && (
         <QuickTaskDialog
-          project={addingTaskTo}
-          onClose={() => setAddingTaskTo(null)}
+          project={addingTask.project}
+          onClose={() => setAddingTask(null)}
         />
       )}
 
@@ -352,11 +371,11 @@ export default function Projects() {
         <AlertDialogContent>
           <AlertDialogHeader>
             <AlertDialogTitle>
-              Xoá nhóm "{deletingField?.name}"?
+              Xoá dự án "{deletingField?.name}"?
             </AlertDialogTitle>
             <AlertDialogDescription>
-              Các dự án trong nhóm này sẽ chuyển sang ngăn "Chưa xếp vào nhóm".
-              Không có công việc nào bị xoá.
+              Các phân nhánh trong dự án này sẽ chuyển sang ngăn "Chưa xếp vào
+              dự án". Không có công việc nào bị xoá.
             </AlertDialogDescription>
           </AlertDialogHeader>
           <AlertDialogFooter>
@@ -367,7 +386,7 @@ export default function Projects() {
                 setDeletingField(null);
               }}
             >
-              Xoá nhóm
+              Xoá dự án
             </AlertDialogAction>
           </AlertDialogFooter>
         </AlertDialogContent>
@@ -459,16 +478,17 @@ function RootNode({
           </span>
         </div>
         <InlineAdd
-          label="Dự án"
+          label="Phân nhánh"
           onClick={() => onNewProject(category)}
-          title={`Thêm dự án vào ${CATEGORY_LABEL[category]}`}
+          title={`Thêm phân nhánh vào ${CATEGORY_LABEL[category]}`}
         />
         <NodeMenu label={`Tuỳ chọn phạm trù ${CATEGORY_LABEL[category]}`}>
           <DropdownMenuItem onClick={() => onNewProject(category)}>
-            <FolderPlus className="mr-2 size-4" /> Thêm dự án vào phạm trù này
+            <FolderPlus className="mr-2 size-4" /> Thêm phân nhánh vào phạm trù
+            này
           </DropdownMenuItem>
           <DropdownMenuItem onClick={() => onNewField(category)}>
-            <Layers className="mr-2 size-4" /> Thêm nhóm vào phạm trù này
+            <Layers className="mr-2 size-4" /> Thêm dự án vào phạm trù này
           </DropdownMenuItem>
         </NodeMenu>
       </div>
@@ -482,21 +502,22 @@ function RootNode({
             projects={active.filter(p => p.field === field.code)}
             onAddProject={() => onNewProject(category, field.code)}
             menu={
-              <NodeMenu label={`Tuỳ chọn nhóm ${field.name}`}>
+              <NodeMenu label={`Tuỳ chọn dự án ${field.name}`}>
                 <DropdownMenuItem
                   onClick={() => onNewProject(category, field.code)}
                 >
-                  <FolderPlus className="mr-2 size-4" /> Thêm dự án vào nhóm này
+                  <FolderPlus className="mr-2 size-4" /> Thêm phân nhánh vào dự
+                  án này
                 </DropdownMenuItem>
                 <DropdownMenuSeparator />
                 <DropdownMenuItem onClick={() => onEditField(field)}>
-                  <Pencil className="mr-2 size-4" /> Sửa nhóm (tên, mã)
+                  <Pencil className="mr-2 size-4" /> Sửa dự án (tên, mã)
                 </DropdownMenuItem>
                 <DropdownMenuItem
                   onClick={() => onDeleteField(field)}
                   className="text-destructive focus:text-destructive"
                 >
-                  <Trash2 className="mr-2 size-4" /> Xoá nhóm (giữ nguyên việc)
+                  <Trash2 className="mr-2 size-4" /> Xoá dự án (giữ nguyên việc)
                 </DropdownMenuItem>
               </NodeMenu>
             }
@@ -504,21 +525,21 @@ function RootNode({
           />
         ))}
 
-        {/* Always present so a project without a nhóm has a visible home. */}
+        {/* Always present so a project without a dự án has a visible home. */}
         {(unfiled.length > 0 || fields.length === 0) && (
           <FieldNode
             nodeKey={`unfiled:${category}`}
-            name="Chưa xếp vào nhóm"
+            name="Chưa xếp vào dự án"
             projects={unfiled}
             muted
             onAddProject={() => onNewProject(category)}
             menu={
               <NodeMenu label="Tuỳ chọn ngăn chưa xếp">
                 <DropdownMenuItem onClick={() => onNewProject(category)}>
-                  <FolderPlus className="mr-2 size-4" /> Thêm dự án vào đây
+                  <FolderPlus className="mr-2 size-4" /> Thêm phân nhánh vào đây
                 </DropdownMenuItem>
                 <DropdownMenuItem onClick={() => onNewField(category)}>
-                  <Layers className="mr-2 size-4" /> Tạo nhóm để xếp
+                  <Layers className="mr-2 size-4" /> Tạo dự án để xếp
                 </DropdownMenuItem>
               </NodeMenu>
             }
@@ -608,17 +629,17 @@ function FieldNode({
           >
             {name}
           </span>
-          {!muted && <LevelTag>nhóm</LevelTag>}
+          {!muted && <LevelTag>dự án</LevelTag>}
           <span className="shrink-0 text-xs tabular-nums text-muted-foreground">
             {projects.length}
-            <span className="hidden sm:inline"> dự án</span>
+            <span className="hidden sm:inline"> phân nhánh</span>
           </span>
         </button>
         {onAddProject && (
           <InlineAdd
-            label="Dự án"
+            label="Phân nhánh"
             onClick={onAddProject}
-            title={`Thêm dự án vào ${name}`}
+            title={`Thêm phân nhánh vào ${name}`}
           />
         )}
         {menu ?? <span className="tap shrink-0" aria-hidden />}
@@ -629,7 +650,7 @@ function FieldNode({
           {projects.length === 0 ? (
             <TreeItem>
               <p className="px-1.5 py-1.5 text-xs text-muted-foreground">
-                Trống — bấm <b>＋ Dự án</b> ở dòng trên để thêm.
+                Trống — bấm <b>＋ Phân nhánh</b> ở dòng trên để thêm.
               </p>
             </TreeItem>
           ) : (
@@ -684,6 +705,9 @@ function ProjectNode({
               {project.code}
             </span>
           </span>
+          {/* The two levels above name themselves; this one is the newest
+              word of the three, so it needs the label most. */}
+          <LevelTag>phân nhánh</LevelTag>
           {count > 0 && (
             <span
               className="shrink-0 rounded-full bg-muted px-1.5 text-xs tabular-nums text-muted-foreground"
@@ -703,13 +727,13 @@ function ProjectNode({
             title={`Thêm việc vào ${project.name}`}
           />
         )}
-        <NodeMenu label={`Tuỳ chọn dự án ${project.name}`}>
+        <NodeMenu label={`Tuỳ chọn phân nhánh ${project.name}`}>
           <DropdownMenuItem onClick={onAddTask}>
-            <ListPlus className="mr-2 size-4" /> Thêm việc vào dự án này
+            <ListPlus className="mr-2 size-4" /> Thêm việc vào phân nhánh này
           </DropdownMenuItem>
           <DropdownMenuSeparator />
           <DropdownMenuItem onClick={onEdit}>
-            <Pencil className="mr-2 size-4" /> Sửa dự án (tên, nhóm, mã)
+            <Pencil className="mr-2 size-4" /> Sửa phân nhánh (tên, dự án, mã)
           </DropdownMenuItem>
           <DropdownMenuItem
             onClick={() =>
@@ -731,7 +755,7 @@ function ProjectNode({
             onClick={onDelete}
             className="text-destructive focus:text-destructive"
           >
-            <Trash2 className="mr-2 size-4" /> Xoá dự án (chỉ khi rỗng)
+            <Trash2 className="mr-2 size-4" /> Xoá phân nhánh (chỉ khi rỗng)
           </DropdownMenuItem>
         </NodeMenu>
       </div>
@@ -850,10 +874,10 @@ function Legend() {
       Phạm trù
       <ChevronRight className="size-3" />
       <Folder className="size-3.5 text-amber-500" />
-      Nhóm
+      Dự án
       <ChevronRight className="size-3" />
       <FileText className="size-3.5" />
-      Dự án
+      Phân nhánh
       <ChevronRight className="size-3" />
       Việc
     </p>

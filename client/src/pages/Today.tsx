@@ -39,7 +39,7 @@ type View = Category | "ALL";
 const SORT_LABEL: Record<SortMode, string> = {
   age: "Cũ nhất trước",
   recent: "Mới nhất trước",
-  project: "Theo dự án",
+  project: "Theo phân nhánh",
 };
 
 const WEEKDAYS = [
@@ -65,7 +65,7 @@ const HELP: HelpItem[] = [
   },
   {
     label: "Thêm việc mới",
-    text: "gõ rồi bấm Enter. Chọn nơi cất việc theo hai bước: “Nhóm” rồi “Dự án” trong nhóm đó; chưa có thì bấm “＋ Tạo … mới” ngay tại đó.",
+    text: "gõ rồi bấm Enter. Chọn nơi cất việc theo hai bước: “Dự án” rồi “Phân nhánh” trong dự án đó; chưa có thì bấm “＋ Tạo … mới” ngay tại đó.",
   },
   {
     label: "Ô vuông bên trái mỗi việc",
@@ -88,7 +88,7 @@ const HELP: HelpItem[] = [
   },
   {
     label: "Nút ⋮ cuối dòng",
-    text: "sửa nội dung, đánh dấu ưu tiên, chuyển sang dự án khác, sao chép mã, xoá.",
+    text: "sửa nội dung, đánh dấu ưu tiên, chuyển sang phân nhánh khác, sao chép mã, xoá.",
   },
   {
     label: "Ghi chú hôm nay",
@@ -131,8 +131,8 @@ export default function Today() {
     () => new Map(projects.map(p => [p.code, p])),
     [projects]
   );
-  // project code -> the name of the nhóm it sits in, for the row's "nhóm › dự
-  // án" tag. Undefined for a project not filed under any nhóm.
+  // project code -> the name of the dự án it sits in, for the row's "dự án › dự
+  // án" tag. Undefined for a project not filed under any dự án.
   const fieldNameByProject = useMemo(() => {
     const byCode = new Map(fields.map(f => [f.code, f.name]));
     return new Map(

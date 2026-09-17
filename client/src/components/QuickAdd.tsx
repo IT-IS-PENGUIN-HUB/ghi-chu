@@ -41,8 +41,8 @@ export interface QuickAddProps {
  * The primary action of the whole app, so it is styled as one: a titled panel
  * with a filled button that says "Thêm", not a bare input with a plus icon.
  *
- * Filing is a two-step cascade — Nhóm, then Dự án filtered to that nhóm —
- * because one flat list of every project across every nhóm was hard to read
+ * Filing is a two-step cascade — Dự án, then Phân nhánh filtered to that dự án —
+ * because one flat list of every project across every dự án was hard to read
  * once there were more than a handful. Each picker can grow its own list on the
  * spot ("＋ Tạo … mới"), so nothing here ever sends you to another screen to
  * set up structure first.
@@ -152,7 +152,7 @@ export function QuickAdd({ projects, fields, category, onAdd }: QuickAddProps) {
       return;
     }
     setField(value);
-    setProject(""); // fall to the first project of the newly chosen nhóm
+    setProject(""); // fall to the first project of the newly chosen dự án
   };
 
   const onProjectChange = (value: string) => {
@@ -167,7 +167,7 @@ export function QuickAdd({ projects, fields, category, onAdd }: QuickAddProps) {
     setField(code);
     setProject("");
     setCreatingField(false);
-    // A brand-new nhóm has no projects yet, so send the user straight on to
+    // A brand-new dự án has no projects yet, so send the user straight on to
     // making the first one.
     setCreatingProject(true);
   };
@@ -277,11 +277,11 @@ export function QuickAdd({ projects, fields, category, onAdd }: QuickAddProps) {
           </>
         )}
 
-        <span className="text-xs text-muted-foreground">Nhóm</span>
+        <span className="text-xs text-muted-foreground">Dự án</span>
         <Select value={effectiveField} onValueChange={onFieldChange}>
           <SelectTrigger
             className="h-9 w-auto min-w-[9rem] max-w-[13rem] gap-1.5 border-2 bg-background text-sm"
-            aria-label="Chọn nhóm cho việc mới"
+            aria-label="Chọn dự án cho việc mới"
           >
             <SelectValue />
           </SelectTrigger>
@@ -292,7 +292,7 @@ export function QuickAdd({ projects, fields, category, onAdd }: QuickAddProps) {
             >
               <span className="flex items-center gap-1.5">
                 <Layers className="size-4" />
-                Tạo nhóm mới…
+                Tạo dự án mới…
               </span>
             </SelectItem>
             <SelectSeparator />
@@ -301,17 +301,17 @@ export function QuickAdd({ projects, fields, category, onAdd }: QuickAddProps) {
                 {f.name}
               </SelectItem>
             ))}
-            <SelectItem value={UNFILED}>Chưa xếp vào nhóm</SelectItem>
+            <SelectItem value={UNFILED}>Chưa xếp vào dự án</SelectItem>
           </SelectContent>
         </Select>
 
-        <span className="text-xs text-muted-foreground">Dự án</span>
+        <span className="text-xs text-muted-foreground">Phân nhánh</span>
         <Select value={effectiveProject} onValueChange={onProjectChange}>
           <SelectTrigger
             className="h-9 w-auto min-w-[10rem] max-w-[15rem] gap-1.5 border-2 bg-background text-sm"
-            aria-label="Chọn dự án cho việc mới"
+            aria-label="Chọn phân nhánh cho việc mới"
           >
-            <SelectValue placeholder="Chọn dự án" />
+            <SelectValue placeholder="Chọn phân nhánh" />
           </SelectTrigger>
           <SelectContent className="max-h-72">
             <SelectItem
@@ -320,13 +320,13 @@ export function QuickAdd({ projects, fields, category, onAdd }: QuickAddProps) {
             >
               <span className="flex items-center gap-1.5">
                 <FolderPlus className="size-4" />
-                Tạo dự án mới…
+                Tạo phân nhánh mới…
               </span>
             </SelectItem>
             <SelectSeparator />
             {projectsInField.length === 0 ? (
               <p className="px-2 py-1.5 text-xs text-muted-foreground">
-                Nhóm này chưa có dự án — bấm “Tạo dự án mới”.
+                Dự án này chưa có phân nhánh — bấm “Tạo phân nhánh mới”.
               </p>
             ) : (
               projectsInField.map(p => (

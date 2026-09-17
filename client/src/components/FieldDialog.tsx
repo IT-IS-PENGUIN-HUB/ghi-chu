@@ -75,11 +75,11 @@ export function FieldDialog({
       toast.success(
         codeChanged
           ? `Đã đổi mã ${field.code} → ${effectiveCode}`
-          : `Đã cập nhật nhóm ${name.trim()}`
+          : `Đã cập nhật dự án ${name.trim()}`
       );
     } else {
       store.createField(name.trim(), effectiveCode, category);
-      toast.success(`Đã tạo nhóm ${name.trim()}`);
+      toast.success(`Đã tạo dự án ${name.trim()}`);
     }
     onClose();
   };
@@ -88,16 +88,17 @@ export function FieldDialog({
     <Dialog open onOpenChange={o => !o && onClose()}>
       <DialogContent className="sm:max-w-md">
         <DialogHeader>
-          <DialogTitle>{editing ? "Sửa nhóm" : "Nhóm mới"}</DialogTitle>
+          <DialogTitle>{editing ? "Sửa dự án" : "Dự án mới"}</DialogTitle>
           <DialogDescription>
-            Một ngăn để gom các dự án cùng loại — ví dụ 積算, 積算照査, Học tập.
-            Không bắt buộc: dự án không thuộc nhóm nào vẫn dùng bình thường.
+            Một ngăn để gom các phân nhánh cùng loại — ví dụ 積算, 積算照査, Học
+            tập. Không bắt buộc: phân nhánh không thuộc dự án nào vẫn dùng bình
+            thường.
           </DialogDescription>
         </DialogHeader>
 
         <div className="space-y-4">
           <div className="space-y-1.5">
-            <Label htmlFor="field-name">Tên nhóm</Label>
+            <Label htmlFor="field-name">Tên dự án</Label>
             <Input
               id="field-name"
               autoFocus
@@ -126,7 +127,7 @@ export function FieldDialog({
             )}
             {codeChanged && !codeError && (
               <p className="text-xs text-muted-foreground">
-                Các dự án thuộc nhóm này sẽ tự trỏ sang mã mới.
+                Các phân nhánh thuộc dự án này sẽ tự trỏ sang mã mới.
               </p>
             )}
           </div>
@@ -149,7 +150,7 @@ export function FieldDialog({
             </RadioGroup>
             {editing && category !== field.category && (
               <p className="text-xs text-amber-600 dark:text-amber-400">
-                Đổi phạm trù sẽ chuyển toàn bộ dự án trong nhóm này sang{" "}
+                Đổi phạm trù sẽ chuyển toàn bộ phân nhánh trong dự án này sang{" "}
                 {CATEGORY_LABEL[category]}.
               </p>
             )}

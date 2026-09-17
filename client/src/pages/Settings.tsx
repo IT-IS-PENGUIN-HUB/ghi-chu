@@ -360,7 +360,7 @@ export default function Settings() {
       </section>
 
       <p className="pb-4 text-xs text-muted-foreground">
-        {fields.length} nhóm · {projects.length} dự án · dữ liệu nằm trong
+        {fields.length} dự án · {projects.length} phân nhánh · dữ liệu nằm trong
         IndexedDB của trình duyệt này.
       </p>
     </div>

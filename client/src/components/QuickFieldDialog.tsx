@@ -24,7 +24,7 @@ export interface QuickFieldDialogProps {
 }
 
 /**
- * Create a "Nhóm" (a field — the layer that gathers projects of one kind)
+ * Create a "Dự án" (a field — the layer that gathers projects of one kind)
  * without leaving the add box. Name only; the code is derived. Sibling of
  * QuickProjectDialog so the two cascading pickers can both grow their own list
  * inline instead of sending the user to the Dự án screen.
@@ -42,7 +42,7 @@ export function QuickFieldDialog({
     if (!trimmed) return;
     const code = suggestProjectCode(trimmed, takenCodes);
     store.createField(trimmed, code, category);
-    toast.success(`Đã tạo nhóm ${trimmed}`);
+    toast.success(`Đã tạo dự án ${trimmed}`);
     onCreated(code);
   };
 
@@ -50,15 +50,15 @@ export function QuickFieldDialog({
     <Dialog open onOpenChange={o => !o && onClose()}>
       <DialogContent className="sm:max-w-md">
         <DialogHeader>
-          <DialogTitle>Nhóm mới · {CATEGORY_LABEL[category]}</DialogTitle>
+          <DialogTitle>Dự án mới · {CATEGORY_LABEL[category]}</DialogTitle>
           <DialogDescription>
-            Nhóm gom các dự án cùng loại — ví dụ 積算, 積算照査. Chỉ cần đặt
-            tên, mã tự tạo.
+            Dự án gom các phân nhánh cùng loại — ví dụ 積算, 積算照査. Chỉ cần
+            đặt tên, mã tự tạo.
           </DialogDescription>
         </DialogHeader>
 
         <div className="space-y-1.5">
-          <Label htmlFor="quick-field-name">Tên nhóm</Label>
+          <Label htmlFor="quick-field-name">Tên dự án</Label>
           <Input
             id="quick-field-name"
             autoFocus
