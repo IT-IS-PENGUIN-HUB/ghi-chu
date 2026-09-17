@@ -37,7 +37,9 @@ export function AppShell({ children }: { children: ReactNode }) {
     <div className="flex min-h-dvh flex-col">
       {/* Desktop / tablet header */}
       <header className="pt-safe sticky top-0 z-40 hidden border-b border-border bg-background/85 backdrop-blur-md sm:block">
-        <div className="mx-auto flex h-16 max-w-6xl items-center gap-1 px-5">
+        {/* 80px of permanent chrome on a 768px screen was a tenth of it
+            spent on a bar that never changes. */}
+        <div className="mx-auto flex h-13 max-w-6xl items-center gap-1 px-5">
           <Link href="/" className="mr-4 flex items-center gap-2">
             <span className="flex size-8 items-center justify-center rounded-lg bg-primary text-primary-foreground">
               <CheckSquare className="size-4 stroke-[2.5]" />
@@ -125,7 +127,7 @@ export function AppShell({ children }: { children: ReactNode }) {
         </div>
       </header>
 
-      <main className="mx-auto w-full max-w-6xl flex-1 px-4 py-5 pb-28 sm:px-5 sm:pb-10">
+      <main className="mx-auto w-full max-w-6xl flex-1 px-4 py-4 pb-28 sm:px-5 sm:pb-8">
         {children}
       </main>
 

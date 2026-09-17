@@ -1,5 +1,5 @@
 import { useEffect, useMemo, useRef, useState } from "react";
-import { CornerDownLeft, FolderPlus, Layers, Plus, Star } from "lucide-react";
+import { FolderPlus, Layers, Plus, Star } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import {
@@ -191,36 +191,16 @@ export function QuickAdd({ projects, fields, category, onAdd }: QuickAddProps) {
   return (
     <section
       className={cn(
-        "rounded-2xl border-2 p-4 shadow-sm transition-colors",
+        "rounded-2xl border-2 p-3 shadow-sm transition-colors",
         activeCategory === "WRK"
           ? "border-wrk/35 bg-wrk-soft/40"
           : "border-per/35 bg-per-soft/40"
       )}
     >
-      <div className="mb-2.5 flex items-center gap-2">
-        <span
-          className={cn(
-            "flex size-7 items-center justify-center rounded-lg text-white",
-            activeCategory === "WRK" ? "bg-wrk" : "bg-per"
-          )}
-        >
-          <Plus className="size-4 stroke-[3]" />
-        </span>
-        <h2 className="text-base font-semibold">Thêm việc mới</h2>
-        {category !== "ALL" && (
-          <span
-            className={cn(
-              "rounded-full px-2 py-0.5 text-xs font-medium",
-              activeCategory === "WRK"
-                ? "bg-wrk/15 text-wrk"
-                : "bg-per/15 text-per"
-            )}
-          >
-            {CATEGORY_LABEL[activeCategory]}
-          </span>
-        )}
-      </div>
-
+      {/* No heading: "Gõ việc cần làm rồi bấm Enter…" in the box says it
+          better than a title above the box, and the coloured frame plus the
+          coloured Thêm button already mark what this is. That row was 45px —
+          one whole task row, spent on a label nobody needed to read twice. */}
       <div className="flex flex-col gap-2 sm:flex-row">
         <Input
           id="quick-add-input"
@@ -230,7 +210,7 @@ export function QuickAdd({ projects, fields, category, onAdd }: QuickAddProps) {
           {...compositionHandlers}
           placeholder="Gõ việc cần làm rồi bấm Enter…"
           aria-label="Nội dung công việc mới"
-          className="h-12 flex-1 border-2 bg-background text-base shadow-none focus-visible:ring-2"
+          className="h-10 flex-1 border-2 bg-background text-base shadow-none focus-visible:ring-2"
           enterKeyHint="done"
           autoComplete="off"
           autoCorrect="off"
@@ -240,18 +220,18 @@ export function QuickAdd({ projects, fields, category, onAdd }: QuickAddProps) {
           disabled={!title.trim() || !effectiveProject}
           size="lg"
           className={cn(
-            "h-12 gap-2 px-6 text-base font-semibold text-white shadow-sm",
+            "h-10 gap-1.5 px-4 text-sm font-semibold text-white shadow-sm",
             activeCategory === "WRK"
               ? "bg-wrk hover:bg-wrk/90"
               : "bg-per hover:bg-per/90"
           )}
         >
-          <Plus className="size-5 stroke-[2.5]" />
+          <Plus className="size-4 stroke-[2.5]" />
           Thêm
         </Button>
       </div>
 
-      <div className="mt-2.5 flex flex-wrap items-center gap-x-2 gap-y-2">
+      <div className="mt-2 flex flex-wrap items-center gap-x-2 gap-y-1.5">
         {/* Phạm trù — only in ALL mode; otherwise the toggle already fixed it. */}
         {category === "ALL" && (
           <>
@@ -261,7 +241,7 @@ export function QuickAdd({ projects, fields, category, onAdd }: QuickAddProps) {
               onValueChange={v => setPickedCategory(v as Category)}
             >
               <SelectTrigger
-                className="h-9 w-auto min-w-[8rem] gap-1.5 border-2 bg-background text-sm"
+                className="h-8 w-auto min-w-[7rem] gap-1.5 border-2 bg-background text-sm"
                 aria-label="Chọn phạm trù cho việc mới"
               >
                 <SelectValue />
@@ -280,7 +260,7 @@ export function QuickAdd({ projects, fields, category, onAdd }: QuickAddProps) {
         <span className="text-xs text-muted-foreground">Dự án</span>
         <Select value={effectiveField} onValueChange={onFieldChange}>
           <SelectTrigger
-            className="h-9 w-auto min-w-[9rem] max-w-[13rem] gap-1.5 border-2 bg-background text-sm"
+            className="h-8 w-auto min-w-[8rem] max-w-[12rem] gap-1.5 border-2 bg-background text-sm"
             aria-label="Chọn dự án cho việc mới"
           >
             <SelectValue />
@@ -308,7 +288,7 @@ export function QuickAdd({ projects, fields, category, onAdd }: QuickAddProps) {
         <span className="text-xs text-muted-foreground">Phân nhánh</span>
         <Select value={effectiveProject} onValueChange={onProjectChange}>
           <SelectTrigger
-            className="h-9 w-auto min-w-[10rem] max-w-[15rem] gap-1.5 border-2 bg-background text-sm"
+            className="h-8 w-auto min-w-[9rem] max-w-[14rem] gap-1.5 border-2 bg-background text-sm"
             aria-label="Chọn phân nhánh cho việc mới"
           >
             <SelectValue placeholder="Chọn phân nhánh" />
@@ -343,7 +323,7 @@ export function QuickAdd({ projects, fields, category, onAdd }: QuickAddProps) {
           onClick={() => setStarred(s => !s)}
           aria-pressed={starred}
           className={cn(
-            "flex h-9 items-center gap-1.5 rounded-lg border-2 px-3 text-sm transition-colors",
+            "flex h-8 items-center gap-1.5 rounded-lg border-2 px-2.5 text-sm transition-colors",
             starred
               ? "border-amber-400 bg-amber-400/15 font-medium text-amber-700 dark:text-amber-300"
               : "border-border bg-background text-muted-foreground hover:text-foreground"
@@ -352,11 +332,6 @@ export function QuickAdd({ projects, fields, category, onAdd }: QuickAddProps) {
           <Star className={cn("size-4", starred && "fill-current")} />
           Ưu tiên
         </button>
-
-        <span className="ml-auto hidden items-center gap-1 text-xs text-muted-foreground sm:flex">
-          <CornerDownLeft className="size-3.5" />
-          Enter để thêm nhanh
-        </span>
       </div>
 
       {preview.tags.length > 0 && (

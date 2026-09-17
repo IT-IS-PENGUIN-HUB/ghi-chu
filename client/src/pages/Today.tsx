@@ -269,27 +269,29 @@ export default function Today() {
     view === "PER" ? "bg-per" : view === "WRK" ? "bg-wrk" : "bg-primary";
 
   return (
-    <div className="space-y-5">
-      <header className="flex flex-wrap items-end justify-between gap-3">
-        <div>
-          <h1 className="text-3xl font-bold tracking-tight">Hôm nay</h1>
-          <p className="mt-1 text-sm text-muted-foreground">
+    <div className="space-y-3">
+      {/* Title and date on one line: the date is a caption, not a second
+          heading, and stacking them cost a whole row of the list below. */}
+      <header className="flex flex-wrap items-center justify-between gap-x-3 gap-y-1">
+        <div className="flex flex-col sm:flex-row sm:items-baseline sm:gap-2.5">
+          <h1 className="text-2xl font-bold tracking-tight">Hôm nay</h1>
+          <p className="text-sm text-muted-foreground">
             {WEEKDAYS[now.getDay()]}, {now.getDate()}/{now.getMonth() + 1}/
             {now.getFullYear()}
           </p>
         </div>
-        <div className="flex items-center gap-4">
+        <div className="flex items-center gap-3">
           {progress > 0 && (
-            <div className="flex items-center gap-3">
-              <div className="text-right">
-                <div className="text-2xl font-bold tabular-nums text-done">
+            <div className="flex items-center gap-2.5">
+              <div className="text-right leading-tight">
+                <div className="text-xl font-bold tabular-nums text-done">
                   {percent}%
                 </div>
                 <div className="text-xs text-muted-foreground">
                   {doneToday.length}/{progress} xong · {VIEW_LABEL[view]}
                 </div>
               </div>
-              <div className="h-11 w-1.5 overflow-hidden rounded-full bg-muted">
+              <div className="h-8 w-1.5 overflow-hidden rounded-full bg-muted">
                 <div
                   className="w-full rounded-full bg-done transition-all"
                   style={{
@@ -308,16 +310,19 @@ export default function Today() {
 
       {totalOpen === 0 && doneToday.length === 0 && <WelcomeCard />}
 
-      {/* View switch — big, coloured, unmistakably a switch. */}
-      <div className="grid grid-cols-3 gap-2">
+      {/* One segmented control rather than three separate cards. The
+          coloured fill on the active segment is what made the old version
+          unmistakable, and it survives at 36px — the height came from padding
+          and a second border, not from anything that carried meaning. */}
+      <div className="grid grid-cols-3 gap-1 rounded-xl border border-border bg-muted/60 p-1 sm:p-0.5">
         {(["WRK", "PER", "ALL"] as View[]).map(v => {
           const active = view === v;
           const activeTone =
             v === "WRK"
-              ? "border-wrk bg-wrk text-white shadow-sm"
+              ? "bg-wrk text-white shadow-sm"
               : v === "PER"
-                ? "border-per bg-per text-white shadow-sm"
-                : "border-primary bg-primary text-primary-foreground shadow-sm";
+                ? "bg-per text-white shadow-sm"
+                : "bg-primary text-primary-foreground shadow-sm";
           const badgeTone = active
             ? "bg-white/25 text-white"
             : v === "WRK"
@@ -332,16 +337,16 @@ export default function Today() {
               onClick={() => setView(v)}
               aria-pressed={active}
               className={cn(
-                "flex items-center justify-center gap-2 rounded-xl border-2 px-2 py-2.5 text-sm font-medium transition-all sm:text-base",
+                "flex h-8 items-center justify-center gap-1 whitespace-nowrap rounded-lg px-1 text-xs font-medium transition-all sm:h-7 sm:gap-1.5 sm:px-2 sm:text-sm",
                 active
                   ? activeTone
-                  : "border-border bg-card text-muted-foreground hover:border-foreground/25 hover:text-foreground"
+                  : "text-muted-foreground hover:bg-background/70 hover:text-foreground"
               )}
             >
               {VIEW_LABEL[v]}
               <span
                 className={cn(
-                  "min-w-6 rounded-full px-1.5 text-xs font-bold tabular-nums",
+                  "min-w-5 rounded-full px-1 text-xs font-bold tabular-nums sm:min-w-6 sm:px-1.5",
                   badgeTone
                 )}
               >
@@ -375,8 +380,8 @@ export default function Today() {
 
       {/* Two columns on a wide screen: the checklist is the work, the note sits
           beside it instead of being buried below a long list. */}
-      <div className="grid gap-5 lg:grid-cols-[minmax(0,1.6fr)_minmax(0,1fr)] lg:items-start">
-        <div className="space-y-3">
+      <div className="grid gap-4 lg:grid-cols-[minmax(0,1.6fr)_minmax(0,1fr)] lg:items-start">
+        <div className="space-y-2">
           <div className="flex items-center justify-between">
             <h2 className="flex items-center gap-1.5 text-sm font-semibold">
               <ListTodo className="size-4 text-muted-foreground" />
@@ -409,7 +414,7 @@ export default function Today() {
               }
             />
           ) : (
-            <ul className="space-y-2">
+            <ul className="space-y-1.5">
               {open.map(({ task, daily }) => (
                 <li key={task.id}>
                   <TaskRow
@@ -440,7 +445,7 @@ export default function Today() {
                 Đã xong hôm nay ({doneToday.length})
               </CollapsibleTrigger>
               <CollapsibleContent className="mt-2">
-                <ul className="space-y-2">
+                <ul className="space-y-1.5">
                   {doneToday.map(task => (
                     <li key={task.id}>
                       <TaskRow
@@ -477,7 +482,7 @@ export default function Today() {
                 <NotebookPen className="size-4" />
                 Ghi chú gần đây
               </h3>
-              <ul className="space-y-2">
+              <ul className="space-y-1.5">
                 {/* Styled as its own coloured bar — a third hue, distinct from
                     the WRK/PER task rows — so an old note reads as something to
                     open, not a caption to skim past. */}

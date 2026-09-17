@@ -155,12 +155,15 @@
     @apply border-border outline-ring/50;
   }
   html {
-    /* Everything in the app is sized in rem, so raising the root size scales
-       text, padding and controls together by 25%. A checklist is read in
-       glances rather than studied, and 16px was too small for that.
+    /* Everything in the app is sized in rem, so the root size scales text,
+       padding and controls together. A checklist is read in glances rather
+       than studied, so this sits above the 16px default — but 125% inflated
+       every gap and every control by a quarter too, which is what made the
+       screen feel roomy and show four rows where it could show six. 112.5%
+       keeps the text comfortably large and hands the rest back to the list.
        Physical touch targets stay in px — see .tap below — because a finger
        does not get bigger along with the text. */
-    font-size: 125%;
+    font-size: 112.5%;
     /* Stops iOS from bumping text size when the phone is turned sideways. */
     -webkit-text-size-adjust: 100%;
   }

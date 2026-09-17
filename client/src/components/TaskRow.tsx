@@ -191,7 +191,7 @@ function TaskRowInner({
           // A soft whole-row wash plus a matching border tells you the group at
           // a glance without reading anything — what makes a long mixed list
           // scannable — without the hard left band, which read as clutter.
-          "group flex items-start gap-2 rounded-xl border py-2.5 pl-2.5 pr-3 shadow-sm transition-colors no-tap-highlight",
+          "group flex items-start gap-2 rounded-xl border py-2 pl-2 pr-2.5 shadow-sm transition-colors no-tap-highlight",
           snapping && "transition-transform duration-200",
           // The wash is the accent colour at low opacity rather than the pale
           // `*-soft` token: soft is near-white and vanishes on a dark ground,
@@ -228,7 +228,7 @@ function TaskRowInner({
             checked={task.done}
             tabIndex={-1}
             aria-hidden
-            className="pointer-events-none size-6"
+            className="pointer-events-none size-5"
           />
         </button>
 
@@ -277,7 +277,7 @@ function TaskRowInner({
                 </span>
               </div>
 
-              <div className="mt-1 flex flex-wrap items-center gap-x-2 gap-y-1 text-xs text-muted-foreground">
+              <div className="mt-0.5 flex flex-wrap items-center gap-x-2 gap-y-0.5 text-xs text-muted-foreground">
                 {project && (
                   // Where the task lives — dự án › phân nhánh — so weeks later you can
                   // still tell what it belongs to. A link so a tap opens the
