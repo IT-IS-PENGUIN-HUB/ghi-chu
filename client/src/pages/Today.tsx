@@ -4,6 +4,7 @@ import {
   ArrowUp,
   CheckCircle2,
   ChevronDown,
+  ChevronRight,
   ClockAlert,
   ListTodo,
   NotebookPen,
@@ -444,19 +445,26 @@ export default function Today() {
                 <NotebookPen className="size-4" />
                 Ghi chú gần đây
               </h3>
-              <ul className="space-y-1.5">
+              <ul className="space-y-2">
+                {/* Styled as its own coloured bar — a third hue, distinct from
+                    the WRK/PER task rows — so an old note reads as something to
+                    open, not a caption to skim past. */}
                 {recentNotes.map(n => (
                   <li key={n.date}>
                     <Link
                       href={`/lich-su/${n.date}`}
-                      className="block rounded-lg border border-border bg-card px-3 py-2 transition-colors hover:border-foreground/20"
+                      className="flex items-start gap-2 rounded-xl border border-note/40 bg-note/10 px-3 py-2.5 shadow-sm transition-colors hover:bg-note/20"
                     >
-                      <div className="text-xs font-medium tabular-nums text-muted-foreground">
-                        {n.date}
+                      <NotebookPen className="mt-0.5 size-4 shrink-0 text-note" />
+                      <div className="min-w-0 flex-1">
+                        <div className="text-xs font-semibold tabular-nums text-note">
+                          {n.date}
+                        </div>
+                        <p className="mt-0.5 line-clamp-2 text-sm leading-snug">
+                          {noteExcerpt(n.body)}
+                        </p>
                       </div>
-                      <p className="mt-0.5 line-clamp-2 text-sm leading-snug">
-                        {noteExcerpt(n.body)}
-                      </p>
+                      <ChevronRight className="mt-0.5 size-4 shrink-0 text-note/60" />
                     </Link>
                   </li>
                 ))}
