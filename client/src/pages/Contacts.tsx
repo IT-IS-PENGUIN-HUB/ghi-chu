@@ -144,64 +144,75 @@ export default function Contacts() {
             <ul className="space-y-1.5">
               {list.map((c, i) => (
                 <li key={`${c.phone}-${i}`} className="flex items-center gap-1">
-                  <div className="flex flex-1 flex-wrap items-center gap-x-1 gap-y-1 rounded-xl border border-border bg-card py-1.5 pl-3 pr-1.5 transition-colors hover:border-foreground/20">
-                    {/* Tapping the name edits; only the number itself dials, so
-                        a stray tap while scrolling can no longer start a call.
-                        Long-press / right-click on the name copies it. */}
-                    <button
-                      type="button"
-                      onClick={() => setEditing(c)}
-                      onContextMenu={e => {
-                        e.preventDefault();
-                        copyText(c.label, "tên");
-                      }}
-                      className="flex min-w-0 flex-1 items-center gap-3 py-1 text-left"
-                      aria-label={`Sửa ${c.label}`}
-                      title="Bấm để sửa · nhấn giữ để sao chép tên"
-                    >
-                      <Pencil className="size-4 shrink-0 text-muted-foreground/60" />
-                      <span className="min-w-0 flex-1">
-                        <span className="block truncate text-base">
-                          {c.label}
-                        </span>
-                        {c.note && (
-                          <span className="block truncate text-xs text-muted-foreground">
-                            {c.note}
+                  <div className="flex flex-1 flex-wrap items-center gap-x-3 gap-y-1 rounded-xl border border-border bg-card py-1.5 pl-3 pr-1.5 transition-colors hover:border-foreground/20">
+                    {/* Name column: the name (tap = edit) and its own copy
+                        button at the far end of the same cell, so the button
+                        clearly belongs to the name, not the number. */}
+                    <div className="flex min-w-0 flex-1 items-center gap-1">
+                      <button
+                        type="button"
+                        onClick={() => setEditing(c)}
+                        onContextMenu={e => {
+                          e.preventDefault();
+                          copyText(c.label, "tên");
+                        }}
+                        className="flex min-w-0 items-center gap-3 py-1 text-left"
+                        aria-label={`Sửa ${c.label}`}
+                        title="Bấm để sửa · nhấn giữ để sao chép tên"
+                      >
+                        <Pencil className="size-4 shrink-0 text-muted-foreground/60" />
+                        <span className="min-w-0">
+                          <span className="block truncate text-base">
+                            {c.label}
                           </span>
-                        )}
-                      </span>
-                    </button>
-                    <button
-                      type="button"
-                      onClick={() => copyText(c.label, "tên")}
-                      aria-label={`Sao chép tên ${c.label}`}
-                      title="Sao chép tên"
-                      className="tap flex shrink-0 items-center justify-center rounded-lg text-muted-foreground hover:bg-accent hover:text-foreground"
-                    >
-                      <Copy className="size-4" />
-                    </button>
-                    <a
-                      href={`tel:${c.phone.replace(/[^\d+]/g, "")}`}
-                      onContextMenu={e => {
-                        e.preventDefault();
-                        copyText(displayPhone(c.phone), "số");
-                      }}
-                      aria-label={`Gọi ${displayPhone(c.phone)}`}
-                      title="Bấm để gọi · nhấn giữ để sao chép số"
-                      className="tap flex shrink-0 items-center gap-1.5 rounded-lg bg-primary/10 px-3 font-mono text-sm font-medium tabular-nums text-primary transition-colors hover:bg-primary/20"
-                    >
-                      <Phone className="size-3.5" />
-                      {displayPhone(c.phone)}
-                    </a>
-                    <button
-                      type="button"
-                      onClick={() => copyText(displayPhone(c.phone), "số")}
-                      aria-label={`Sao chép số ${displayPhone(c.phone)}`}
-                      title="Sao chép số"
-                      className="tap flex shrink-0 items-center justify-center rounded-lg text-muted-foreground hover:bg-accent hover:text-foreground"
-                    >
-                      <Copy className="size-4" />
-                    </button>
+                          {c.note && (
+                            <span className="block truncate text-xs text-muted-foreground">
+                              {c.note}
+                            </span>
+                          )}
+                        </span>
+                      </button>
+                      <button
+                        type="button"
+                        onClick={() => copyText(c.label, "tên")}
+                        aria-label={`Sao chép tên ${c.label}`}
+                        title="Sao chép tên"
+                        className="tap flex shrink-0 items-center justify-center rounded-lg text-muted-foreground hover:bg-accent hover:text-foreground"
+                      >
+                        <Copy className="size-4" />
+                      </button>
+                      {/* Eats the rest of the name column so the copy-name
+                          button hugs the name instead of drifting to the far
+                          right next to the phone. */}
+                      <span aria-hidden className="flex-1" />
+                    </div>
+
+                    {/* Phone column: the number (tap = call) and its copy
+                        button, kept together as their own cell. */}
+                    <div className="flex shrink-0 items-center gap-1">
+                      <a
+                        href={`tel:${c.phone.replace(/[^\d+]/g, "")}`}
+                        onContextMenu={e => {
+                          e.preventDefault();
+                          copyText(displayPhone(c.phone), "số");
+                        }}
+                        aria-label={`Gọi ${displayPhone(c.phone)}`}
+                        title="Bấm để gọi · nhấn giữ để sao chép số"
+                        className="tap flex shrink-0 items-center gap-1.5 rounded-lg bg-primary/10 px-3 font-mono text-sm font-medium tabular-nums text-primary transition-colors hover:bg-primary/20"
+                      >
+                        <Phone className="size-3.5" />
+                        {displayPhone(c.phone)}
+                      </a>
+                      <button
+                        type="button"
+                        onClick={() => copyText(displayPhone(c.phone), "số")}
+                        aria-label={`Sao chép số ${displayPhone(c.phone)}`}
+                        title="Sao chép số"
+                        className="tap flex shrink-0 items-center justify-center rounded-lg text-muted-foreground hover:bg-accent hover:text-foreground"
+                      >
+                        <Copy className="size-4" />
+                      </button>
+                    </div>
                   </div>
                   <button
                     type="button"
