@@ -208,12 +208,41 @@ Cá nhân
         </ul>
       </Section>
 
-      <Section icon={NotebookPen} title="Ghi chú tự do" accent="per">
+      <Section
+        icon={NotebookPen}
+        title="Ghi chú tự do (sổ tay của ngày)"
+        accent="per"
+      >
         <p>
-          Ô <b>“Ghi chú hôm nay”</b> ở màn Hôm nay dùng để ghi những gì không
-          phải checklist: nội dung cuộc họp, số liệu, ý tưởng. Hỗ trợ Markdown,
-          có nút xem trước.
+          Ô <b>“Ghi chú hôm nay”</b> ở màn Hôm nay là{" "}
+          <b>sổ tay riêng của một ngày</b> — khác với checklist. Checklist là{" "}
+          <i>việc phải làm rồi tick</i>; còn đây là chỗ <i>chép lại</i> những gì
+          không phải việc: nội dung gọi khách/cuộc họp, số liệu, đoạn mail, ý
+          tưởng. Hỗ trợ Markdown, có nút xem trước.
         </p>
+        <h3 className="mb-2 mt-4 font-semibold">
+          Lỡ quên đã ghi gì thì tìm lại ra sao?
+        </h3>
+        <ul className="space-y-2">
+          <Bullet>
+            Ghi chú các ngày trước hiện ngay ở mục <b>“Ghi chú gần đây”</b> dưới
+            ô nhập trên màn Hôm nay — nên không bị khuất.
+          </Bullet>
+          <Bullet>
+            <b>Tìm kiếm</b> có lục cả nội dung ghi chú: gõ một từ bất kỳ từng
+            viết là ra, bấm vào mở đúng ngày.
+          </Bullet>
+          <Bullet>
+            Màn{" "}
+            <Link
+              href="/lich-su"
+              className="font-medium text-primary hover:underline"
+            >
+              Lịch sử
+            </Link>{" "}
+            có <b>chấm nhỏ</b> dưới mỗi ngày có ghi chú — bấm ngày để đọc lại.
+          </Bullet>
+        </ul>
         <Tip>
           Ngày nào không ghi gì thì <b>không tạo file nào cả</b> — bạn chỉ ghi
           khi có việc phát sinh.

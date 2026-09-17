@@ -56,10 +56,14 @@ export function DayNoteEditor({ date, value, onChange }: DayNoteEditorProps) {
         {!empty && (
           <button
             type="button"
-            onClick={() => setPreview((p) => !p)}
+            onClick={() => setPreview(p => !p)}
             className="flex items-center gap-1 rounded-md px-2 py-1 text-xs text-muted-foreground hover:bg-accent hover:text-foreground"
           >
-            {preview ? <Pencil className="size-3.5" /> : <Eye className="size-3.5" />}
+            {preview ? (
+              <Pencil className="size-3.5" />
+            ) : (
+              <Eye className="size-3.5" />
+            )}
             {preview ? "Sửa" : "Xem"}
           </button>
         )}
@@ -75,7 +79,7 @@ export function DayNoteEditor({ date, value, onChange }: DayNoteEditorProps) {
       ) : (
         <Textarea
           value={draft}
-          onChange={(e) => {
+          onChange={e => {
             dirty.current = true;
             setDraft(e.target.value);
           }}
@@ -85,16 +89,19 @@ export function DayNoteEditor({ date, value, onChange }: DayNoteEditorProps) {
               dirty.current = false;
             }
           }}
-          placeholder="Có gì phát sinh thì ghi ở đây… (hỗ trợ Markdown)"
+          placeholder="Sổ tay tự do của ngày: nội dung gọi khách, số liệu, ý tưởng… — không phải checklist. (hỗ trợ Markdown)"
           aria-label="Ghi chú tự do cho ngày hôm nay"
-          className={cn("min-h-[7rem] resize-y leading-relaxed", empty && "min-h-[4.5rem]")}
+          className={cn(
+            "min-h-[7rem] resize-y leading-relaxed",
+            empty && "min-h-[5.5rem]"
+          )}
         />
       )}
 
       <p className="text-xs text-muted-foreground">
         {empty
-          ? "Ngày không có ghi chú sẽ không tạo file nào trên GitHub."
-          : `Lưu vào data/days/${date.slice(0, 4)}/${date}.md`}
+          ? "Sổ tay riêng của ngày, khác với checklist ở trên. Bỏ trống cũng được — tìm lại sau bằng Tìm kiếm (gõ chữ trong ghi chú) hoặc màn Lịch sử."
+          : "Tự lưu theo ngày · tìm lại ở Tìm kiếm hoặc Lịch sử."}
       </p>
     </section>
   );

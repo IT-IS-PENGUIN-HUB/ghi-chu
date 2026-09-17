@@ -1,10 +1,12 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
+import { Link } from "wouter";
 import {
   ArrowUp,
   CheckCircle2,
   ChevronDown,
   ClockAlert,
   ListTodo,
+  NotebookPen,
   Plus,
 } from "lucide-react";
 import { toast } from "sonner";
@@ -89,9 +91,14 @@ const HELP: HelpItem[] = [
   },
   {
     label: "Ghi chú hôm nay",
-    text: "ghi tự do những gì không phải checklist: nội dung họp, số liệu, ý tưởng.",
+    text: "sổ tay tự do của ngày (khác checklist): nội dung họp, số liệu, ý tưởng. Ngày cũ có ghi chú hiện ở “Ghi chú gần đây” ngay dưới, hoặc tìm bằng Tìm kiếm / màn Lịch sử.",
   },
 ];
+
+/** First line of a note body, flattened, for the recent-notes preview. */
+function noteExcerpt(body: string): string {
+  return body.trim().replace(/\s+/g, " ").slice(0, 100);
+}
 
 /** Reorders a merged (multi-category) list without disturbing daily labels. */
 function sortMerged(entries: DailyEntry[], sort: SortMode): DailyEntry[] {
@@ -153,6 +160,12 @@ export default function Today() {
   );
 
   const note = days.find(d => d.date === today)?.body ?? "";
+  // Past days that have a note, most recent first — surfaced on the main screen
+  // so a note written weeks ago is not lost behind the History calendar.
+  const recentNotes = useMemo(
+    () => days.filter(d => d.date !== today && d.body.trim()).slice(0, 4),
+    [days, today]
+  );
   const stale = open.filter(e => ageInDays(e.task.created) >= 7).length;
   const totalOpen = tasks.filter(t => !t.done).length;
 
@@ -418,12 +431,38 @@ export default function Today() {
           )}
         </div>
 
-        <div className="lg:sticky lg:top-20">
+        <div className="space-y-4 lg:sticky lg:top-20">
           <DayNoteEditor
             date={today}
             value={note}
             onChange={body => store.setDayNote(today, body)}
           />
+
+          {recentNotes.length > 0 && (
+            <section className="space-y-2">
+              <h3 className="flex items-center gap-1.5 text-sm font-medium text-muted-foreground">
+                <NotebookPen className="size-4" />
+                Ghi chú gần đây
+              </h3>
+              <ul className="space-y-1.5">
+                {recentNotes.map(n => (
+                  <li key={n.date}>
+                    <Link
+                      href={`/lich-su/${n.date}`}
+                      className="block rounded-lg border border-border bg-card px-3 py-2 transition-colors hover:border-foreground/20"
+                    >
+                      <div className="text-xs font-medium tabular-nums text-muted-foreground">
+                        {n.date}
+                      </div>
+                      <p className="mt-0.5 line-clamp-2 text-sm leading-snug">
+                        {noteExcerpt(n.body)}
+                      </p>
+                    </Link>
+                  </li>
+                ))}
+              </ul>
+            </section>
+          )}
         </div>
       </div>
       {/* Mobile-only floating add button. The quick-add box scrolls away on a
