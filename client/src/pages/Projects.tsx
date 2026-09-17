@@ -227,6 +227,24 @@ export default function Projects() {
   const editProject = (project: Project) =>
     setProjectEditor({ project, category: project.category });
 
+  // A just-created project must be seen to land somewhere: open the nhóm (or
+  // the "chưa xếp" bucket) it went into and flash it. Otherwise a project that
+  // fell into a collapsed bucket looks lost, and a duplicate gets made.
+  const revealProject = (created: Project) => {
+    const key =
+      created.field && fields.some(f => f.code === created.field)
+        ? `field:${created.field}`
+        : `unfiled:${created.category}`;
+    setCollapsed(prev => {
+      if (!prev.has(key)) return prev;
+      const next = new Set(prev);
+      next.delete(key);
+      persistCollapsed(next);
+      return next;
+    });
+    setFocus(key);
+  };
+
   return (
     <div className="space-y-5">
       <header className="flex flex-wrap items-start justify-between gap-3">
@@ -301,6 +319,7 @@ export default function Projects() {
           fields={fields}
           existing={projects}
           onClose={() => setProjectEditor(null)}
+          onCreated={revealProject}
         />
       )}
 

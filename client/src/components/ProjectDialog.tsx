@@ -44,6 +44,8 @@ export interface ProjectDialogProps {
   fields: Field[];
   existing: Project[];
   onClose: () => void;
+  /** Called with the newly created project so the caller can reveal it. */
+  onCreated?: (project: Project) => void;
 }
 
 /**
@@ -58,6 +60,7 @@ export function ProjectDialog({
   fields,
   existing,
   onClose,
+  onCreated,
 }: ProjectDialogProps) {
   const { tasks } = useStore();
   const editing = project !== null;
@@ -86,6 +89,14 @@ export function ProjectDialog({
   // an unfiled project needs to be asked which group it belongs to.
   const owner = fields.find(f => f.code === field);
   const category: Category = owner?.category ?? pickedCategory;
+
+  // Same name, different code — the trap that makes people think a project
+  // "vanished" and create a duplicate. Warned, not blocked.
+  const dupName = editing
+    ? undefined
+    : existing.find(
+        p => p.name.trim().toLowerCase() === name.trim().toLowerCase()
+      );
 
   const codeError =
     effectiveCode && !CODE_RE.test(effectiveCode)
@@ -118,10 +129,16 @@ export function ProjectDialog({
           : `Đã cập nhật ${name.trim()}`
       );
     } else {
-      store.createProject(name.trim(), effectiveCode, category, fieldCode);
+      const created = store.createProject(
+        name.trim(),
+        effectiveCode,
+        category,
+        fieldCode
+      );
       toast.success(
         `Đã tạo dự án ${name.trim()} · mã việc ${effectiveCode}-0001`
       );
+      onCreated?.(created);
     }
     onClose();
   };
@@ -148,6 +165,14 @@ export function ProjectDialog({
               onKeyDown={e => e.key === "Enter" && submit()}
               placeholder="Alpha"
             />
+            {dupName && (
+              <p className="rounded-lg border-l-4 border-l-amber-500 bg-amber-500/10 px-2.5 py-2 text-xs">
+                Đã có dự án tên <b>“{dupName.name}”</b> (mã{" "}
+                <code className="font-mono">{dupName.code}</code>
+                {dupName.field ? "" : ", đang ở ngăn “Chưa xếp vào nhóm”"}). Bạn
+                có định tạo trùng không? Nếu muốn dùng lại, huỷ và mở dự án cũ.
+              </p>
+            )}
           </div>
 
           <div className="space-y-1.5">
