@@ -1,15 +1,16 @@
 //! Desktop shell for the checklist PWA.
 //!
-//! The web app is unchanged — this wrapper adds the three things a browser
-//! cannot do: an always-on-top window (the "floating note"), a global
-//! shortcut to summon it from any app, and a tray icon so closing the
-//! window hides it instead of quitting.
+//! The web app is unchanged — this wrapper adds the things a browser cannot
+//! do: an always-on-top window (the "floating note"), a global shortcut to
+//! summon it from any app, a tray icon so closing the window hides it instead
+//! of quitting, and optional start-with-Windows.
 
 use tauri::{
     menu::{Menu, MenuItem},
     tray::{MouseButton, MouseButtonState, TrayIconBuilder, TrayIconEvent},
     Manager,
 };
+use tauri_plugin_autostart::MacosLauncher;
 use tauri_plugin_global_shortcut::{GlobalShortcutExt, ShortcutState};
 
 /// Show the window if hidden, hide it if visible. Used by the tray icon and
@@ -31,7 +32,23 @@ fn toggle_window(app: &tauri::AppHandle) {
 pub fn run() {
     tauri::Builder::default()
         .plugin(tauri_plugin_global_shortcut::Builder::new().build())
+        // Start-with-Windows is off until the user turns it on in Cài đặt. The
+        // "--minimized" argument is handed to the launched-at-boot copy so it
+        // can start life hidden in the tray instead of popping a window open on
+        // every login.
+        .plugin(tauri_plugin_autostart::init(
+            MacosLauncher::LaunchAgent,
+            Some(vec!["--minimized"]),
+        ))
         .setup(|app| {
+            // Launched by Windows at login (with --minimized): sit quietly in
+            // the tray rather than stealing focus with a window.
+            if std::env::args().any(|a| a == "--minimized") {
+                if let Some(window) = app.get_webview_window("main") {
+                    let _ = window.hide();
+                }
+            }
+
             // A summoning shortcut, tried in order of preference. Some other
             // program may already own any given combination (this machine had
             // Ctrl+Alt+G taken), and a taken hotkey must never be fatal — the

@@ -20,6 +20,7 @@ import {
   AlertDialogHeader,
   AlertDialogTitle,
 } from "@/components/ui/alert-dialog";
+import { AutostartToggle } from "@/components/AutostartToggle";
 import { RecurringRules } from "@/components/RecurringRules";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -294,6 +295,8 @@ export default function Settings() {
         </div>
         <RecurringRules />
       </section>
+
+      <AutostartToggle />
 
       <section className="space-y-3">
         <div className="flex items-center gap-2">

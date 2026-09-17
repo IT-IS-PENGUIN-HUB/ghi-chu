@@ -13,6 +13,7 @@ interface TauriWindow {
 
 interface TauriGlobal {
   window: { getCurrentWindow(): TauriWindow };
+  core: { invoke<T = unknown>(cmd: string): Promise<T> };
 }
 
 declare global {
@@ -27,4 +28,20 @@ export function isDesktop(): boolean {
 
 export async function setAlwaysOnTop(onTop: boolean): Promise<void> {
   await window.__TAURI__?.window.getCurrentWindow().setAlwaysOnTop(onTop);
+}
+
+// Start-with-Windows, via the autostart plugin's commands. Called through the
+// global core.invoke so the web build still imports no Tauri npm package.
+export async function isAutostartEnabled(): Promise<boolean> {
+  return (
+    (await window.__TAURI__?.core.invoke<boolean>(
+      "plugin:autostart|is_enabled"
+    )) ?? false
+  );
+}
+
+export async function setAutostart(on: boolean): Promise<void> {
+  await window.__TAURI__?.core.invoke(
+    on ? "plugin:autostart|enable" : "plugin:autostart|disable"
+  );
 }
