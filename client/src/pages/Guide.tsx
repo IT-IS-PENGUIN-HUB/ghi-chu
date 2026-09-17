@@ -131,7 +131,9 @@ export default function Guide() {
           <span className="rounded bg-destructive/10 px-1.5 py-0.5 text-xs font-medium text-destructive">
             +9 ngày
           </span>{" "}
-          cho biết việc đó đã tồn bao lâu — đỏ là quá 7 ngày.
+          cho biết việc đó đã tồn bao lâu. Đỏ khi quá <b>nhịp của dự án</b> chứa
+          nó — mặc định 7 ngày, đổi được từng dự án một, nên việc dài hơi không
+          đỏ suốt.
         </Tip>
       </Section>
 
@@ -175,6 +177,15 @@ Cá nhân
           <Bullet>
             Xoá dự án <b>không xoá việc nào</b>; các phân nhánh bên trong chuyển
             về ngăn “Chưa xếp”.
+          </Bullet>
+          <Bullet>
+            Mỗi dự án có một <b>nhịp</b> — bao lâu im lặng thì app báo đỏ. Đặt
+            trong <b>“Sửa dự án”</b>: 7 ngày cho việc chạy hằng ngày, 90 ngày
+            hoặc <b>“không nhắc”</b> cho thứ dài hơi như học hành, viết phần
+            mềm. Đây là lý do việc dài hơi không bị đỏ suốt: ngưỡng là của{" "}
+            <b>công việc</b>, không phải một con số app tự đặt cho tất cả. Chỉ
+            phân nhánh <b>còn việc đang tồn</b> mới bị tính — làm xong hết hoặc
+            đã lưu trữ thì không báo.
           </Bullet>
           <Bullet>
             Xoá phân nhánh nằm ở <b>⋮ → Xoá phân nhánh</b> trên dòng đó, hoặc

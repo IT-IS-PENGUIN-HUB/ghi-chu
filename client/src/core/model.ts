@@ -115,6 +115,41 @@ export interface Field {
   category: Category;
   /** Manual ordering in the sidebar; ties fall back to name. */
   order: number;
+  /**
+   * Days something here may sit untouched before it is worth flagging.
+   * 0 means never. Absent means {@link DEFAULT_CADENCE}.
+   */
+  cadence?: number;
+}
+
+/**
+ * How long is "too long" — asked once per dự án, not per phân nhánh.
+ *
+ * A single app-wide number cannot work: seven quiet days on a 積算 gói means
+ * something is stuck, while seven quiet days on "Học tập" means nothing at
+ * all. Ask at the dự án level and the answer comes almost free, because a dự
+ * án already gathers work that moves at one speed — and it is four or five
+ * answers instead of one per phân nhánh.
+ */
+export const DEFAULT_CADENCE = 7;
+
+export const CADENCE_OPTIONS: Array<{ days: number; label: string }> = [
+  { days: 3, label: "3 ngày — chạy hằng ngày" },
+  { days: 7, label: "7 ngày — nhịp tuần" },
+  { days: 14, label: "14 ngày — nửa tháng" },
+  { days: 30, label: "30 ngày — nhịp tháng" },
+  { days: 90, label: "90 ngày — dài hơi" },
+  { days: 0, label: "Không nhắc — tự chạy theo ý mình" },
+];
+
+/** The cadence a phân nhánh inherits. Unfiled ones fall back to the default. */
+export function cadenceOf(field: Field | undefined): number {
+  return field?.cadence ?? DEFAULT_CADENCE;
+}
+
+/** "7 ngày" / "Không nhắc" — the same words everywhere the number is shown. */
+export function cadenceLabel(days: number): string {
+  return days === 0 ? "không nhắc" : `${days} ngày`;
 }
 
 export interface Project {

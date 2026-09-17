@@ -24,7 +24,12 @@ import {
 } from "@/components/ui/dropdown-menu";
 import { Input } from "@/components/ui/input";
 import { useComposition } from "@/hooks/useComposition";
-import { ageInDays, type Project, type Task } from "@/core/model";
+import {
+  ageInDays,
+  DEFAULT_CADENCE,
+  type Project,
+  type Task,
+} from "@/core/model";
 import { cn } from "@/lib/utils";
 
 function copyId(id: string) {
@@ -45,6 +50,12 @@ export interface TaskRowProps {
   project?: Project;
   /** Name of the dự án (field) the project sits in, shown on mixed lists. */
   fieldName?: string;
+  /**
+   * Days this việc may sit before its age badge turns red — the nhịp of the
+   * dự án it belongs to. 0 never turns red, which is what makes the badge
+   * mean something on work that is slow by design.
+   */
+  staleAfter?: number;
   projects?: Project[];
   selected?: boolean;
   onToggle: (id: string) => void;
@@ -67,6 +78,7 @@ function TaskRowInner({
   label,
   project,
   fieldName,
+  staleAfter = DEFAULT_CADENCE,
   projects,
   selected,
   onToggle,
@@ -101,6 +113,7 @@ function TaskRowInner({
   void _isComposing;
 
   const age = ageInDays(task.created);
+  const overdue = staleAfter > 0 && age >= staleAfter;
 
   // ------------------------------------------------------------- swipe -----
   // Swipe right = done, swipe left = delete — the pattern every major todo
@@ -300,13 +313,20 @@ function TaskRowInner({
                       "rounded px-1.5 py-0.5 font-medium tabular-nums",
                       // Three steps, because "how long has this been sitting
                       // there" is the question the timestamp exists to answer.
+                      // The last step is the dự án's own nhịp, not a number
+                      // this app picked: red that is always on is not a
+                      // warning, it is a background colour.
                       age === 0
                         ? "bg-done-soft text-done"
-                        : age < 7
+                        : !overdue
                           ? "bg-muted text-muted-foreground"
                           : "bg-destructive/10 text-destructive"
                     )}
-                    title={`Thêm lúc ${task.created}`}
+                    title={
+                      overdue
+                        ? `Thêm lúc ${task.created} — quá nhịp ${staleAfter} ngày của dự án`
+                        : `Thêm lúc ${task.created}`
+                    }
                   >
                     {age === 0 ? "hôm nay" : `+${age} ngày`}
                   </span>

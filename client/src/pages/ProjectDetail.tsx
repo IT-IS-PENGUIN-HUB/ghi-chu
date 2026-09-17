@@ -17,6 +17,7 @@ import { TaskRow } from "@/components/TaskRow";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { useComposition } from "@/hooks/useComposition";
+import { pacesByProject } from "@/core/cadence";
 import { CATEGORY_LABEL, type Project } from "@/core/model";
 import { store } from "@/core/store";
 import { deleteTaskWithUndo, toggleTaskWithUndo } from "@/lib/taskActions";
@@ -67,6 +68,11 @@ export default function ProjectDetail() {
           (b.completed ?? b.created).localeCompare(a.completed ?? a.created)
         ),
     [mine]
+  );
+
+  const pace = useMemo(
+    () => pacesByProject(projects, fields, tasks).get(code),
+    [projects, fields, tasks, code]
   );
 
   const onToggle = useCallback((id: string) => toggleTaskWithUndo(id), []);
@@ -243,6 +249,7 @@ export default function ProjectDetail() {
             <TaskRow
               task={task}
               label={task.id}
+              staleAfter={pace?.staleAfter}
               projects={projects}
               onToggle={onToggle}
               onRename={onRename}
@@ -264,6 +271,7 @@ export default function ProjectDetail() {
             <TaskRow
               task={task}
               label={task.id}
+              staleAfter={pace?.staleAfter}
               projects={projects}
               onToggle={onToggle}
               onRename={onRename}

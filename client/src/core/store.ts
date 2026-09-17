@@ -362,13 +362,19 @@ export class Store {
 
   // ------------------------------------------------------------- mutations --
 
-  createField(name: string, code: string, category: Category): Field {
+  createField(
+    name: string,
+    code: string,
+    category: Category,
+    cadence?: number
+  ): Field {
     const fields = this.snapshot.fields;
     const field: Field = {
       code: code.toUpperCase(),
       name: name.trim() || code.toUpperCase(),
       category,
       order: fields.filter(f => f.category === category).length + 1,
+      ...(cadence === undefined ? {} : { cadence }),
     };
     this.write([
       { path: paths.fields, content: serializeFieldsFile([...fields, field]) },

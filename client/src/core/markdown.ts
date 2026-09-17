@@ -312,11 +312,24 @@ export function parseFieldsFile(text: string): Field[] {
     const code = cells[0].replace(/`/g, "").toUpperCase();
     if (!CODE_RE.test(code)) continue;
 
+    // The fifth cell arrived long after the first four, so a row written by
+    // an older version simply has none — which must read as "not set" and
+    // fall back to the default, not as "0 = never warn me".
+    const pace = cells[4] ?? "";
+    const days = Number(pace);
+    const cadence =
+      pace === "" || pace.startsWith("—")
+        ? undefined
+        : Number.isInteger(days) && days >= 0
+          ? days
+          : 0;
+
     fields.push({
       code,
       name: cells[1] || code,
       category: CATEGORIES.includes(cells[2] as Category) ? (cells[2] as Category) : "WRK",
       order: Number.parseInt(cells[3] ?? "", 10) || fields.length + 1,
+      ...(cadence === undefined ? {} : { cadence }),
     });
   }
   return fields;
@@ -325,18 +338,28 @@ export function parseFieldsFile(text: string): Field[] {
 export function serializeFieldsFile(fields: Field[]): string {
   const rows = [...fields]
     .sort((a, b) => a.category.localeCompare(b.category) || a.order - b.order)
-    .map((f) => `| ${f.code} | ${f.name} | ${f.category} | ${f.order} |`);
+    .map(
+      (f) =>
+        `| ${f.code} | ${f.name} | ${f.category} | ${f.order} | ${paceCell(f.cadence)} |`
+    );
 
   return [
-    "# Lĩnh vực",
+    "# Dự án",
     "",
-    "Tầng giữa Nhóm và Dự án. Thêm, sửa, xoá thoải mái.",
+    "Tầng giữa Phạm trù và Phân nhánh. Thêm, sửa, xoá thoải mái.",
+    "Nhịp = số ngày im lặng trước khi app báo đỏ; “không nhắc” là tắt hẳn.",
     "",
-    "| Mã | Tên | Nhóm | Thứ tự |",
-    "| --- | --- | --- | --- |",
+    "| Mã | Tên | Phạm trù | Thứ tự | Nhịp |",
+    "| --- | --- | --- | --- | --- |",
     ...rows,
     "",
   ].join("\n");
+}
+
+/** "—" when the dự án never set a nhịp, so the cell is never mistaken for 0. */
+function paceCell(cadence: number | undefined): string {
+  if (cadence === undefined) return "—";
+  return cadence === 0 ? "không nhắc" : String(cadence);
 }
 
 /** Splits a Markdown table row into trimmed cells. */

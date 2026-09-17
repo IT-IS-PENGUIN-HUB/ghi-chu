@@ -14,6 +14,7 @@ import {
   ListPlus,
   MoreVertical,
   Pencil,
+  TimerReset,
   Trash2,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
@@ -44,9 +45,12 @@ import {
   DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
+import { pacesByProject, type Pace } from "@/core/cadence";
 import {
   CATEGORIES,
   CATEGORY_LABEL,
+  cadenceLabel,
+  cadenceOf,
   type Category,
   type Field,
   type Project,
@@ -118,6 +122,10 @@ const HELP: HelpItem[] = [
     text: "các phân nhánh bên trong chỉ chuyển sang ngăn “Chưa xếp vào dự án”.",
   },
   {
+    label: "Nhịp của mỗi dự án",
+    text: "là số ngày im lặng trước khi app báo đỏ. Dự án 積算 để 7 ngày, dự án học hành hay viết phần mềm để 90 ngày hoặc “không nhắc” — nhờ vậy việc dài hơi không đỏ suốt và màu đỏ mới còn nghĩa. Đổi trong “Sửa dự án”, chỉ phân nhánh còn việc mới bị tính.",
+  },
+  {
     label: "Xoá phân nhánh",
     text: "nằm trong menu ⋮ của dòng phân nhánh, và ở nút “Xoá” trong trang phân nhánh. App luôn hỏi lại, và chỉ xoá được phân nhánh rỗng — còn việc bên trong thì nó nói rõ còn bao nhiêu việc thay vì xoá theo.",
   },
@@ -172,6 +180,13 @@ export default function Projects() {
     }
     return counts;
   }, [tasks]);
+
+  // "Lâu chưa đụng tới", measured per dự án rather than per app — see
+  // core/cadence.ts for why one global number could not work.
+  const paces = useMemo(
+    () => pacesByProject(projects, fields, tasks),
+    [projects, fields, tasks]
+  );
 
   const toggleNode = (key: string) =>
     setCollapsed(prev => {
@@ -313,6 +328,7 @@ export default function Projects() {
                 )}
               projects={projects.filter(p => p.category === category)}
               openCount={openCount}
+              paces={paces}
               collapsed={collapsed}
               focus={focus}
               onToggle={toggleNode}
@@ -402,6 +418,7 @@ interface RootNodeProps {
   fields: Field[];
   projects: Project[];
   openCount: Map<string, number>;
+  paces: Map<string, Pace>;
   collapsed: Set<string>;
   /** Node key being flashed after a breadcrumb jump, if any. */
   focus: string | null;
@@ -420,6 +437,7 @@ function RootNode({
   fields,
   projects,
   openCount,
+  paces,
   collapsed,
   focus,
   onToggle,
@@ -445,6 +463,7 @@ function RootNode({
 
   const shared = {
     openCount,
+    paces,
     collapsed,
     focus,
     onToggle,
@@ -499,6 +518,7 @@ function RootNode({
             key={field.code}
             nodeKey={`field:${field.code}`}
             name={field.name}
+            cadence={cadenceOf(field)}
             projects={active.filter(p => p.field === field.code)}
             onAddProject={() => onNewProject(category, field.code)}
             menu={
@@ -511,7 +531,7 @@ function RootNode({
                 </DropdownMenuItem>
                 <DropdownMenuSeparator />
                 <DropdownMenuItem onClick={() => onEditField(field)}>
-                  <Pencil className="mr-2 size-4" /> Sửa dự án (tên, mã)
+                  <Pencil className="mr-2 size-4" /> Sửa dự án (tên, mã, nhịp)
                 </DropdownMenuItem>
                 <DropdownMenuItem
                   onClick={() => onDeleteField(field)}
@@ -566,8 +586,11 @@ function RootNode({
 interface FieldNodeProps {
   nodeKey: string;
   name: string;
+  /** This dự án's nhịp. Undefined on the buckets that are not a real dự án. */
+  cadence?: number;
   projects: Project[];
   openCount: Map<string, number>;
+  paces: Map<string, Pace>;
   collapsed: Set<string>;
   focus: string | null;
   onToggle: (key: string) => void;
@@ -584,8 +607,10 @@ interface FieldNodeProps {
 function FieldNode({
   nodeKey,
   name,
+  cadence,
   projects,
   openCount,
+  paces,
   collapsed,
   focus,
   onToggle,
@@ -604,6 +629,7 @@ function FieldNode({
     ? collapsed.has(nodeKey)
     : !collapsed.has(nodeKey);
   const FolderIcon = icon ?? (open ? FolderOpen : Folder);
+  const staleCount = projects.filter(p => paces.get(p.code)?.stale).length;
 
   return (
     <TreeItem>
@@ -630,6 +656,24 @@ function FieldNode({
             {name}
           </span>
           {!muted && <LevelTag>dự án</LevelTag>}
+          {/* The rule, written on the row it belongs to: a red badge whose
+              threshold is invisible is just a mystery. */}
+          {!muted && cadence !== undefined && (
+            <span
+              className="hidden shrink-0 items-center gap-1 rounded bg-muted px-1.5 py-px text-[0.7rem] text-muted-foreground sm:inline-flex"
+              title={`Phân nhánh trong dự án này còn việc mà quá ${cadenceLabel(cadence)} không đụng tới thì báo đỏ. Đổi trong "Sửa dự án".`}
+            >
+              <TimerReset className="size-3" />
+              {cadenceLabel(cadence)}
+            </span>
+          )}
+          {/* Only while folded shut: open, the red sits on the rows themselves
+              and saying it twice would be noise. */}
+          {!open && staleCount > 0 && (
+            <span className="shrink-0 rounded bg-destructive/10 px-1.5 py-px text-[0.7rem] font-medium text-destructive">
+              {staleCount} lâu chưa đụng
+            </span>
+          )}
           <span className="shrink-0 text-xs tabular-nums text-muted-foreground">
             {projects.length}
             <span className="hidden sm:inline"> phân nhánh</span>
@@ -659,6 +703,7 @@ function FieldNode({
                 key={project.code}
                 project={project}
                 count={openCount.get(project.code) ?? 0}
+                pace={paces.get(project.code)}
                 onEdit={() => onEditProject(project)}
                 onDelete={() => onDeleteProject(project)}
                 onAddTask={() => onAddTask(project)}
@@ -674,12 +719,14 @@ function FieldNode({
 function ProjectNode({
   project,
   count,
+  pace,
   onEdit,
   onDelete,
   onAddTask,
 }: {
   project: Project;
   count: number;
+  pace?: Pace;
   onEdit: () => void;
   onDelete: () => void;
   onAddTask: () => void;
@@ -715,6 +762,18 @@ function ProjectNode({
             >
               {count}
               <span className="hidden sm:inline"> việc</span>
+            </span>
+          )}
+          {/* Still has open việc and has gone quiet for longer than its dự án
+              allows. Anything finished, archived or simply slow by design
+              never gets here — that is the whole point of the nhịp. */}
+          {pace?.stale && (
+            <span
+              className="flex shrink-0 items-center gap-1 rounded-full bg-destructive/10 px-1.5 text-xs font-medium tabular-nums text-destructive"
+              title={`${pace.idleDays} ngày không đụng tới, quá nhịp ${cadenceLabel(pace.staleAfter)} của dự án`}
+            >
+              <TimerReset className="size-3" />
+              {pace.idleDays} ngày
             </span>
           )}
           <ChevronRight className="hidden size-4 shrink-0 text-muted-foreground/60 sm:block" />

@@ -12,12 +12,22 @@ import {
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
 import { suggestProjectCode } from "@/core/codes";
 import {
+  CADENCE_OPTIONS,
   CATEGORIES,
   CATEGORY_LABEL,
   CODE_RE,
   CODE_RULE_TEXT,
+  DEFAULT_CADENCE,
+  cadenceOf,
   normaliseCode,
   type Category,
   type Field,
@@ -45,6 +55,7 @@ export function FieldDialog({
     field?.category ?? defaultCategory
   );
   const [codeTouched, setCodeTouched] = useState(editing);
+  const [cadence, setCadence] = useState(() => cadenceOf(field ?? undefined));
 
   const taken = existing.filter(f => f.code !== field?.code).map(f => f.code);
   const effectiveCode = codeTouched
@@ -71,6 +82,7 @@ export function FieldDialog({
       store.updateField(codeChanged ? effectiveCode : field.code, {
         name: name.trim(),
         category,
+        cadence,
       });
       toast.success(
         codeChanged
@@ -78,7 +90,7 @@ export function FieldDialog({
           : `Đã cập nhật dự án ${name.trim()}`
       );
     } else {
-      store.createField(name.trim(), effectiveCode, category);
+      store.createField(name.trim(), effectiveCode, category, cadence);
       toast.success(`Đã tạo dự án ${name.trim()}`);
     }
     onClose();
@@ -107,6 +119,50 @@ export function FieldDialog({
               onKeyDown={e => e.key === "Enter" && submit()}
               placeholder="積算"
             />
+          </div>
+
+          {/* The one setting that stops the red badge becoming wallpaper.
+              Asked here, at the level that already groups work moving at the
+              same speed, so it is four or five answers for the whole app. */}
+          <div className="space-y-1.5">
+            <Label htmlFor="field-nhip">
+              Nhịp — bao lâu im lặng thì báo đỏ
+            </Label>
+            <Select
+              value={String(cadence)}
+              onValueChange={v => setCadence(Number(v))}
+            >
+              <SelectTrigger id="field-nhip">
+                <SelectValue />
+              </SelectTrigger>
+              <SelectContent>
+                {CADENCE_OPTIONS.map(option => (
+                  <SelectItem key={option.days} value={String(option.days)}>
+                    {option.label}
+                    {option.days === DEFAULT_CADENCE && (
+                      <span className="ml-2 text-xs text-muted-foreground">
+                        mặc định
+                      </span>
+                    )}
+                  </SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+            <p className="text-xs text-muted-foreground">
+              {cadence === 0 ? (
+                <>
+                  Không có gì trong dự án này bị tô đỏ. Hợp với việc dài hơi —
+                  học hành, viết phần mềm — nơi im vài tuần là chuyện bình
+                  thường.
+                </>
+              ) : (
+                <>
+                  Phân nhánh nào còn việc mà quá <b>{cadence} ngày</b> không
+                  động tới sẽ hiện dấu đỏ, và mọi việc bên trong cũng đổi màu
+                  theo mốc này.
+                </>
+              )}
+            </p>
           </div>
 
           <div className="space-y-1.5">

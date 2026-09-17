@@ -27,7 +27,14 @@ import {
   CollapsibleTrigger,
 } from "@/components/ui/collapsible";
 import { buildDailyList, type DailyEntry, type SortMode } from "@/core/codes";
-import { ageInDays, toDateKey, type Category, type Task } from "@/core/model";
+import {
+  ageInDays,
+  DEFAULT_CADENCE,
+  toDateKey,
+  type Category,
+  type Task,
+} from "@/core/model";
+import { pacesByProject } from "@/core/cadence";
 import { store } from "@/core/store";
 import { deleteTaskWithUndo, toggleTaskWithUndo } from "@/lib/taskActions";
 import { useStore } from "@/hooks/useStore";
@@ -84,7 +91,7 @@ const HELP: HelpItem[] = [
   },
   {
     label: "+3 ngày",
-    text: "việc đã nằm trong danh sách bao lâu. Đỏ là quá 7 ngày — nên làm hoặc xoá.",
+    text: "việc đã nằm trong danh sách bao lâu. Đỏ là quá nhịp của dự án chứa nó (mặc định 7 ngày, đổi trong “Sửa dự án”) — nên làm hoặc xoá.",
   },
   {
     label: "Nút ⋮ cuối dòng",
@@ -140,6 +147,13 @@ export default function Today() {
     );
   }, [projects, fields]);
 
+  // Each phân nhánh's nhịp, so a row's age badge reddens on its dự án's
+  // schedule rather than on one number picked for the whole app.
+  const paces = useMemo(
+    () => pacesByProject(projects, fields, tasks),
+    [projects, fields, tasks]
+  );
+
   const open = useMemo(() => {
     if (view === "ALL") {
       return sortMerged(
@@ -175,7 +189,13 @@ export default function Today() {
     () => days.filter(d => d.date !== today && d.body.trim()).slice(0, 4),
     [days, today]
   );
-  const stale = open.filter(e => ageInDays(e.task.created) >= 7).length;
+  // Each việc against its own dự án's nhịp, so the banner counts the same
+  // rows the red badges mark — and stays quiet about work that is slow by
+  // design rather than forgotten.
+  const stale = open.filter(e => {
+    const limit = paces.get(e.task.project)?.staleAfter ?? DEFAULT_CADENCE;
+    return limit > 0 && ageInDays(e.task.created) >= limit;
+  }).length;
   const totalOpen = tasks.filter(t => !t.done).length;
 
   const onToggle = useCallback((id: string) => toggleTaskWithUndo(id), []);
@@ -346,7 +366,7 @@ export default function Today() {
           className="flex w-full items-center gap-2 rounded-xl border-2 border-destructive/25 bg-destructive/5 px-3 py-2.5 text-left text-sm font-medium text-destructive transition-colors hover:bg-destructive/10"
         >
           <ClockAlert className="size-4 shrink-0" />
-          <span className="flex-1">{stale} việc đã tồn quá 7 ngày</span>
+          <span className="flex-1">{stale} việc đã quá nhịp của dự án</span>
           <span className="text-xs font-normal opacity-80">
             bấm để xếp lên đầu
           </span>
@@ -397,6 +417,7 @@ export default function Today() {
                     label={daily}
                     project={projectByCode.get(task.project)}
                     fieldName={fieldNameByProject.get(task.project)}
+                    staleAfter={paces.get(task.project)?.staleAfter}
                     projects={projects}
                     selected={selected === task.id}
                     onToggle={onToggle}
@@ -427,6 +448,7 @@ export default function Today() {
                         label={task.id}
                         project={projectByCode.get(task.project)}
                         fieldName={fieldNameByProject.get(task.project)}
+                        staleAfter={paces.get(task.project)?.staleAfter}
                         projects={projects}
                         onToggle={onToggle}
                         onRename={onRename}
