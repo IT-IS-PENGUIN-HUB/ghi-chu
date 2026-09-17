@@ -33,6 +33,7 @@ const KIND_LABEL: Record<RecurrenceKind, string> = {
 export function RecurringRules() {
   const { recurring, projects } = useStore();
   const [adding, setAdding] = useState(false);
+  const [editing, setEditing] = useState<RecurringRule | null>(null);
 
   const projectName = new Map(projects.map(p => [p.code, p.name]));
 
@@ -49,14 +50,19 @@ export function RecurringRules() {
               key={rule.id}
               className="flex items-center gap-3 rounded-xl border border-border bg-card px-3 py-2.5"
             >
-              <div className="min-w-0 flex-1">
+              <button
+                type="button"
+                onClick={() => setEditing(rule)}
+                title="Bấm để sửa"
+                className="min-w-0 flex-1 rounded-lg text-left"
+              >
                 <div className="truncate text-sm">{rule.title}</div>
                 <div className="text-xs text-muted-foreground">
                   {describeRule(rule)} ·{" "}
                   {projectName.get(rule.project) ?? rule.project}
                   {rule.lastRun && ` · lần cuối ${rule.lastRun}`}
                 </div>
-              </div>
+              </button>
               <button
                 type="button"
                 onClick={() =>
@@ -76,13 +82,22 @@ export function RecurringRules() {
         <Plus className="mr-1.5 size-4" /> Thêm quy tắc
       </Button>
 
-      {adding && (
+      {(adding || editing) && (
         <RuleDialog
-          onSave={rule => {
-            store.setRecurring([...recurring, rule]);
+          rule={editing}
+          onSave={saved => {
+            store.setRecurring(
+              editing
+                ? recurring.map(r => (r.id === saved.id ? saved : r))
+                : [...recurring, saved]
+            );
             setAdding(false);
+            setEditing(null);
           }}
-          onClose={() => setAdding(false)}
+          onClose={() => {
+            setAdding(false);
+            setEditing(null);
+          }}
         />
       )}
     </div>
@@ -90,30 +105,38 @@ export function RecurringRules() {
 }
 
 function RuleDialog({
+  rule,
   onSave,
   onClose,
 }: {
+  /** The rule being changed, or null when adding a new one. */
+  rule: RecurringRule | null;
   onSave: (rule: RecurringRule) => void;
   onClose: () => void;
 }) {
   const { recurring, projects } = useStore();
   const available = projects.filter(p => !p.archived);
 
-  const [title, setTitle] = useState("");
-  const [project, setProject] = useState(available[0]?.code ?? "ETC");
-  const [kind, setKind] = useState<RecurrenceKind>("weekdays");
-  const [days, setDays] = useState<number[]>([5]);
+  const [title, setTitle] = useState(rule?.title ?? "");
+  const [project, setProject] = useState(
+    rule?.project ?? available[0]?.code ?? "ETC"
+  );
+  const [kind, setKind] = useState<RecurrenceKind>(rule?.kind ?? "weekdays");
+  const [days, setDays] = useState<number[]>(rule?.days ?? [5]);
 
   const submit = () => {
     if (!title.trim()) return;
     const owner = available.find(p => p.code === project);
     onSave({
-      id: nextRuleId(recurring),
+      // Keeping the id and lastRun matters: a rule edited this afternoon must
+      // not fire a second copy of itself this evening.
+      id: rule?.id ?? nextRuleId(recurring),
       title: title.trim(),
       project,
       category: owner?.category ?? "WRK",
       kind,
       days: kind === "weekdays" ? days : [],
+      ...(rule?.lastRun ? { lastRun: rule.lastRun } : {}),
     });
   };
 
@@ -121,10 +144,13 @@ function RuleDialog({
     <Dialog open onOpenChange={o => !o && onClose()}>
       <DialogContent className="sm:max-w-md">
         <DialogHeader>
-          <DialogTitle>Việc lặp lại</DialogTitle>
+          <DialogTitle>
+            {rule ? "Sửa việc lặp lại" : "Việc lặp lại"}
+          </DialogTitle>
           <DialogDescription>
             Việc sẽ tự xuất hiện trong danh sách khi đến hạn, và không nhân đôi
-            nếu việc cũ chưa xong.
+            nếu việc cũ chưa xong. Sửa ở đây chỉ đổi những lần sau — việc đã nằm
+            trên danh sách hôm nay giữ nguyên nội dung cũ.
           </DialogDescription>
         </DialogHeader>
 
@@ -221,7 +247,7 @@ function RuleDialog({
               !title.trim() || (kind === "weekdays" && days.length === 0)
             }
           >
-            Thêm
+            {rule ? "Lưu" : "Thêm"}
           </Button>
         </DialogFooter>
       </DialogContent>

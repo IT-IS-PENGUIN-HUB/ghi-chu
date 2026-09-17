@@ -322,9 +322,21 @@ Cá nhân
           có mục “Việc lặp lại”: khai báo một lần, việc tự xuất hiện đúng ngày
           (hằng ngày, hoặc chọn thứ trong tuần).
         </p>
+        <p className="mt-2">
+          Đây là chỗ dành cho <b>việc làm đi làm lại mỗi ngày</b> — ôn 10 từ
+          vựng, làm 10 câu hỏi. Nó nằm chung danh sách như mọi việc khác:{" "}
+          <b>tích xong là biến mất, sáng hôm sau tự hiện lại</b>. Chưa làm xong
+          thì việc cũ nằm nguyên đó, app <b>không tạo thêm bản thứ hai</b>.
+        </p>
+        <p className="mt-2">
+          Bấm vào một dòng trong danh sách đó để <b>sửa</b>, bấm thùng rác để{" "}
+          <b>xoá</b>. Sửa chỉ ảnh hưởng những lần sau — việc đã nằm trên danh
+          sách hôm nay giữ nguyên nội dung cũ.
+        </p>
         <Tip>
           Việc lặp được sinh khi bạn <b>mở app</b>, không phải đúng 0h — app
-          chạy trong trình duyệt nên không có tiến trình nền.
+          chạy trong trình duyệt nên không có tiến trình nền. Mở app lúc nào thì
+          việc của ngày hôm đó có lúc ấy.
         </Tip>
       </Section>
 
