@@ -130,8 +130,14 @@ export interface Field {
  * all. Ask at the dự án level and the answer comes almost free, because a dự
  * án already gathers work that moves at one speed — and it is four or five
  * answers instead of one per phân nhánh.
+ *
+ * Nothing nags until asked to: the default is 0, so a dự án stays quiet
+ * until someone decides that this particular work has a rhythm worth
+ * watching. A warning you never switched on is a warning you never agreed
+ * to, and an app that turns itself red on day seven is one you learn to
+ * ignore by day eight.
  */
-export const DEFAULT_CADENCE = 7;
+export const DEFAULT_CADENCE = 0;
 
 export const CADENCE_OPTIONS: Array<{ days: number; label: string }> = [
   { days: 3, label: "3 ngày — chạy hằng ngày" },
@@ -139,7 +145,7 @@ export const CADENCE_OPTIONS: Array<{ days: number; label: string }> = [
   { days: 14, label: "14 ngày — nửa tháng" },
   { days: 30, label: "30 ngày — nhịp tháng" },
   { days: 90, label: "90 ngày — dài hơi" },
-  { days: 0, label: "Không nhắc — tự chạy theo ý mình" },
+  { days: 0, label: "Không nhắc" },
 ];
 
 /** The cadence a phân nhánh inherits. Unfiled ones fall back to the default. */

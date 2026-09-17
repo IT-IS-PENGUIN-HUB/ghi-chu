@@ -91,7 +91,7 @@ const HELP: HelpItem[] = [
   },
   {
     label: "+3 ngày",
-    text: "việc đã nằm trong danh sách bao lâu. Đỏ là quá nhịp của dự án chứa nó (mặc định 7 ngày, đổi trong “Sửa dự án”) — nên làm hoặc xoá.",
+    text: "việc đã nằm trong danh sách bao lâu. Mặc định không có màu đỏ; chỉ dự án nào bạn tự đặt nhịp trong “Sửa dự án” thì việc quá hạn mới đỏ.",
   },
   {
     label: "Nút ⋮ cuối dòng",

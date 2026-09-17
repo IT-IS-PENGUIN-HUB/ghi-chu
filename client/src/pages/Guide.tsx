@@ -131,9 +131,8 @@ export default function Guide() {
           <span className="rounded bg-destructive/10 px-1.5 py-0.5 text-xs font-medium text-destructive">
             +9 ngày
           </span>{" "}
-          cho biết việc đó đã tồn bao lâu. Đỏ khi quá <b>nhịp của dự án</b> chứa
-          nó — mặc định 7 ngày, đổi được từng dự án một, nên việc dài hơi không
-          đỏ suốt.
+          cho biết việc đó đã tồn bao lâu. <b>Mặc định không có màu đỏ.</b> Chỉ
+          dự án nào bạn tự đặt <b>nhịp</b> thì việc quá hạn trong đó mới đỏ.
         </Tip>
       </Section>
 
@@ -179,13 +178,14 @@ Cá nhân
             về ngăn “Chưa xếp”.
           </Bullet>
           <Bullet>
-            Mỗi dự án có một <b>nhịp</b> — bao lâu im lặng thì app báo đỏ. Đặt
-            trong <b>“Sửa dự án”</b>: 7 ngày cho việc chạy hằng ngày, 90 ngày
-            hoặc <b>“không nhắc”</b> cho thứ dài hơi như học hành, viết phần
-            mềm. Đây là lý do việc dài hơi không bị đỏ suốt: ngưỡng là của{" "}
-            <b>công việc</b>, không phải một con số app tự đặt cho tất cả. Chỉ
-            phân nhánh <b>còn việc đang tồn</b> mới bị tính — làm xong hết hoặc
-            đã lưu trữ thì không báo.
+            Mỗi dự án có một <b>nhịp</b> — bao lâu im lặng thì app báo đỏ.{" "}
+            <b>Mặc định là “Không nhắc”</b>: app không tự nhắc gì hết. Dự án nào
+            bạn muốn được nhắc thì vào <b>“Sửa dự án”</b> chọn 3 / 7 / 14 / 30 /
+            90 ngày — hợp với việc chạy đều như 積算. Ngưỡng là của{" "}
+            <b>công việc</b>, không phải một con số app đặt sẵn cho tất cả, nên
+            việc dài hơi không bao giờ đỏ suốt. Chỉ phân nhánh{" "}
+            <b>còn việc đang tồn</b> mới bị tính — làm xong hết hoặc đã lưu trữ
+            thì không báo.
           </Bullet>
           <Bullet>
             Xoá phân nhánh nằm ở <b>⋮ → Xoá phân nhánh</b> trên dòng đó, hoặc

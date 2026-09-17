@@ -118,12 +118,29 @@ describe("nhịp per dự án", () => {
     expect(paces.get("ALP")).toMatchObject({ stale: false, idleDays: 2 });
   });
 
-  it("falls back to the default for a phân nhánh in no dự án", () => {
-    const paces = pacesByProject([project("ALP")], [], [task("ALP", 40)], NOW);
-    expect(paces.get("ALP")).toMatchObject({
+  it("says nothing at all until a dự án asks to be reminded", () => {
+    // The default is 0 — an app that goes red on its own on day seven is one
+    // you have learned to ignore by day eight.
+    const untouched = pacesByProject(
+      [project("ALP", "SEK")],
+      [field("SEK")],
+      [task("ALP", 400)],
+      NOW
+    );
+    expect(untouched.get("ALP")).toMatchObject({
       staleAfter: DEFAULT_CADENCE,
-      stale: true,
+      stale: false,
     });
+    expect(DEFAULT_CADENCE).toBe(0);
+
+    // And a phân nhánh in no dự án at all has nobody to inherit a nhịp from.
+    const unfiled = pacesByProject(
+      [project("ALP")],
+      [],
+      [task("ALP", 400)],
+      NOW
+    );
+    expect(unfiled.get("ALP")?.stale).toBe(false);
   });
 
   it("says nothing about a phân nhánh that never held a việc", () => {
@@ -151,7 +168,7 @@ describe("nhịp in fields.md", () => {
     expect(read.find(f => f.code === "ETC")?.cadence).toBeUndefined();
   });
 
-  it("reads a row written before the column existed as 'not set', not as 0", () => {
+  it("keeps 'not set' distinct from an explicit 0", () => {
     const old = [
       "# Lĩnh vực",
       "",
@@ -162,8 +179,10 @@ describe("nhịp in fields.md", () => {
     ].join("\n");
 
     const [parsed] = parseFieldsFile(old);
+    // Both behave the same today, but the file still records which one the
+    // user actually chose — so changing the app default later only moves the
+    // rows nobody ever set.
     expect(parsed.cadence).toBeUndefined();
-    // Which is what keeps the app behaving exactly as it did before.
     expect(cadenceOf(parsed)).toBe(DEFAULT_CADENCE);
   });
 });

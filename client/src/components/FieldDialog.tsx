@@ -151,9 +151,8 @@ export function FieldDialog({
             <p className="text-xs text-muted-foreground">
               {cadence === 0 ? (
                 <>
-                  Không có gì trong dự án này bị tô đỏ. Hợp với việc dài hơi —
-                  học hành, viết phần mềm — nơi im vài tuần là chuyện bình
-                  thường.
+                  App không nhắc gì về dự án này — không có gì bị tô đỏ. Đây là
+                  mặc định: chỉ bật nhịp cho dự án nào bạn thật sự muốn bị nhắc.
                 </>
               ) : (
                 <>

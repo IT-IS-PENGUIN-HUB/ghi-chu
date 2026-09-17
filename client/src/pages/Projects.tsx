@@ -123,7 +123,7 @@ const HELP: HelpItem[] = [
   },
   {
     label: "Nhịp của mỗi dự án",
-    text: "là số ngày im lặng trước khi app báo đỏ. Dự án 積算 để 7 ngày, dự án học hành hay viết phần mềm để 90 ngày hoặc “không nhắc” — nhờ vậy việc dài hơi không đỏ suốt và màu đỏ mới còn nghĩa. Đổi trong “Sửa dự án”, chỉ phân nhánh còn việc mới bị tính.",
+    text: "mặc định app KHÔNG nhắc gì cả. Dự án nào bạn muốn được nhắc thì vào “Sửa dự án” đặt nhịp cho nó — ví dụ 積算 để 7 ngày; quá chừng đó ngày không đụng tới mà vẫn còn việc thì phân nhánh đó hiện dấu đỏ. Dự án dài hơi cứ để nguyên, không bao giờ đỏ.",
   },
   {
     label: "Xoá phân nhánh",
@@ -658,7 +658,7 @@ function FieldNode({
           {!muted && <LevelTag>dự án</LevelTag>}
           {/* The rule, written on the row it belongs to: a red badge whose
               threshold is invisible is just a mystery. */}
-          {!muted && cadence !== undefined && (
+          {!muted && cadence !== undefined && cadence > 0 && (
             <span
               className="hidden shrink-0 items-center gap-1 rounded bg-muted px-1.5 py-px text-[0.7rem] text-muted-foreground sm:inline-flex"
               title={`Phân nhánh trong dự án này còn việc mà quá ${cadenceLabel(cadence)} không đụng tới thì báo đỏ. Đổi trong "Sửa dự án".`}
