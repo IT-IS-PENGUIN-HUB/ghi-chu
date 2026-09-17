@@ -1,5 +1,6 @@
 import { useState } from "react";
 import { toast } from "sonner";
+import { Trash2 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import {
   Dialog,
@@ -46,6 +47,8 @@ export interface ProjectDialogProps {
   onClose: () => void;
   /** Called with the newly created project so the caller can reveal it. */
   onCreated?: (project: Project) => void;
+  /** Asks the caller to open the delete confirmation for this project. */
+  onRequestDelete?: (project: Project) => void;
 }
 
 /**
@@ -61,6 +64,7 @@ export function ProjectDialog({
   existing,
   onClose,
   onCreated,
+  onRequestDelete,
 }: ProjectDialogProps) {
   const { tasks } = useStore();
   const editing = project !== null;
@@ -267,24 +271,21 @@ export function ProjectDialog({
         </div>
 
         <DialogFooter className="gap-2 sm:justify-between">
-          {/* A mistyped project used to be un-deletable and haunted the
-              archive forever. Deleting is offered only while it holds no
-              tasks, so real work can never disappear with it. */}
-          {editing && existingTaskCount === 0 ? (
+          {/* Always shown while editing, even when the project holds work:
+              a button that quietly disappears is what made people think the
+              project could not be deleted at all. It asks first — the
+              confirmation is also where "no, this one holds 12 việc" gets
+              said out loud. */}
+          {editing && onRequestDelete ? (
             <Button
               variant="ghost"
               onClick={() => {
-                const result = store.deleteProject(project.code);
-                if (!result.ok) {
-                  toast.error(result.reason ?? "Không xoá được");
-                  return;
-                }
-                toast.success(`Đã xoá dự án ${project.name}`);
                 onClose();
+                onRequestDelete(project);
               }}
-              className="text-destructive hover:text-destructive sm:mr-auto"
+              className="gap-1.5 text-destructive hover:bg-destructive/10 hover:text-destructive sm:mr-auto"
             >
-              Xoá dự án rỗng
+              <Trash2 className="size-4" /> Xoá dự án
             </Button>
           ) : (
             <span className="hidden sm:block" />

@@ -17,6 +17,7 @@ import {
   Trash2,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
+import { DeleteProjectDialog } from "@/components/DeleteProjectDialog";
 import { FieldDialog } from "@/components/FieldDialog";
 import { ProjectDialog } from "@/components/ProjectDialog";
 import { QuickTaskDialog } from "@/components/QuickTaskDialog";
@@ -117,6 +118,10 @@ const HELP: HelpItem[] = [
     text: "các dự án bên trong chỉ chuyển sang ngăn “Chưa xếp vào nhóm”.",
   },
   {
+    label: "Xoá dự án",
+    text: "nằm trong menu ⋮ của dòng dự án, và ở nút “Xoá” trong trang dự án. App luôn hỏi lại, và chỉ xoá được dự án rỗng — còn việc bên trong thì nó nói rõ còn bao nhiêu việc thay vì xoá theo.",
+  },
+  {
     label: "Chữ mờ như ALP",
     text: (
       <>
@@ -153,6 +158,7 @@ export default function Projects() {
     null
   );
   const [deletingField, setDeletingField] = useState<Field | null>(null);
+  const [deletingProject, setDeletingProject] = useState<Project | null>(null);
   const [addingTaskTo, setAddingTaskTo] = useState<Project | null>(null);
 
   const openCount = useMemo(() => {
@@ -296,6 +302,7 @@ export default function Projects() {
               onEditField={field => setFieldEditor({ field, category })}
               onDeleteField={setDeletingField}
               onEditProject={editProject}
+              onDeleteProject={setDeletingProject}
               onAddTask={setAddingTaskTo}
             />
           ))}
@@ -320,6 +327,14 @@ export default function Projects() {
           existing={projects}
           onClose={() => setProjectEditor(null)}
           onCreated={revealProject}
+          onRequestDelete={setDeletingProject}
+        />
+      )}
+
+      {deletingProject && (
+        <DeleteProjectDialog
+          project={deletingProject}
+          onClose={() => setDeletingProject(null)}
         />
       )}
 
@@ -377,6 +392,7 @@ interface RootNodeProps {
   onEditField: (field: Field) => void;
   onDeleteField: (field: Field) => void;
   onEditProject: (project: Project) => void;
+  onDeleteProject: (project: Project) => void;
   onAddTask: (project: Project) => void;
 }
 
@@ -393,6 +409,7 @@ function RootNode({
   onEditField,
   onDeleteField,
   onEditProject,
+  onDeleteProject,
   onAddTask,
 }: RootNodeProps) {
   const nodeKey = `root:${category}`;
@@ -413,6 +430,7 @@ function RootNode({
     focus,
     onToggle,
     onEditProject,
+    onDeleteProject,
     onAddTask,
   };
 
@@ -533,6 +551,7 @@ interface FieldNodeProps {
   focus: string | null;
   onToggle: (key: string) => void;
   onEditProject: (project: Project) => void;
+  onDeleteProject: (project: Project) => void;
   onAddTask: (project: Project) => void;
   onAddProject?: () => void;
   menu?: ReactNode;
@@ -550,6 +569,7 @@ function FieldNode({
   focus,
   onToggle,
   onEditProject,
+  onDeleteProject,
   onAddTask,
   onAddProject,
   menu,
@@ -619,6 +639,7 @@ function FieldNode({
                 project={project}
                 count={openCount.get(project.code) ?? 0}
                 onEdit={() => onEditProject(project)}
+                onDelete={() => onDeleteProject(project)}
                 onAddTask={() => onAddTask(project)}
               />
             ))
@@ -633,11 +654,13 @@ function ProjectNode({
   project,
   count,
   onEdit,
+  onDelete,
   onAddTask,
 }: {
   project: Project;
   count: number;
   onEdit: () => void;
+  onDelete: () => void;
   onAddTask: () => void;
 }) {
   return (
@@ -703,6 +726,12 @@ function ProjectNode({
                 nhanh)
               </>
             )}
+          </DropdownMenuItem>
+          <DropdownMenuItem
+            onClick={onDelete}
+            className="text-destructive focus:text-destructive"
+          >
+            <Trash2 className="mr-2 size-4" /> Xoá dự án (chỉ khi rỗng)
           </DropdownMenuItem>
         </NodeMenu>
       </div>

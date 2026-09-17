@@ -176,6 +176,12 @@ Cá nhân
             ngăn “Chưa xếp”.
           </Bullet>
           <Bullet>
+            Xoá dự án nằm ở <b>⋮ → Xoá dự án</b> trên dòng đó, hoặc nút{" "}
+            <b>Xoá</b> khi đang mở dự án. Lúc nào app cũng <b>hỏi lại trước</b>,
+            và chỉ dự án <b>rỗng</b> mới xoá được — dự án còn việc thì app nói
+            còn bao nhiêu việc chứ không xoá theo.
+          </Bullet>
+          <Bullet>
             Mã dự án (ví dụ{" "}
             <code className="rounded bg-muted px-1 font-mono">ALP</code>) là
             tiền tố của mọi mã việc bên trong. <b>Đổi được bất cứ lúc nào</b> —

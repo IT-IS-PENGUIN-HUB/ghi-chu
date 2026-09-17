@@ -1,5 +1,5 @@
 import { useCallback, useMemo, useRef, useState } from "react";
-import { Link, useRoute } from "wouter";
+import { Link, useLocation, useRoute } from "wouter";
 import {
   ArrowLeft,
   Briefcase,
@@ -9,7 +9,9 @@ import {
   House,
   Pencil,
   Plus,
+  Trash2,
 } from "lucide-react";
+import { DeleteProjectDialog } from "@/components/DeleteProjectDialog";
 import { ProjectDialog } from "@/components/ProjectDialog";
 import { TaskRow } from "@/components/TaskRow";
 import { Button } from "@/components/ui/button";
@@ -29,9 +31,11 @@ const crumbClass =
  */
 export default function ProjectDetail() {
   const [, params] = useRoute("/du-an/:code");
+  const [, navigate] = useLocation();
   const { projects, fields, tasks } = useStore();
   const [query, setQuery] = useState("");
   const [editing, setEditing] = useState(false);
+  const [deleting, setDeleting] = useState(false);
 
   const code = params?.code?.toUpperCase() ?? "";
   const project = projects.find(p => p.code === code);
@@ -173,14 +177,27 @@ export default function ProjectDetail() {
             <span className="font-mono">{project.code}-0001</span>
           </p>
         </div>
-        <button
-          type="button"
-          onClick={() => setEditing(true)}
-          aria-label="Sửa dự án"
-          className="tap flex shrink-0 items-center justify-center rounded-lg text-muted-foreground hover:bg-accent hover:text-foreground"
-        >
-          <Pencil className="size-4" />
-        </button>
+        {/* Named, not two bare glyphs: this is the only place a whole
+            project can be renamed or removed, and a trash can next to a
+            pencil is exactly the pair worth spelling out. */}
+        <div className="flex shrink-0 items-center gap-1">
+          <Button
+            variant="outline"
+            size="sm"
+            onClick={() => setEditing(true)}
+            className="gap-1.5"
+          >
+            <Pencil className="size-4" /> Sửa
+          </Button>
+          <Button
+            variant="ghost"
+            size="sm"
+            onClick={() => setDeleting(true)}
+            className="gap-1.5 text-destructive hover:bg-destructive/10 hover:text-destructive"
+          >
+            <Trash2 className="size-4" /> Xoá
+          </Button>
+        </div>
       </header>
 
       {/* Add straight into this project. */}
@@ -265,6 +282,16 @@ export default function ProjectDetail() {
           fields={fields}
           existing={projects}
           onClose={() => setEditing(false)}
+          onRequestDelete={() => setDeleting(true)}
+        />
+      )}
+
+      {deleting && (
+        <DeleteProjectDialog
+          project={project as Project}
+          onClose={() => setDeleting(false)}
+          // The page it was on no longer exists, so go back to the tree.
+          onDeleted={() => navigate("/du-an")}
         />
       )}
     </div>
