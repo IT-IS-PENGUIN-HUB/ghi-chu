@@ -51,6 +51,15 @@ function formatJpPhone(raw: string): string {
 }
 
 /**
+ * How a stored number is shown. Numbers saved before auto-formatting existed,
+ * or synced as bare digits, get grouped here too; a number the user dashed
+ * their own way is shown verbatim.
+ */
+function displayPhone(phone: string): string {
+  return /[-\s]/.test(phone) ? phone.trim() : formatJpPhone(phone);
+}
+
+/**
  * Customer phone book. Numbers are `tel:` links so one tap dials from the
  * phone — the whole reason for keeping them in here rather than in a note.
  */
@@ -175,19 +184,19 @@ export default function Contacts() {
                       href={`tel:${c.phone.replace(/[^\d+]/g, "")}`}
                       onContextMenu={e => {
                         e.preventDefault();
-                        copyText(c.phone, "số");
+                        copyText(displayPhone(c.phone), "số");
                       }}
-                      aria-label={`Gọi ${c.phone}`}
+                      aria-label={`Gọi ${displayPhone(c.phone)}`}
                       title="Bấm để gọi · nhấn giữ để sao chép số"
                       className="tap flex shrink-0 items-center gap-1.5 rounded-lg bg-primary/10 px-3 font-mono text-sm font-medium tabular-nums text-primary transition-colors hover:bg-primary/20"
                     >
                       <Phone className="size-3.5" />
-                      {c.phone}
+                      {displayPhone(c.phone)}
                     </a>
                     <button
                       type="button"
-                      onClick={() => copyText(c.phone, "số")}
-                      aria-label={`Sao chép số ${c.phone}`}
+                      onClick={() => copyText(displayPhone(c.phone), "số")}
+                      aria-label={`Sao chép số ${displayPhone(c.phone)}`}
                       title="Sao chép số"
                       className="tap flex shrink-0 items-center justify-center rounded-lg text-muted-foreground hover:bg-accent hover:text-foreground"
                     >
