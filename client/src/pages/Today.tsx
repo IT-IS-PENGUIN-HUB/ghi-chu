@@ -131,6 +131,14 @@ export default function Today() {
     () => new Map(projects.map(p => [p.code, p])),
     [projects]
   );
+  // project code -> the name of the nhóm it sits in, for the row's "nhóm › dự
+  // án" tag. Undefined for a project not filed under any nhóm.
+  const fieldNameByProject = useMemo(() => {
+    const byCode = new Map(fields.map(f => [f.code, f.name]));
+    return new Map(
+      projects.map(p => [p.code, p.field ? byCode.get(p.field) : undefined])
+    );
+  }, [projects, fields]);
 
   const open = useMemo(() => {
     if (view === "ALL") {
@@ -388,6 +396,7 @@ export default function Today() {
                     task={task}
                     label={daily}
                     project={projectByCode.get(task.project)}
+                    fieldName={fieldNameByProject.get(task.project)}
                     projects={projects}
                     selected={selected === task.id}
                     onToggle={onToggle}
@@ -417,6 +426,7 @@ export default function Today() {
                         task={task}
                         label={task.id}
                         project={projectByCode.get(task.project)}
+                        fieldName={fieldNameByProject.get(task.project)}
                         projects={projects}
                         onToggle={onToggle}
                         onRename={onRename}

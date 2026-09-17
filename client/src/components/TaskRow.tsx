@@ -1,5 +1,15 @@
 import { memo, useEffect, useRef, useState } from "react";
-import { Check, Copy, MoreVertical, Pencil, Star, Trash2 } from "lucide-react";
+import { Link } from "wouter";
+import {
+  Check,
+  ChevronRight,
+  Copy,
+  Folder,
+  MoreVertical,
+  Pencil,
+  Star,
+  Trash2,
+} from "lucide-react";
 import { toast } from "sonner";
 import { Checkbox } from "@/components/ui/checkbox";
 import {
@@ -33,6 +43,8 @@ export interface TaskRowProps {
   /** "WORK_01" — today's position, or the permanent id on archive screens. */
   label: string;
   project?: Project;
+  /** Name of the nhóm (field) the project sits in, shown on mixed lists. */
+  fieldName?: string;
   projects?: Project[];
   selected?: boolean;
   onToggle: (id: string) => void;
@@ -54,6 +66,7 @@ function TaskRowInner({
   task,
   label,
   project,
+  fieldName,
   projects,
   selected,
   onToggle,
@@ -253,9 +266,29 @@ function TaskRowInner({
 
               <div className="mt-1 flex flex-wrap items-center gap-x-2 gap-y-1 text-xs text-muted-foreground">
                 {project && (
-                  <span className="rounded bg-muted px-1.5 py-0.5 font-medium">
-                    {project.name}
-                  </span>
+                  // Where the task lives — nhóm › dự án — so weeks later you can
+                  // still tell what it belongs to. A link so a tap opens the
+                  // project (with its full breadcrumb) instead of leaving you
+                  // guessing. Phạm trù is left off: WORK/HOME already says it.
+                  <Link
+                    href={`/du-an/${task.project}`}
+                    onClick={e => e.stopPropagation()}
+                    title={
+                      fieldName
+                        ? `Nhóm ${fieldName} › ${project.name} — bấm để mở dự án`
+                        : `${project.name} — bấm để mở dự án`
+                    }
+                    className="inline-flex min-w-0 max-w-full items-center gap-1 rounded bg-muted px-1.5 py-0.5 font-medium transition-colors hover:bg-accent hover:text-foreground"
+                  >
+                    {fieldName && (
+                      <>
+                        <Folder className="size-3 shrink-0 text-amber-500" />
+                        <span className="truncate">{fieldName}</span>
+                        <ChevronRight className="size-3 shrink-0 opacity-50" />
+                      </>
+                    )}
+                    <span className="truncate">{project.name}</span>
+                  </Link>
                 )}
                 {task.done ? (
                   <span className="tabular-nums text-done">
