@@ -1,5 +1,6 @@
 import { useEffect, useMemo, useRef, useState } from "react";
 import { FolderPlus, Layers, Plus, Star } from "lucide-react";
+import { DuplicateHint } from "@/components/DuplicateHint";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import {
@@ -13,6 +14,7 @@ import {
 import { QuickFieldDialog } from "@/components/QuickFieldDialog";
 import { QuickProjectDialog } from "@/components/QuickProjectDialog";
 import { useComposition } from "@/hooks/useComposition";
+import { findDuplicateTask } from "@/core/duplicates";
 import { extractTags } from "@/core/markdown";
 import {
   CATEGORIES,
@@ -21,6 +23,7 @@ import {
   type Field,
   type Project,
 } from "@/core/model";
+import { useStore } from "@/hooks/useStore";
 import { cn } from "@/lib/utils";
 
 const LAST_PROJECT_KEY = "quickadd-last-project";
@@ -48,6 +51,7 @@ export interface QuickAddProps {
  * set up structure first.
  */
 export function QuickAdd({ projects, fields, category, onAdd }: QuickAddProps) {
+  const { tasks } = useStore();
   const inputRef = useRef<HTMLInputElement>(null);
   const [title, setTitle] = useState("");
   const [starred, setStarred] = useState(false);
@@ -180,6 +184,15 @@ export function QuickAdd({ projects, fields, category, onAdd }: QuickAddProps) {
   };
 
   const preview = extractTags(title);
+  // Checked live rather than on submit: seeing it before pressing Enter is
+  // the difference between a warning and a complaint.
+  const duplicate = useMemo(
+    () =>
+      effectiveProject
+        ? findDuplicateTask(tasks, preview.title, effectiveProject)
+        : null,
+    [tasks, preview.title, effectiveProject]
+  );
   const takenCodes = useMemo(
     () => [...projects.map(p => p.code), ...fields.map(f => f.code)],
     [projects, fields]
@@ -333,6 +346,8 @@ export function QuickAdd({ projects, fields, category, onAdd }: QuickAddProps) {
           Ưu tiên
         </button>
       </div>
+
+      {duplicate && <DuplicateHint hit={duplicate} />}
 
       {preview.tags.length > 0 && (
         <p

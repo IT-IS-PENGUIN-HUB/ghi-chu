@@ -18,6 +18,8 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { useComposition } from "@/hooks/useComposition";
 import { pacesByProject } from "@/core/cadence";
+import { findDuplicateTask } from "@/core/duplicates";
+import { DuplicateHint } from "@/components/DuplicateHint";
 import { CATEGORY_LABEL, type Project } from "@/core/model";
 import { store } from "@/core/store";
 import { deleteTaskWithUndo, toggleTaskWithUndo } from "@/lib/taskActions";
@@ -105,6 +107,11 @@ export default function ProjectDetail() {
     setNewTitle("");
     addInputRef.current?.focus();
   };
+  const duplicate = useMemo(
+    () => findDuplicateTask(tasks, newTitle, code),
+    [tasks, newTitle, code]
+  );
+
   const { isComposing: _c, ...addHandlers } = useComposition<HTMLInputElement>({
     onKeyDown: e => {
       if (e.key === "Enter") addTask();
@@ -228,6 +235,8 @@ export default function ProjectDetail() {
           <Plus className="size-4 stroke-[2.5]" /> Thêm
         </Button>
       </div>
+
+      {duplicate && <DuplicateHint hit={duplicate} />}
 
       {mine.length > 6 && (
         <Input

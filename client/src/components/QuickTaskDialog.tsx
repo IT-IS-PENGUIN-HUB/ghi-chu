@@ -1,5 +1,6 @@
 import { useMemo, useRef, useState } from "react";
 import { CornerDownLeft } from "lucide-react";
+import { DuplicateHint } from "@/components/DuplicateHint";
 import { Button } from "@/components/ui/button";
 import {
   Dialog,
@@ -21,6 +22,7 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { useComposition } from "@/hooks/useComposition";
+import { findDuplicateTask } from "@/core/duplicates";
 import { CATEGORIES, CATEGORY_LABEL, type Project } from "@/core/model";
 import { store } from "@/core/store";
 import { useStore } from "@/hooks/useStore";
@@ -46,7 +48,7 @@ export interface QuickTaskDialogProps {
  * several tasks for the same công trình go in one after another.
  */
 export function QuickTaskDialog({ project, onClose }: QuickTaskDialogProps) {
-  const { projects, fields } = useStore();
+  const { projects, fields, tasks } = useStore();
   const inputRef = useRef<HTMLInputElement>(null);
   const [title, setTitle] = useState("");
   const [added, setAdded] = useState(0);
@@ -95,6 +97,11 @@ export function QuickTaskDialog({ project, onClose }: QuickTaskDialogProps) {
   const choices = groups.flatMap(g => g.items);
   const target =
     project ?? choices.find(p => p.code === picked) ?? choices[0] ?? null;
+
+  const duplicate = useMemo(
+    () => (target ? findDuplicateTask(tasks, title, target.code) : null),
+    [tasks, title, target]
+  );
 
   const add = () => {
     const trimmed = title.trim();
@@ -181,6 +188,8 @@ export function QuickTaskDialog({ project, onClose }: QuickTaskDialogProps) {
             placeholder="Gõ việc cần làm…"
           />
         </div>
+
+        {duplicate && <DuplicateHint hit={duplicate} />}
 
         <DialogFooter className="gap-2 sm:items-center sm:justify-between">
           <span className="text-xs text-muted-foreground">
