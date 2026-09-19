@@ -12,6 +12,7 @@
  * marked done, a line that still exists — and never drop a row silently.
  */
 import {
+  codeFromProjectPath,
   parseContactsFile,
   parseFieldsFile,
   parseProjectFile,
@@ -23,7 +24,8 @@ import {
   serializeProjectsFile,
   serializeRecurringFile,
 } from "./markdown";
-import { parseStamp, type Task } from "./model";
+import { formatTaskId } from "./codes";
+import { DEFAULT_PROJECT, parseStamp, type Task } from "./model";
 
 export interface MergeInput {
   path: string;
@@ -43,8 +45,10 @@ export function mergeFile(input: MergeInput): MergeOutput {
   const { path, base, local, remote } = input;
 
   if (local === remote) return { content: local, merged: false };
-  if (base !== null && local === base) return { content: remote, merged: false };
-  if (base !== null && remote === base) return { content: local, merged: false };
+  if (base !== null && local === base)
+    return { content: remote, merged: false };
+  if (base !== null && remote === base)
+    return { content: local, merged: false };
 
   if (path.startsWith("data/tasks/")) return mergeProject(input);
   if (path.startsWith("data/days/")) return mergeNote(input);
@@ -63,17 +67,31 @@ const CONFLICT_MARKER =
 // ------------------------------------------------------------ project file --
 
 function mergeProject({ base, local, remote, path }: MergeInput): MergeOutput {
-  const code = /\/([A-Z][A-Z0-9]{1,4})\.md$/.exec(path)?.[1] ?? "ETC";
+  // The shared reader, not a second regex: this one stopped at five
+  // characters and silently answered "ETC" for a longer code — harmless
+  // while it only named the parsed project, wrong now that it also
+  // prefixes any id this merge has to re-issue.
+  const code = codeFromProjectPath(path) ?? DEFAULT_PROJECT;
   const baseFile = base === null ? null : parseProjectFile(base, code);
   const localFile = parseProjectFile(local, code);
   const remoteFile = parseProjectFile(remote, code);
 
-  const baseTasks = new Map((baseFile?.tasks ?? []).map((t) => [t.id, t]));
-  const localTasks = new Map(localFile.tasks.map((t) => [t.id, t]));
-  const remoteTasks = new Map(remoteFile.tasks.map((t) => [t.id, t]));
+  const baseTasks = new Map((baseFile?.tasks ?? []).map(t => [t.id, t]));
+  const localTasks = new Map(localFile.tasks.map(t => [t.id, t]));
+  const remoteTasks = new Map(remoteFile.tasks.map(t => [t.id, t]));
 
   const merged: Task[] = [];
-  for (const id of new Set([...localTasks.keys(), ...remoteTasks.keys()])) {
+  /** Two different tasks that were minted with the same number — see below. */
+  const collided: Task[] = [];
+
+  // Sorted so both devices walk the ids in the same order and therefore hand
+  // out the same replacement numbers; a merge that is not deterministic just
+  // moves the disagreement to the next round.
+  const ids = [
+    ...new Set([...localTasks.keys(), ...remoteTasks.keys()]),
+  ].sort();
+
+  for (const id of ids) {
     const b = baseTasks.get(id);
     const l = localTasks.get(id);
     const r = remoteTasks.get(id);
@@ -91,24 +109,57 @@ function mergeProject({ base, local, remote, path }: MergeInput): MergeOutput {
     }
     if (!l || !r) continue;
 
-    if (same(l, r)) merged.push(l);
-    else if (b && same(b, l)) merged.push(r);
-    else if (b && same(b, r)) merged.push(l);
-    else merged.push(reconcile(l, r));
+    if (same(l, r)) {
+      merged.push(l);
+      continue;
+    }
+
+    if (b) {
+      // The id existed before both sides touched it, so this is one task that
+      // was edited twice.
+      if (same(b, l)) merged.push(r);
+      else if (same(b, r)) merged.push(l);
+      else merged.push(reconcile(l, r));
+      continue;
+    }
+
+    // No row in the base: the number was handed out independently on two
+    // devices that were both offline. Written at different moments, these are
+    // two different pieces of work that happen to share a number — and
+    // reconciling them would quietly throw one away. Keep both; the later one
+    // gets a fresh number below.
+    if (l.created !== r.created) {
+      const later = l.created > r.created ? l : r;
+      merged.push(later === l ? r : l);
+      collided.push(later);
+      continue;
+    }
+    merged.push(reconcile(l, r));
   }
 
   // The counter must clear the highest id either side ever handed out, or the
   // next task would collide with one that already exists on the other device.
-  const highest = merged.reduce((max, t) => {
-    const n = Number.parseInt(t.id.split("-")[1] ?? "0", 10);
-    return Number.isFinite(n) ? Math.max(max, n) : max;
-  }, 0);
+  let highest = [...localTasks.keys(), ...remoteTasks.keys()].reduce(
+    (max, id) => {
+      const n = Number.parseInt(id.split("-")[1] ?? "0", 10);
+      return Number.isFinite(n) ? Math.max(max, n) : max;
+    },
+    0
+  );
+
+  for (const task of collided) {
+    merged.push({ ...task, id: formatTaskId(code, ++highest) });
+  }
 
   return {
     content: serializeProjectFile({
       project: {
         ...localFile.project,
-        next: Math.max(localFile.project.next, remoteFile.project.next, highest + 1),
+        next: Math.max(
+          localFile.project.next,
+          remoteFile.project.next,
+          highest + 1
+        ),
       },
       tasks: merged,
       extra: [...new Set([...localFile.extra, ...remoteFile.extra])],
@@ -168,9 +219,9 @@ function mergeKeyed<T>(
   key: (row: T) => string,
   equal: (a: T, b: T) => boolean
 ): T[] {
-  const baseMap = new Map((base ?? []).map((r) => [key(r), r]));
-  const localMap = new Map(local.map((r) => [key(r), r]));
-  const remoteMap = new Map(remote.map((r) => [key(r), r]));
+  const baseMap = new Map((base ?? []).map(r => [key(r), r]));
+  const localMap = new Map(local.map(r => [key(r), r]));
+  const remoteMap = new Map(remote.map(r => [key(r), r]));
 
   const out: T[] = [];
   for (const k of new Set([...localMap.keys(), ...remoteMap.keys()])) {
@@ -200,15 +251,20 @@ function mergeProjects({ base, local, remote }: MergeInput): MergeOutput {
     base === null ? null : parseProjectsFile(base),
     parseProjectsFile(local),
     parseProjectsFile(remote),
-    (p) => p.code,
+    p => p.code,
     (a, b) => JSON.stringify(a) === JSON.stringify(b)
   );
 
   // Counters only ever move forward, so take the higher of the two.
-  const remoteNext = new Map(parseProjectsFile(remote).map((p) => [p.code, p.next]));
+  const remoteNext = new Map(
+    parseProjectsFile(remote).map(p => [p.code, p.next])
+  );
   return {
     content: serializeProjectsFile(
-      rows.map((p) => ({ ...p, next: Math.max(p.next, remoteNext.get(p.code) ?? 1) }))
+      rows.map(p => ({
+        ...p,
+        next: Math.max(p.next, remoteNext.get(p.code) ?? 1),
+      }))
     ),
     merged: true,
   };
@@ -221,7 +277,7 @@ function mergeFields({ base, local, remote }: MergeInput): MergeOutput {
         base === null ? null : parseFieldsFile(base),
         parseFieldsFile(local),
         parseFieldsFile(remote),
-        (f) => f.code,
+        f => f.code,
         (a, b) => JSON.stringify(a) === JSON.stringify(b)
       )
     ),
@@ -236,7 +292,7 @@ function mergeContacts({ base, local, remote }: MergeInput): MergeOutput {
         base === null ? null : parseContactsFile(base),
         parseContactsFile(local),
         parseContactsFile(remote),
-        (c) => `${c.group}|${c.phone}`,
+        c => `${c.group}|${c.phone}`,
         (a, b) => JSON.stringify(a) === JSON.stringify(b)
       )
     ),
@@ -249,17 +305,21 @@ function mergeRecurring({ base, local, remote }: MergeInput): MergeOutput {
     base === null ? null : parseRecurringFile(base),
     parseRecurringFile(local),
     parseRecurringFile(remote),
-    (r) => r.id,
+    r => r.id,
     (a, b) => JSON.stringify(a) === JSON.stringify(b)
   );
 
   // Keep the later run date so a rule cannot fire twice for the same day.
-  const remoteRuns = new Map(parseRecurringFile(remote).map((r) => [r.id, r.lastRun]));
+  const remoteRuns = new Map(
+    parseRecurringFile(remote).map(r => [r.id, r.lastRun])
+  );
   return {
     content: serializeRecurringFile(
-      rows.map((r) => {
+      rows.map(r => {
         const other = remoteRuns.get(r.id);
-        return other && (!r.lastRun || other > r.lastRun) ? { ...r, lastRun: other } : r;
+        return other && (!r.lastRun || other > r.lastRun)
+          ? { ...r, lastRun: other }
+          : r;
       })
     ),
     merged: true,

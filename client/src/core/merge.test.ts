@@ -1,6 +1,10 @@
 import { describe, expect, it } from "vitest";
 import { mergeFile } from "./merge";
-import { parseContactsFile, parseProjectFile, serializeProjectFile } from "./markdown";
+import {
+  parseContactsFile,
+  parseProjectFile,
+  serializeProjectFile,
+} from "./markdown";
 import type { Project, Task } from "./model";
 
 const PROJECT: Project = {
@@ -12,7 +16,11 @@ const PROJECT: Project = {
 };
 
 function file(tasks: Task[], next = 3): string {
-  return serializeProjectFile({ project: { ...PROJECT, next }, tasks, extra: [] });
+  return serializeProjectFile({
+    project: { ...PROJECT, next },
+    tasks,
+    extra: [],
+  });
 }
 
 function task(id: string, title: string, extra: Partial<Task> = {}): Task {
@@ -31,7 +39,7 @@ const PATH = "data/tasks/ALP.md";
 const tasksIn = (content: string) => parseProjectFile(content, "ALP").tasks;
 const titles = (content: string) =>
   tasksIn(content)
-    .map((t) => t.title)
+    .map(t => t.title)
     .sort();
 
 describe("no real conflict", () => {
@@ -47,15 +55,23 @@ describe("no real conflict", () => {
   it("keeps the local when only the local moved", () => {
     const base = file([task("ALP-0001", "A")]);
     const local = file([task("ALP-0001", "A sửa")]);
-    expect(mergeFile({ path: PATH, base, local, remote: base }).content).toBe(local);
+    expect(mergeFile({ path: PATH, base, local, remote: base }).content).toBe(
+      local
+    );
   });
 });
 
 describe("project file merge", () => {
   it("keeps tasks added on both devices while offline", () => {
     const base = file([task("ALP-0001", "Chung")], 2);
-    const local = file([task("ALP-0001", "Chung"), task("ALP-0002", "Thêm trên máy tính")], 3);
-    const remote = file([task("ALP-0001", "Chung"), task("ALP-0003", "Thêm trên iPhone")], 4);
+    const local = file(
+      [task("ALP-0001", "Chung"), task("ALP-0002", "Thêm trên máy tính")],
+      3
+    );
+    const remote = file(
+      [task("ALP-0001", "Chung"), task("ALP-0003", "Thêm trên iPhone")],
+      4
+    );
 
     const merged = mergeFile({ path: PATH, base, local, remote });
 
@@ -80,7 +96,10 @@ describe("project file merge", () => {
   it("keeps a task done on one device and edited on the other", () => {
     const base = file([task("ALP-0001", "Nộp báo cáo ngày")]);
     const local = file([
-      task("ALP-0001", "Nộp báo cáo ngày", { done: true, completed: "2026.08.17_17.30" }),
+      task("ALP-0001", "Nộp báo cáo ngày", {
+        done: true,
+        completed: "2026.08.17_17.30",
+      }),
     ]);
     const remote = file([task("ALP-0001", "Nộp báo cáo ngày tháng 8")]);
 
@@ -97,7 +116,9 @@ describe("project file merge", () => {
     const local = file([task("ALP-0001", "A")]);
     const remote = base;
 
-    expect(titles(mergeFile({ path: PATH, base, local, remote }).content)).toEqual(["A"]);
+    expect(
+      titles(mergeFile({ path: PATH, base, local, remote }).content)
+    ).toEqual(["A"]);
   });
 
   it("keeps a task deleted on one side but edited on the other", () => {
@@ -107,20 +128,18 @@ describe("project file merge", () => {
     const local = file([task("ALP-0001", "A")]);
     const remote = file([task("ALP-0001", "A"), task("ALP-0002", "B đã sửa")]);
 
-    expect(titles(mergeFile({ path: PATH, base, local, remote }).content)).toEqual([
-      "A",
-      "B đã sửa",
-    ]);
+    expect(
+      titles(mergeFile({ path: PATH, base, local, remote }).content)
+    ).toEqual(["A", "B đã sửa"]);
   });
 
   it("loses nothing when this device has never seen the file", () => {
     const local = file([task("ALP-0001", "Máy tính")]);
     const remote = file([task("ALP-0002", "iPhone")]);
 
-    expect(titles(mergeFile({ path: PATH, base: null, local, remote }).content)).toEqual([
-      "Máy tính",
-      "iPhone",
-    ]);
+    expect(
+      titles(mergeFile({ path: PATH, base: null, local, remote }).content)
+    ).toEqual(["Máy tính", "iPhone"]);
   });
 });
 
@@ -129,8 +148,10 @@ describe("day note merge", () => {
     const merged = mergeFile({
       path: "data/days/2026/2026-08-17.md",
       base: "---\ndate: 2026-08-17\n---\n\nHọp lúc 14:00\n",
-      local: "---\ndate: 2026-08-17\n---\n\nHọp lúc 14:00\nChốt khối lượng tầng 3\n",
-      remote: "---\ndate: 2026-08-17\n---\n\nHọp lúc 14:00\nBên kia gửi bản vẽ thứ Tư\n",
+      local:
+        "---\ndate: 2026-08-17\n---\n\nHọp lúc 14:00\nChốt khối lượng tầng 3\n",
+      remote:
+        "---\ndate: 2026-08-17\n---\n\nHọp lúc 14:00\nBên kia gửi bản vẽ thứ Tư\n",
     });
 
     expect(merged.content).toContain("Chốt khối lượng tầng 3");
@@ -142,12 +163,89 @@ describe("day note merge", () => {
 describe("contacts merge", () => {
   it("keeps a number added on each device", () => {
     const base = "# Danh bạ\n\n## Alpha\n- VP · `03-1111-1111`\n";
-    const local = "# Danh bạ\n\n## Alpha\n- VP · `03-1111-1111`\n- Kho · `03-2222-2222`\n";
-    const remote = "# Danh bạ\n\n## Alpha\n- VP · `03-1111-1111`\n- Xưởng · `03-3333-3333`\n";
+    const local =
+      "# Danh bạ\n\n## Alpha\n- VP · `03-1111-1111`\n- Kho · `03-2222-2222`\n";
+    const remote =
+      "# Danh bạ\n\n## Alpha\n- VP · `03-1111-1111`\n- Xưởng · `03-3333-3333`\n";
 
     const merged = mergeFile({ path: "data/contacts.md", base, local, remote });
-    const phones = parseContactsFile(merged.content).map((c) => c.phone).sort();
+    const phones = parseContactsFile(merged.content)
+      .map(c => c.phone)
+      .sort();
 
     expect(phones).toEqual(["03-1111-1111", "03-2222-2222", "03-3333-3333"]);
+  });
+});
+
+/**
+ * Two devices offline at once both hand out the same number, so the merge sees
+ * one id carrying two unrelated pieces of work. Keyed only by id, it used to
+ * reconcile them into one row and the other was gone for good.
+ */
+describe("the same id minted on two devices", () => {
+  const early = "2026.09.18_09.00";
+  const late = "2026.09.18_10.30";
+
+  it("keeps both tasks and renumbers the later one", () => {
+    const out = mergeFile({
+      path: "data/tasks/ALP.md",
+      base: file([], 5),
+      local: file(
+        [task("ALP-0005", "Việc của máy tính", { created: early })],
+        6
+      ),
+      remote: file([task("ALP-0005", "Việc của iPhone", { created: late })], 6),
+    });
+    const merged = parseProjectFile(out.content, "ALP");
+
+    expect(merged.tasks.map(t => t.title).sort()).toEqual([
+      "Việc của iPhone",
+      "Việc của máy tính",
+    ]);
+    expect(new Set(merged.tasks.map(t => t.id)).size).toBe(2);
+    // The one written first keeps the number it was shown under.
+    expect(merged.tasks.find(t => t.id === "ALP-0005")?.title).toBe(
+      "Việc của máy tính"
+    );
+  });
+
+  it("gives both devices the same answer, whichever side is local", () => {
+    const a = file(
+      [task("ALP-0005", "Việc của máy tính", { created: early })],
+      6
+    );
+    const b = file([task("ALP-0005", "Việc của iPhone", { created: late })], 6);
+    const base = file([], 5);
+
+    const onePc = mergeFile({
+      path: "data/tasks/ALP.md",
+      base,
+      local: a,
+      remote: b,
+    });
+    const onePhone = mergeFile({
+      path: "data/tasks/ALP.md",
+      base,
+      local: b,
+      remote: a,
+    });
+
+    expect(onePc.content).toBe(onePhone.content);
+  });
+
+  it("still treats one task edited on both sides as one task", () => {
+    const out = mergeFile({
+      path: "data/tasks/ALP.md",
+      base: file([task("ALP-0005", "Bản gốc", { created: early })], 6),
+      local: file(
+        [task("ALP-0005", "Sửa trên máy tính", { created: early })],
+        6
+      ),
+      remote: file(
+        [task("ALP-0005", "Sửa trên iPhone", { created: early })],
+        6
+      ),
+    });
+    expect(parseProjectFile(out.content, "ALP").tasks).toHaveLength(1);
   });
 });

@@ -98,10 +98,41 @@ async function pull(repo: RepoConfig, force: boolean): Promise<void> {
 
   // A matching head means nothing changed upstream — no blobs to fetch.
   if (!force && commit === knownCommit) return;
-  knownCommit = commit;
 
-  const local = new Map(store.allFiles().map(f => [f.path, f]));
+  const before = new Map(store.allFiles().map(f => [f.path, f]));
   const remotePaths = new Set(remoteList.map(f => f.path));
+
+  // --- download first, decide nothing yet -------------------------------
+  //
+  // Every await below is a window in which the person can keep typing. The
+  // old code chose "take the remote version" *before* that window and applied
+  // it after, so a sentence written while a blob was in flight was overwritten
+  // by the download and the file was marked clean — the edit was gone and the
+  // app no longer even showed it as unsaved.
+  const fetched: Array<{ path: string; content: string; sha: string }> = [];
+  for (const entry of remoteList) {
+    const mine = before.get(entry.path);
+    // Same blob SHA means byte-identical content; skip the download.
+    if (mine && mine.sha === entry.sha && !mine.dirty) continue;
+
+    // Deleted here, still present there: the delete is pending and wins on
+    // the next push. Asked before the download, because fetching a file we are
+    // about to remove is a request that can only cost time and fail.
+    if (mine?.deleted) continue;
+
+    fetched.push({
+      path: entry.path,
+      content: await fetchBlob(repo, entry.sha),
+      sha: entry.sha,
+    });
+  }
+
+  // --- then decide and apply, against what the files look like *now* ----
+  //
+  // No await from here to the end, so nothing can change underneath: whatever
+  // was typed during the download is seen, and a file that turned dirty in the
+  // meantime goes through a three-way merge instead of being replaced.
+  const current = new Map(store.allFiles().map(f => [f.path, f]));
 
   const fresh: Array<{ path: string; content: string; sha: string }> = [];
   const merged: Array<{
@@ -111,34 +142,26 @@ async function pull(repo: RepoConfig, force: boolean): Promise<void> {
     base: string;
   }> = [];
 
-  for (const entry of remoteList) {
-    const mine = local.get(entry.path);
-    // Same blob SHA means byte-identical content; skip the download.
-    if (mine && mine.sha === entry.sha && !mine.dirty) continue;
-
-    // Deleted here, still present there: the delete is pending and wins on
-    // the next push. Asked before the download, because fetching a file we are
-    // about to remove is a request that can only cost time and fail.
+  for (const blob of fetched) {
+    const mine = current.get(blob.path);
     if (mine?.deleted) continue;
 
-    const content = await fetchBlob(repo, entry.sha);
-
     if (!mine || !mine.dirty) {
-      fresh.push({ path: entry.path, content, sha: entry.sha });
+      fresh.push(blob);
       continue;
     }
 
     const result = mergeFile({
-      path: entry.path,
+      path: blob.path,
       base: mine.base,
       local: mine.content,
-      remote: content,
+      remote: blob.content,
     });
     merged.push({
-      path: entry.path,
+      path: blob.path,
       content: result.content,
-      sha: entry.sha,
-      base: content,
+      sha: blob.sha,
+      base: blob.content,
     });
   }
 
@@ -148,6 +171,12 @@ async function pull(repo: RepoConfig, force: boolean): Promise<void> {
   // Files the remote no longer has and that we have not edited were deleted
   // elsewhere; mirror that rather than silently resurrecting them on push.
   store.dropMissing(remotePaths);
+
+  // Only now. Recording the head before the downloads meant that a pull cut
+  // off by a dropped connection still counted as done: the next sync saw a
+  // matching head, skipped the pull entirely, and pushed the stale local copy
+  // straight over the newer one on GitHub.
+  knownCommit = commit;
 }
 
 async function pushPending(repo: RepoConfig): Promise<void> {

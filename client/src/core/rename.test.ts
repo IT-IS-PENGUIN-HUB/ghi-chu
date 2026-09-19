@@ -52,18 +52,20 @@ describe("renaming a project code", () => {
   });
 
   it("rewrites every task id and keeps the numbers", () => {
-    const before = store.getSnapshot().tasks.filter((t) => t.project === "ALP");
+    const before = store.getSnapshot().tasks.filter(t => t.project === "ALP");
     expect(before.length).toBeGreaterThan(0);
 
     expect(store.renameProjectCode("ALP", "ALPHA")).toEqual({ ok: true });
 
-    const after = store.getSnapshot().tasks.filter((t) => t.project === "ALPHA");
+    const after = store.getSnapshot().tasks.filter(t => t.project === "ALPHA");
     expect(after).toHaveLength(before.length);
-    expect(after.map((t) => t.id).sort()).toEqual(
-      before.map((t) => t.id.replace("ALP-", "ALPHA-")).sort()
+    expect(after.map(t => t.id).sort()).toEqual(
+      before.map(t => t.id.replace("ALP-", "ALPHA-")).sort()
     );
     // Nothing is left behind under the old code.
-    expect(store.getSnapshot().tasks.some((t) => t.project === "ALP")).toBe(false);
+    expect(store.getSnapshot().tasks.some(t => t.project === "ALP")).toBe(
+      false
+    );
   });
 
   it("loses no task at all", () => {
@@ -75,7 +77,7 @@ describe("renaming a project code", () => {
   it("keeps titles, status and timestamps untouched", () => {
     const before = store
       .getSnapshot()
-      .tasks.filter((t) => t.project === "ALP")
+      .tasks.filter(t => t.project === "ALP")
       .map(({ title, done, created }) => ({ title, done, created }));
 
     store.renameProjectCode("ALP", "ZZ");
@@ -83,34 +85,48 @@ describe("renaming a project code", () => {
     expect(
       store
         .getSnapshot()
-        .tasks.filter((t) => t.project === "ZZ")
+        .tasks.filter(t => t.project === "ZZ")
         .map(({ title, done, created }) => ({ title, done, created }))
     ).toEqual(before);
   });
 
   it("renames the file on disk and removes the old one", () => {
     store.renameProjectCode("ALP", "ZZ");
-    const live = store.allFiles().filter((f) => !f.deleted).map((f) => f.path);
+    const live = store
+      .allFiles()
+      .filter(f => !f.deleted)
+      .map(f => f.path);
 
     expect(live).toContain(paths.project("ZZ"));
     expect(live).not.toContain(paths.project("ALP"));
   });
 
   it("carries the counter over so ids never collide", () => {
-    const before = store.getSnapshot().projects.find((p) => p.code === "ALP")!.next;
+    const before = store
+      .getSnapshot()
+      .projects.find(p => p.code === "ALP")!.next;
     store.renameProjectCode("ALP", "ZZ");
 
-    const after = store.getSnapshot().projects.find((p) => p.code === "ZZ")!;
+    const after = store.getSnapshot().projects.find(p => p.code === "ZZ")!;
     expect(after.next).toBe(before);
 
     const added = store.addTask({ title: "Sau khi đổi mã", project: "ZZ" })!;
     expect(added.id).toBe(`ZZ-${String(before).padStart(4, "0")}`);
-    expect(store.getSnapshot().tasks.filter((t) => t.id === added.id)).toHaveLength(1);
+    expect(
+      store.getSnapshot().tasks.filter(t => t.id === added.id)
+    ).toHaveLength(1);
   });
 
   it("repoints recurring rules at the new code", () => {
     store.setRecurring([
-      { id: "R1", title: "Nộp báo cáo", project: "ALP", category: "WRK", kind: "daily", days: [] },
+      {
+        id: "R1",
+        title: "Nộp báo cáo",
+        project: "ALP",
+        category: "WRK",
+        kind: "daily",
+        days: [],
+      },
     ]);
     store.renameProjectCode("ALP", "ZZ");
 
@@ -120,8 +136,12 @@ describe("renaming a project code", () => {
   it("refuses a code already in use", () => {
     const result = store.renameProjectCode("ALP", "BET");
     expect(result.ok).toBe(false);
-    expect(store.getSnapshot().projects.find((p) => p.code === "ALP")).toBeDefined();
-    expect(store.getSnapshot().projects.find((p) => p.code === "BET")).toBeDefined();
+    expect(
+      store.getSnapshot().projects.find(p => p.code === "ALP")
+    ).toBeDefined();
+    expect(
+      store.getSnapshot().projects.find(p => p.code === "BET")
+    ).toBeDefined();
   });
 
   it("is a no-op when the code does not change", () => {
@@ -142,21 +162,75 @@ describe("renaming a field code", () => {
     store.updateProject("ALP", { field: "SEK" });
     expect(store.renameFieldCode("SEK", "SEKISAN")).toEqual({ ok: true });
 
-    expect(store.getSnapshot().fields.find((f) => f.code === "SEKISAN")).toBeDefined();
-    expect(store.getSnapshot().fields.find((f) => f.code === "SEK")).toBeUndefined();
-    expect(store.getSnapshot().projects.find((p) => p.code === "ALP")?.field).toBe("SEKISAN");
+    expect(
+      store.getSnapshot().fields.find(f => f.code === "SEKISAN")
+    ).toBeDefined();
+    expect(
+      store.getSnapshot().fields.find(f => f.code === "SEK")
+    ).toBeUndefined();
+    expect(
+      store.getSnapshot().projects.find(p => p.code === "ALP")?.field
+    ).toBe("SEKISAN");
   });
 
   it("does not touch task ids", () => {
     store.updateProject("ALP", { field: "SEK" });
-    const before = store.getSnapshot().tasks.map((t) => t.id).sort();
+    const before = store
+      .getSnapshot()
+      .tasks.map(t => t.id)
+      .sort();
 
     store.renameFieldCode("SEK", "XYZ");
 
-    expect(store.getSnapshot().tasks.map((t) => t.id).sort()).toEqual(before);
+    expect(
+      store
+        .getSnapshot()
+        .tasks.map(t => t.id)
+        .sort()
+    ).toEqual(before);
   });
 
   it("refuses a code already in use", () => {
     expect(store.renameFieldCode("SEK", "SKS").ok).toBe(false);
+  });
+});
+
+/**
+ * A task moved in from another phân nhánh keeps the id it was born with, so
+ * renaming the phân nhánh must not renumber it onto a number this one had
+ * already used — two rows with one id meant ticking either ticked both.
+ */
+describe("renaming a phân nhánh that holds a task moved in from elsewhere", () => {
+  function seeded(): Store {
+    const store = new Store();
+    store.loadForTest(buildFixtureFiles(new Date("2026-08-17T10:00:00")));
+    store.moveTask("BET-0001", "ALP");
+    return store;
+  }
+
+  it("does not mint two tasks with the same id", () => {
+    const store = seeded();
+    expect(store.renameProjectCode("ALP", "XYZ").ok).toBe(true);
+
+    const after = store.getSnapshot().tasks.filter(t => t.project === "XYZ");
+    expect(after).toHaveLength(2);
+    expect(new Set(after.map(t => t.id)).size).toBe(2);
+  });
+
+  it("leaves the moved task's permanent id alone", () => {
+    const store = seeded();
+    store.renameProjectCode("ALP", "XYZ");
+    expect(store.getSnapshot().tasks.some(t => t.id === "BET-0001")).toBe(true);
+  });
+
+  it("ticking one of them does not complete the other", () => {
+    const store = seeded();
+    store.renameProjectCode("ALP", "XYZ");
+    const [first] = store.getSnapshot().tasks.filter(t => t.project === "XYZ");
+    store.toggleTask(first.id);
+
+    expect(
+      store.getSnapshot().tasks.filter(t => t.project === "XYZ" && t.done)
+    ).toHaveLength(1);
   });
 });

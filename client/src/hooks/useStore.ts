@@ -1,7 +1,7 @@
 import { useEffect, useMemo, useState, useSyncExternalStore } from "react";
 import { buildDailyList, type SortMode } from "@/core/codes";
 import { CATEGORIES, toDateKey, type Category } from "@/core/model";
-import { materialise } from "@/core/recurring";
+import { everyMidnight, materialise } from "@/core/recurring";
 import { SearchIndex } from "@/core/search";
 import { store, type Snapshot } from "@/core/store";
 
@@ -66,8 +66,9 @@ export function useSearchIndex(): { index: SearchIndex; version: number } {
 }
 
 /**
- * Fires due recurring rules once per app open, and again if the app is left
- * open across midnight — a static PWA has no background worker to do it.
+ * Fires due recurring rules on open, on every midnight the app stays open
+ * for, and whenever the window is brought back — a static PWA has no
+ * background worker, and a sleeping machine has no working timers either.
  */
 export function useRecurring(): void {
   const { ready, recurring, tasks } = useStore();
@@ -99,12 +100,21 @@ export function useRecurring(): void {
 
     run();
 
-    // Re-check just after the next local midnight.
-    const now = new Date();
-    const midnight = new Date(now);
-    midnight.setHours(24, 0, 5, 0);
-    const timer = setTimeout(run, midnight.getTime() - now.getTime());
-    return () => clearTimeout(timer);
+    // Every midnight, not just the first one.
+    const stop = everyMidnight(run);
+
+    // A timer is not enough on its own: a closed laptop or a background tab
+    // has its timers throttled or frozen, so the night can pass without the
+    // callback ever firing. Coming back to the window re-checks.
+    const onVisible = () => {
+      if (document.visibilityState === "visible") run();
+    };
+    document.addEventListener("visibilitychange", onVisible);
+
+    return () => {
+      stop();
+      document.removeEventListener("visibilitychange", onVisible);
+    };
     // `tasks` is read inside `run` from the live store, not closed over.
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [ready, recurring.length]);

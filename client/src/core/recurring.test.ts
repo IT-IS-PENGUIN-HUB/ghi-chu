@@ -1,5 +1,13 @@
-import { describe, expect, it } from "vitest";
-import { describeRule, isDue, isoWeekday, materialise, nextRuleId } from "./recurring";
+import { describe, expect, it, vi } from "vitest";
+import {
+  describeRule,
+  everyMidnight,
+  isDue,
+  isoWeekday,
+  materialise,
+  msUntilNextMidnight,
+  nextRuleId,
+} from "./recurring";
 import type { RecurringRule, Task } from "./model";
 
 const baocao: RecurringRule = {
@@ -46,16 +54,23 @@ describe("due dates", () => {
   });
 
   it("spaces a weekly rule seven days apart", () => {
-    expect(isDue({ ...mail, kind: "weekly", lastRun: "2026-08-17" }, FRIDAY)).toBe(false);
-    expect(isDue({ ...mail, kind: "weekly", lastRun: "2026-08-14" }, FRIDAY)).toBe(true);
+    expect(
+      isDue({ ...mail, kind: "weekly", lastRun: "2026-08-17" }, FRIDAY)
+    ).toBe(false);
+    expect(
+      isDue({ ...mail, kind: "weekly", lastRun: "2026-08-14" }, FRIDAY)
+    ).toBe(true);
   });
 });
 
 describe("materialising", () => {
   it("creates a task and records the run date", () => {
     const { created, rules } = materialise([baocao, mail], [], FRIDAY);
-    expect(created.map((c) => c.title)).toEqual(["Nộp báo cáo ngày", "Kiểm tra mail"]);
-    expect(rules.every((r) => r.lastRun === "2026-08-21")).toBe(true);
+    expect(created.map(c => c.title)).toEqual([
+      "Nộp báo cáo ngày",
+      "Kiểm tra mail",
+    ]);
+    expect(rules.every(r => r.lastRun === "2026-08-21")).toBe(true);
   });
 
   it("skips a rule whose task is already open, without duplicating it", () => {
@@ -99,7 +114,45 @@ describe("rule bookkeeping", () => {
 
   it("describes a rule in Vietnamese", () => {
     expect(describeRule(baocao)).toBe("T6");
-    expect(describeRule({ ...baocao, days: [1, 2, 3, 4, 5] })).toBe("T2, T3, T4, T5, T6");
+    expect(describeRule({ ...baocao, days: [1, 2, 3, 4, 5] })).toBe(
+      "T2, T3, T4, T5, T6"
+    );
     expect(describeRule(mail)).toBe("Hằng ngày");
+  });
+});
+
+/**
+ * The desktop build starts with Windows and is left running, so "fires when
+ * the app opens" can mean once a fortnight. A single timer covered the first
+ * night and then nothing.
+ */
+describe("the nightly schedule", () => {
+  it("fires again every midnight the app stays open for", () => {
+    vi.useFakeTimers();
+    const start = new Date("2026-09-19T22:00:00");
+    vi.setSystemTime(start);
+
+    const job = vi.fn();
+    const stop = everyMidnight(job);
+
+    vi.advanceTimersByTime(msUntilNextMidnight(start));
+    expect(job).toHaveBeenCalledTimes(1);
+
+    vi.advanceTimersByTime(24 * 60 * 60 * 1000);
+    expect(job).toHaveBeenCalledTimes(2);
+
+    vi.advanceTimersByTime(24 * 60 * 60 * 1000);
+    expect(job).toHaveBeenCalledTimes(3);
+
+    stop();
+    vi.advanceTimersByTime(24 * 60 * 60 * 1000);
+    expect(job).toHaveBeenCalledTimes(3);
+
+    vi.useRealTimers();
+  });
+
+  it("lands just after midnight, not just before", () => {
+    const ms = msUntilNextMidnight(new Date("2026-09-19T23:59:00"));
+    expect(ms).toBe(65_000);
   });
 });

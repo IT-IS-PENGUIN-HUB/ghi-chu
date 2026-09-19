@@ -11,7 +11,7 @@
  * GitHub both happen after the fact, off the interaction path.
  */
 import { openDB, type IDBPDatabase } from "idb";
-import { allocateTaskId } from "./codes";
+import { allocateTaskId, formatTaskId } from "./codes";
 import {
   codeFromProjectPath,
   dateFromDayPath,
@@ -464,12 +464,25 @@ export class Store {
     if (this.projectOf(to))
       return { ok: false, reason: `Mã ${to} đã được dùng.` };
 
-    const renamed: Project = { ...project, code: to };
-    const tasks = this.tasksOf(from).map(t => ({
-      ...t,
-      id: `${to}-${t.id.split("-")[1] ?? "0001"}`,
-      project: to,
-    }));
+    // Only ids this phân nhánh actually issued get rewritten. A task moved
+    // in from somewhere else keeps the id it was born with — that is what
+    // "permanent id" means — and renumbering it under the new code used to
+    // land on a number this project had already used, leaving two rows with
+    // one id: ticking either one ticked both.
+    let counter = project.next;
+    const used = new Set<string>();
+    const tasks = this.tasksOf(from).map(t => {
+      const mine = t.id.startsWith(`${from}-`);
+      let id = mine ? `${to}-${t.id.split("-")[1] ?? "0001"}` : t.id;
+      while (used.has(id)) id = formatTaskId(to, counter++);
+      used.add(id);
+      return { ...t, id, project: to };
+    });
+    const renamed: Project = {
+      ...project,
+      code: to,
+      next: Math.max(project.next, counter),
+    };
 
     const registry = this.snapshot.projects
       .filter(p => p.code !== from)
