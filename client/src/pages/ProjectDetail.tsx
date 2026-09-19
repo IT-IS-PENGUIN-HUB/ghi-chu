@@ -236,7 +236,14 @@ export default function ProjectDetail() {
         </Button>
       </div>
 
-      {duplicate && <DuplicateHint hit={duplicate} />}
+      {duplicate && (
+        <DuplicateHint
+          hit={duplicate}
+          projectName={
+            projects.find(p => p.code === duplicate.task.project)?.name
+          }
+        />
+      )}
 
       {mine.length > 6 && (
         <Input

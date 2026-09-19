@@ -3,6 +3,7 @@ import react from "@vitejs/plugin-react";
 import path from "node:path";
 import { defineConfig } from "vite";
 import { VitePWA } from "vite-plugin-pwa";
+import pkg from "./package.json" with { type: "json" };
 
 // GitHub Pages project sites are served from /<repo>/ — the deploy workflow sets
 // VITE_BASE. Local dev and user/org pages stay at "/".
@@ -30,6 +31,9 @@ function resolveBase(): string {
 
 export default defineConfig({
   base,
+  // Without this the app cannot say which build it is, and "did the update
+  // actually install?" has no answer but guessing.
+  define: { __APP_VERSION__: JSON.stringify(pkg.version) },
   plugins: [
     react(),
     tailwindcss(),
@@ -92,7 +96,8 @@ export default defineConfig({
           // Left unassigned so they stay inside the dynamically imported
           // Markdown chunk — otherwise they land in vendor and get parsed on
           // startup even though a note preview is a deliberate action.
-          if (id.includes("marked") || id.includes("dompurify")) return undefined;
+          if (id.includes("marked") || id.includes("dompurify"))
+            return undefined;
           if (id.includes("minisearch")) return "search";
           if (id.includes("lucide-react")) return "icons";
           return "vendor";

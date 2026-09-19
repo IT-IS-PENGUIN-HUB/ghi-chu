@@ -60,15 +60,29 @@ describe("đã thêm việc này rồi", () => {
     expect(hit).toBeNull();
   });
 
-  it("không nhắc khi cùng câu nhưng khác phân nhánh", () => {
-    // "Kiểm tra bản vẽ" trên ba gói khác nhau là chuyện bình thường.
+  it("vẫn nhắc khi câu đó nằm ở phân nhánh khác, và nói rõ là ở đâu", () => {
     const hit = findDuplicateTask(
-      [task({ title: "Kiểm tra bản vẽ", project: "ALP" })],
-      "Kiểm tra bản vẽ",
+      [task({ title: "Giặt ghế", project: "ALP" })],
+      "Giặt ghế",
       "BET",
       NOW
     );
-    expect(hit).toBeNull();
+    expect(hit?.sameProject).toBe(false);
+    expect(hit?.task.project).toBe("ALP");
+  });
+
+  it("ưu tiên dòng ở ngay phân nhánh đang gõ", () => {
+    const hit = findDuplicateTask(
+      [
+        task({ id: "ALP-0001", title: "Giặt ghế", project: "ALP" }),
+        task({ id: "BET-0001", title: "Giặt ghế", project: "BET" }),
+      ],
+      "Giặt ghế",
+      "BET",
+      NOW
+    );
+    expect(hit?.task.id).toBe("BET-0001");
+    expect(hit?.sameProject).toBe(true);
   });
 
   it("ưu tiên dòng đang tồn hơn dòng đã xong", () => {

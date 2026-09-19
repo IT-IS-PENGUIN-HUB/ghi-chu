@@ -19,6 +19,8 @@ export interface DuplicateHit {
   state: "open" | "done";
   /** Days since it was finished. Only meaningful when state is "done". */
   daysAgo: number;
+  /** In the phân nhánh being added to, or somewhere else. */
+  sameProject: boolean;
 }
 
 /** Trimmed, single-spaced and folded, so tone marks and spacing do not matter. */
@@ -44,19 +46,38 @@ export function findDuplicateTask(
   const needle = key(title);
   if (!needle) return null;
 
-  let finished: DuplicateHit | null = null;
+  let best: DuplicateHit | null = null;
   for (const task of tasks) {
-    if (task.project !== project) continue;
     if (key(task.title) !== needle) continue;
 
-    if (!task.done) return { task, state: "open", daysAgo: 0 };
+    const sameProject = task.project === project;
+    const daysAgo = task.done
+      ? ageInDays(task.completed ?? task.created, now)
+      : 0;
+    if (task.done && daysAgo > RECENT_DAYS) continue;
 
-    const daysAgo = ageInDays(task.completed ?? task.created, now);
-    if (daysAgo <= RECENT_DAYS && (!finished || daysAgo < finished.daysAgo)) {
-      finished = { task, state: "done", daysAgo };
-    }
+    const hit: DuplicateHit = {
+      task,
+      state: task.done ? "done" : "open",
+      daysAgo,
+      sameProject,
+    };
+    if (!best || rank(hit) < rank(best)) best = hit;
   }
-  return finished;
+  return best;
+}
+
+/**
+ * Which match to show when there are several.
+ *
+ * "Still on your list, right here" is the most useful thing to say, then the
+ * same sentence filed somewhere else — that one is often legitimate (the same
+ * step on three different gói), so it is named rather than assumed to be a
+ * mistake, and it never hides a match in the phân nhánh you are typing into.
+ */
+function rank(hit: DuplicateHit): number {
+  if (hit.state === "open") return hit.sameProject ? 0 : 1;
+  return hit.sameProject ? 2 : 3;
 }
 
 /** "đang còn trong danh sách" / "đã xong hôm qua" — said the way people say it. */

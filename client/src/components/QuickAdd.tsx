@@ -347,7 +347,14 @@ export function QuickAdd({ projects, fields, category, onAdd }: QuickAddProps) {
         </button>
       </div>
 
-      {duplicate && <DuplicateHint hit={duplicate} />}
+      {duplicate && (
+        <DuplicateHint
+          hit={duplicate}
+          projectName={
+            projects.find(p => p.code === duplicate.task.project)?.name
+          }
+        />
+      )}
 
       {preview.tags.length > 0 && (
         <p

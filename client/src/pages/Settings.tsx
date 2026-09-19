@@ -27,6 +27,7 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Switch } from "@/components/ui/switch";
 import { verifyAccess } from "@/core/github";
+import { isDesktop } from "@/lib/tauri";
 import { store } from "@/core/store";
 import { resetSyncState, syncNow } from "@/core/sync";
 import { useStore } from "@/hooks/useStore";
@@ -359,9 +360,14 @@ export default function Settings() {
         </Button>
       </section>
 
+      {/* The version is here so "did the update actually install?" stops
+          being a guess — for the person looking at the screen and for anyone
+          they are describing the problem to. */}
       <p className="pb-4 text-xs text-muted-foreground">
-        {fields.length} dự án · {projects.length} phân nhánh · dữ liệu nằm trong
-        IndexedDB của trình duyệt này.
+        Phiên bản <b className="font-mono">{__APP_VERSION__}</b>
+        {isDesktop() ? " · bản máy tính" : " · bản web"} · {fields.length} dự án
+        · {projects.length} phân nhánh · dữ liệu nằm trong IndexedDB của trình
+        duyệt này.
       </p>
     </div>
   );

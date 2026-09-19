@@ -189,7 +189,14 @@ export function QuickTaskDialog({ project, onClose }: QuickTaskDialogProps) {
           />
         </div>
 
-        {duplicate && <DuplicateHint hit={duplicate} />}
+        {duplicate && (
+          <DuplicateHint
+            hit={duplicate}
+            projectName={
+              projects.find(p => p.code === duplicate.task.project)?.name
+            }
+          />
+        )}
 
         <DialogFooter className="gap-2 sm:items-center sm:justify-between">
           <span className="text-xs text-muted-foreground">
