@@ -297,16 +297,37 @@ export async function push(
     }
   );
 
-  await api(
-    config,
-    `/repos/${config.owner}/${config.repo}/git/refs/heads/${encodeURIComponent(config.branch)}`,
-    { method: "PATCH", body: JSON.stringify({ sha: commit.sha, force: false }) }
-  );
+  try {
+    await api(
+      config,
+      `/repos/${config.owner}/${config.repo}/git/refs/heads/${encodeURIComponent(config.branch)}`,
+      { method: "PATCH", body: JSON.stringify({ sha: commit.sha, force: false }) }
+    );
+  } catch (error) {
+    // "Update is not a fast forward" means the branch moved between reading
+    // the head above and setting it here — another device pushed in that
+    // window. That is the same situation as the guard at the top of this
+    // function, and it has the same answer: pull, merge, push again. Treating
+    // it as a hard error left every later push failing on the same thing, so
+    // nothing this device did — including deleting a task — ever reached
+    // GitHub, and the next fresh pull brought the old copy back.
+    if (isRaceLost(error)) return null;
+    throw error;
+  }
 
   return {
     commit: commit.sha,
     files: [...blobs, ...deletes.map(d => ({ path: d.path, sha: null }))],
   };
+}
+
+/** The branch moved under us: someone else pushed first. */
+function isRaceLost(error: unknown): boolean {
+  return (
+    error instanceof GitHubError &&
+    error.status === 422 &&
+    /fast forward/i.test(error.message)
+  );
 }
 
 /** Human-readable commit subject, e.g. "3 thay đổi từ Ghi chú". */

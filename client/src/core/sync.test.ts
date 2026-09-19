@@ -70,3 +70,39 @@ describe("BUG 3 — a pull cut off halfway", () => {
     );
   });
 });
+
+describe("khi máy khác vừa đẩy lên trước", () => {
+  it("kéo về rồi đẩy lại, thay vì báo lỗi và bỏ cuộc", async () => {
+    listRemote.mockResolvedValue({ commit: "c1", files: [] });
+    store.setDayNote("2026-09-19", "ghi chú mới\n");
+    expect(store.getSnapshot().pending).toBeGreaterThan(0);
+
+    // Lần đầu thua cuộc đua (GitHub: "not a fast forward"), lần sau được.
+    const sent = store.allFiles().find(f => f.path === NOTE)!.content;
+    push.mockResolvedValueOnce(null);
+    push.mockResolvedValue({
+      commit: "c2",
+      files: [{ path: NOTE, sha: "sha-new", content: sent }],
+    });
+
+    await syncNow();
+
+    expect(push).toHaveBeenCalledTimes(2);
+    expect(store.getSnapshot().syncState.status).toBe("idle");
+    expect(store.getSnapshot().pending).toBe(0);
+  });
+
+  it("thua mãi thì nói rõ là chưa gửi được, chứ không im lặng", async () => {
+    listRemote.mockResolvedValue({ commit: "c1", files: [] });
+    store.setDayNote("2026-09-19", "ghi chú mới\n");
+    push.mockResolvedValue(null);
+
+    await syncNow();
+
+    const state = store.getSnapshot().syncState;
+    expect(state.status).toBe("error");
+    expect(state.status === "error" && state.message).toContain("Máy khác");
+    // Quan trọng: thay đổi vẫn còn nguyên, không bị coi là đã gửi.
+    expect(store.getSnapshot().pending).toBeGreaterThan(0);
+  });
+});

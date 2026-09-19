@@ -179,32 +179,33 @@ async function pull(repo: RepoConfig, force: boolean): Promise<void> {
   knownCommit = commit;
 }
 
+/** Enough to outlast another device's burst, few enough to end. */
+const PUSH_ATTEMPTS = 3;
+
 async function pushPending(repo: RepoConfig): Promise<void> {
-  const dirty = store.dirtyFiles();
-  if (!dirty.length) return;
+  for (let attempt = 1; attempt <= PUSH_ATTEMPTS; attempt++) {
+    const dirty = store.dirtyFiles();
+    if (!dirty.length) return;
 
-  const result = await push(repo, dirty, knownCommit, commitMessage(dirty));
+    const result = await push(repo, dirty, knownCommit, commitMessage(dirty));
+    if (result) {
+      knownCommit = result.commit;
+      store.markPushed(result.files);
+      return;
+    }
 
-  if (result === null) {
-    // Someone committed between our pull and our push. Re-pull and merge; the
-    // next scheduled push carries the reconciled version.
+    // Someone committed between our pull and our push. Re-pull, merge, and go
+    // again with the reconciled version. The old code tried exactly once and
+    // then went quiet, which on a repo two devices both write to meant the
+    // push could fail for good while the app still looked idle.
     knownCommit = null;
     await pull(repo, true);
-    const retry = await push(
-      repo,
-      store.dirtyFiles(),
-      knownCommit,
-      commitMessage(store.dirtyFiles())
-    );
-    if (retry) {
-      knownCommit = retry.commit;
-      store.markPushed(retry.files);
-    }
-    return;
   }
 
-  knownCommit = result.commit;
-  store.markPushed(result.files);
+  throw new Error(
+    "Máy khác đẩy lên liên tục nên lần này chưa gửi được. " +
+      "Thay đổi vẫn nằm nguyên trên máy, sẽ tự gửi lại ở lần sau."
+  );
 }
 
 /** Called after every mutation; collapses a burst of edits into one commit. */
