@@ -94,6 +94,12 @@ export interface Snapshot {
   syncState: SyncState;
   /** Most recent sync failures, newest first. Shown in Cài đặt. */
   syncErrors: SyncError[];
+  /**
+   * When a sync last went all the way through. Kept apart from `syncState`
+   * because an error replaces that, and "—" during an error read as "this
+   * has never worked" when it only meant "the latest try failed".
+   */
+  lastSyncAt: number | null;
 }
 
 export type SyncState =
@@ -122,6 +128,7 @@ const EMPTY: Snapshot = {
   pending: 0,
   syncState: { status: "idle", lastSync: null },
   syncErrors: [],
+  lastSyncAt: null,
 };
 
 // --------------------------------------------------------------------------
@@ -163,6 +170,7 @@ export class Store {
     this.rebuild({
       settings: { ...DEFAULT_SETTINGS, ...settings },
       syncState: { status: "idle", lastSync: lastSync ?? null },
+      lastSyncAt: lastSync ?? null,
       syncErrors: syncErrors ?? [],
       ready: true,
     });
@@ -901,6 +909,7 @@ export class Store {
   setSyncState(state: SyncState): void {
     this.snapshot = { ...this.snapshot, syncState: state };
     if (state.status === "idle" && state.lastSync) {
+      this.snapshot = { ...this.snapshot, lastSyncAt: state.lastSync };
       void this.db?.put("meta", state.lastSync, "lastSync");
     }
     // A failure that heals itself on the next edit leaves no trace otherwise,

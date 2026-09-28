@@ -63,6 +63,14 @@ async function api<T>(
 ): Promise<T> {
   const res = await fetch(`${API}${path}`, {
     ...init,
+    // GitHub answers every GET with "Cache-Control: max-age=60", which lets
+    // the browser replay the previous answer for a minute without asking
+    // again. For "where is main right now?" that answer is wrong the moment
+    // this app pushes: the next push within the minute built its commit on
+    // the old head, GitHub refused it as "not a fast forward", and all three
+    // retries read the same stale answer — so a burst of edits could never
+    // be sent. Nothing here is worth caching; blobs are fetched once anyway.
+    cache: "no-store",
     headers: {
       Accept: "application/vnd.github+json",
       Authorization: `Bearer ${config.token}`,

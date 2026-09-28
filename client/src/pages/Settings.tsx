@@ -38,6 +38,7 @@ export default function Settings() {
     pending,
     syncState,
     syncErrors,
+    lastSyncAt,
     tasks,
     projects,
     days,
@@ -276,14 +277,16 @@ export default function Settings() {
         <dl className="grid grid-cols-2 gap-2 text-xs sm:grid-cols-4">
           <Stat label="Chờ đẩy lên" value={String(pending)} />
           <Stat
-            label="Lần cuối"
+            label="Lần cuối thành công"
             value={
-              syncState.status === "idle" && syncState.lastSync
-                ? new Date(syncState.lastSync).toLocaleTimeString("vi-VN", {
+              lastSyncAt
+                ? new Date(lastSyncAt).toLocaleString("vi-VN", {
+                    day: "2-digit",
+                    month: "2-digit",
                     hour: "2-digit",
                     minute: "2-digit",
                   })
-                : "—"
+                : "chưa lần nào"
             }
           />
           <Stat label="Công việc" value={String(tasks.length)} />
